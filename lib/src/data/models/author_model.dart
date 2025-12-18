@@ -1,6 +1,7 @@
-import 'package:id_pair_set/id_pair_set.dart';
 import '../../domain/entities/author.dart';
-import '../../domain/entities/author_id.dart';
+import '../../domain/value_objects/author_id_pair.dart';
+import '../../domain/value_objects/author_id_pairs.dart';
+import '../../domain/value_objects/author_id_type.dart';
 import 'package:uuid/uuid.dart';
 
 /// A data model representing an author with their metadata and identifiers.
@@ -18,7 +19,7 @@ class AuthorModel {
   final String? biography;
 
   /// The list of book identifiers associated with the author.
-  final List<String> bookIds;
+  final List<String> bookIdPairs;
 
   /// Creates an [AuthorModel] instance.
   const AuthorModel({
@@ -26,12 +27,12 @@ class AuthorModel {
     required this.idPairs,
     required this.name,
     this.biography,
-    required this.bookIds,
+    required this.bookIdPairs,
   });
 
   /// Creates an [AuthorModel] from a map representation.
   factory AuthorModel.fromMap({required Map<String, dynamic> map}) {
-    final idPairs =
+    final idPairsList =
         (map['idPairs'] as List<dynamic>?)
             ?.map(
               (e) => AuthorIdPair(
@@ -45,10 +46,10 @@ class AuthorModel {
         [];
     return AuthorModel(
       id: map['id'] as String?,
-      idPairs: idPairs,
+      idPairs: idPairsList,
       name: map['name'] as String,
       biography: map['biography'] as String?,
-      bookIds: (map['bookIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      bookIdPairs: (map['bookIdPairs'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -61,14 +62,14 @@ class AuthorModel {
           .toList(),
       'name': name,
       'biography': biography,
-      'bookIds': bookIds,
+      'bookIdPairs': bookIdPairs,
     };
   }
 
   /// Converts this [AuthorModel] to an [Author] domain entity.
   Author toEntity() {
     return Author(
-      idPairs: IdPairSet(idPairs),
+      idPairs: AuthorIdPairs(idPairs),
       name: name,
       biography: biography,
     );
@@ -77,8 +78,7 @@ class AuthorModel {
   /// Creates an [AuthorModel] from an [Author] domain entity.
   factory AuthorModel.fromEntity(Author author) {
     /// Ensure author always has at least one AuthorIdPair
-    final List<AuthorIdPair> effectiveIdPairs =
-        author.idPairs.idPairs.isNotEmpty
+    final effectiveIdPairs = author.idPairs.idPairs.isNotEmpty
         ? author.idPairs.idPairs
         : [AuthorIdPair(idType: AuthorIdType.local, idCode: const Uuid().v4())];
 
@@ -87,7 +87,7 @@ class AuthorModel {
       idPairs: effectiveIdPairs,
       name: author.name,
       biography: author.biography,
-      bookIds: [],
+      bookIdPairs: [],
     );
   }
 
@@ -97,14 +97,14 @@ class AuthorModel {
     List<AuthorIdPair>? idPairs,
     String? name,
     String? biography,
-    List<String>? bookIds,
+    List<String>? bookIdPairs,
   }) {
     return AuthorModel(
       id: id ?? this.id,
       idPairs: idPairs ?? this.idPairs,
       name: name ?? this.name,
       biography: biography ?? this.biography,
-      bookIds: bookIds ?? this.bookIds,
+      bookIdPairs: bookIdPairs ?? this.bookIdPairs,
     );
   }
 }

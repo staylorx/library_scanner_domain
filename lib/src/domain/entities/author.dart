@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
-import 'package:id_pair_set/id_pair_set.dart';
-import 'author_id.dart';
+
+import '../value_objects/author_id_pairs.dart';
 
 /// A domain entity representing an author.
 class Author with EquatableMixin {
   /// The set of identifier pairs for the author.
-  final IdPairSet<AuthorIdPair> _idPairs;
+  final AuthorIdPairs _idPairs;
 
   /// The name of the author.
   final String name;
@@ -14,24 +14,18 @@ class Author with EquatableMixin {
   final String? biography;
 
   /// Creates an [Author] instance.
-  Author({
-    required IdPairSet<AuthorIdPair> idPairs,
-    required this.name,
-    this.biography,
-  }) : _idPairs = idPairs;
+  Author({required AuthorIdPairs idPairs, required this.name, this.biography})
+    : _idPairs = idPairs;
 
   /// The set of identifier pairs for the author.
-  IdPairSet<AuthorIdPair> get idPairs => _idPairs;
+  AuthorIdPairs get idPairs => _idPairs;
 
-  /// The key for the author, which is the name.
-  String get key => name;
+  /// The key for the author, which is the idCode.
+  /// TODO: i don't like idPairs.idPairs... etc. I don't like the duplication. Factory, something else?
+  String get key => idPairs.idPairs.first.idCode;
 
   /// Creates a copy of this [Author] with optional field updates.
-  Author copyWith({
-    IdPairSet<AuthorIdPair>? idPairs,
-    String? name,
-    String? biography,
-  }) {
+  Author copyWith({AuthorIdPairs? idPairs, String? name, String? biography}) {
     return Author(
       idPairs: idPairs ?? this.idPairs,
       name: name ?? this.name,

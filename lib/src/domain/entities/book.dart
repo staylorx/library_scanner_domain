@@ -1,14 +1,13 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
-import 'package:id_pair_set/id_pair_set.dart';
-import '../value_objects/book_id.dart';
+import '../value_objects/book_id_pairs.dart';
 import 'author.dart';
 import 'tag.dart';
 
 /// A domain entity representing a book.
 class Book with EquatableMixin {
   /// The set of identifier pairs for the book, representing various identification codes like ISBNs.
-  final IdPairSet<BookIdPair> _idPairs;
+  final BookIdPairs _idPairs;
 
   /// The title of the book.
   final String title;
@@ -36,7 +35,7 @@ class Book with EquatableMixin {
 
   /// Creates a [Book] instance.
   Book({
-    required IdPairSet<BookIdPair> idPairs,
+    required BookIdPairs idPairs,
     required this.title,
     this.originalTitle,
     this.description,
@@ -48,7 +47,7 @@ class Book with EquatableMixin {
   }) : _idPairs = idPairs;
 
   /// The set of identifier pairs for the book.
-  IdPairSet<BookIdPair> get idPairs => _idPairs;
+  BookIdPairs get idPairs => _idPairs;
 
   /// The key for the book, based on idPairs or title.
   String get key {
@@ -58,7 +57,7 @@ class Book with EquatableMixin {
 
   /// Creates a copy of this [Book] with optional field updates.
   Book copyWith({
-    IdPairSet<BookIdPair>? idPairs,
+    BookIdPairs? idPairs,
     String? title,
     String? originalTitle,
     String? description,

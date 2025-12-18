@@ -168,7 +168,8 @@ class InMemorySettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getBookListTagFilterDropdownCollapsed() async {
     try {
-      final value = _storage['book_list_tag_filter_dropdown_collapsed'] as bool?;
+      final value =
+          _storage['book_list_tag_filter_dropdown_collapsed'] as bool?;
       return right(value ?? false); // Default to false (expanded)
     } catch (e) {
       return left(

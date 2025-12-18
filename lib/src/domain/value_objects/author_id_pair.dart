@@ -1,15 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:id_pair_set/id_pair_set.dart';
 
-enum AuthorIdType {
-  isni('ISNI'),
-  orcid('ORCID'),
-  viaf('VIAF'),
-  local('LOCAL');
-
-  const AuthorIdType(this.displayName);
-  final String displayName;
-}
+import 'author_id_type.dart';
 
 class AuthorIdPair with EquatableMixin implements IdPair {
   @override

@@ -2,8 +2,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-import 'package:id_pair_set/id_pair_set.dart';
-
 import 'package:logging/logging.dart';
 
 /// Use case for adding a new book to the repository.
@@ -16,17 +14,19 @@ class AddBookUsecase {
 
   /// Adds a new book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
-    List<BookIdPair> idPairs = book.idPairs.idPairs;
+    BookIdPairs idPairs = book.idPairs;
     if (idPairs.isEmpty) {
       // Generate a unique local ID
       final localId =
           'local-${DateTime.now().millisecondsSinceEpoch}-${book.title.hashCode}';
-      idPairs.add(BookIdPair(idType: BookIdType.local, idCode: localId));
+      idPairs = idPairs.add(
+        pair: BookIdPair(idType: BookIdType.local, idCode: localId),
+      );
     }
     final cleanedBook = book.copyWith(
       title: cleanBookTitle(book.title),
       originalTitle: book.title,
-      idPairs: IdPairSet(idPairs),
+      idPairs: idPairs,
     );
     logger.info(
       'AddBookUsecase: Entering call with book: ${cleanedBook.title} (idPairs: ${cleanedBook.idPairs})',

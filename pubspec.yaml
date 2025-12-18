@@ -27,3 +27,4 @@ dev_dependencies:
   test: ^1.25.6
   husky: ^0.1.7
   mocktail: ^1.0.4
+  matcher: ^0.12.18

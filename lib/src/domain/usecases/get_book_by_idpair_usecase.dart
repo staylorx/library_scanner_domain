@@ -35,9 +35,7 @@ class GetBookByIdPairUsecase {
     logger.info(
       'GetBookByIdPairpairUsecase: Entering call with bookIdPair: $bookIdPair',
     );
-    final result = await bookRepository.getBookByIdPairPair(
-      bookIdPair: bookIdPair,
-    );
+    final result = await bookRepository.getBookByIdPair(bookIdPair: bookIdPair);
     logger.info('GetBookByIdPairpairUsecase: Success in call');
     return result.fold((failure) => Left(failure), (book) {
       logger.info(

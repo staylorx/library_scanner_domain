@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:id_pair_set/id_pair_set.dart';
+
 import 'package:yaml/yaml.dart';
 import 'package:yaml_writer/yaml_writer.dart';
 import 'package:uuid/uuid.dart';
@@ -20,7 +20,7 @@ Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
       final name =
           '${yamlAuthor['firstName'] as String} ${yamlAuthor['lastName'] as String}';
       authors[name] = Author(
-        idPairs: IdPairSet([
+        idPairs: AuthorIdPairs([
           AuthorIdPair(idType: AuthorIdType.local, idCode: name),
         ]),
         name: name,
@@ -122,7 +122,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
               publishedDate: yamlBook['year'] != null
                   ? DateTime(yamlBook['year'] as int, 1, 1)
                   : null,
-              idPairs: IdPairSet(idPairs),
+              idPairs: BookIdPairs(idPairs),
             ),
           );
           continue;
@@ -147,7 +147,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
               publishedDate: yamlBook['year'] != null
                   ? DateTime(yamlBook['year'] as int, 1, 1)
                   : null,
-              idPairs: IdPairSet(idPairs),
+              idPairs: BookIdPairs(idPairs),
             ),
           );
           continue;
@@ -170,7 +170,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
           publishedDate: yamlBook['year'] != null
               ? DateTime(yamlBook['year'] as int, 1, 1)
               : null,
-          idPairs: IdPairSet(idPairs),
+          idPairs: BookIdPairs(idPairs),
         ),
       );
     } catch (e) {
@@ -362,7 +362,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       // Add missing authors
       for (final authorName in missingAuthorNames) {
         final author = Author(
-          idPairs: IdPairSet([
+          idPairs: AuthorIdPairs([
             AuthorIdPair(idType: AuthorIdType.local, idCode: authorName),
           ]),
           name: authorName,

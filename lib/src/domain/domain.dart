@@ -1,6 +1,5 @@
 // Entities
 export 'entities/author.dart';
-export 'entities/author_id.dart';
 export 'entities/author_sort_settings.dart';
 export 'entities/book.dart';
 export 'entities/book_metadata.dart';
@@ -47,7 +46,12 @@ export 'usecases/update_book_usecase.dart';
 export 'usecases/update_tag_usecase.dart';
 
 // Value Objects
-export 'value_objects/book_id.dart';
+export 'value_objects/book_id_pair.dart';
+export 'value_objects/book_id_pairs.dart';
+export 'value_objects/book_id_type.dart';
+export 'value_objects/author_id_pairs.dart';
+export 'value_objects/author_id_type.dart';
+export 'value_objects/author_id_pair.dart';
 
 // Services
 export 'services/barcode_scanner_service.dart';

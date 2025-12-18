@@ -53,9 +53,7 @@ class BookRepositoryImpl implements IBookRepository {
       }
 
       final authorRecords = authorIds.isNotEmpty
-          ? (await _database.authorsStore
-                    .records(authorIds.cast<String>())
-                    .get(db))
+          ? (await _database.authorsStore.records(authorIds.toList()).get(db))
                 .whereType<RecordSnapshot>()
                 .toList()
           : [];
@@ -97,6 +95,8 @@ class BookRepositoryImpl implements IBookRepository {
               .whereType<AuthorModel>()
               .map((m) => m.toEntity())
               .toList();
+          print('model.authorIds: ${model.authorIds}');
+          print('authors length: ${authors.length}');
           final tags = model.tagIds
               .map((id) => tagMap[id])
               .whereType<TagModel>()
@@ -121,7 +121,7 @@ class BookRepositoryImpl implements IBookRepository {
   }
 
   @override
-  Future<Either<Failure, Book?>> getBookByIdPairPair({
+  Future<Either<Failure, Book?>> getBookByIdPair({
     required BookIdPair bookIdPair,
   }) async {
     logger.info(
@@ -211,7 +211,7 @@ class BookRepositoryImpl implements IBookRepository {
       'BookRepositoryImpl: Entering updateBook with book: ${book.title}',
     );
     final key = book.key;
-    final eitherExisting = await getBookByIdPairPair(
+    final eitherExisting = await getBookByIdPair(
       bookIdPair: book.idPairs.idPairs.first,
     );
     final existing = eitherExisting.getOrElse((failure) => null);
@@ -302,7 +302,7 @@ class BookRepositoryImpl implements IBookRepository {
           } catch (e) {
             return Either.left(DataParsingFailure(e.toString()));
           }
-          final updatedBookIds = List<String>.from(authorModel.bookIds);
+          final updatedBookIds = List<String>.from(authorModel.bookIdPairs);
           if (isAdd) {
             if (!updatedBookIds.contains(key)) {
               updatedBookIds.add(key);
@@ -315,7 +315,7 @@ class BookRepositoryImpl implements IBookRepository {
             idPairs: authorModel.idPairs,
             name: authorModel.name,
             biography: authorModel.biography,
-            bookIds: updatedBookIds,
+            bookIdPairs: updatedBookIds,
           );
           await _database.authorsStore
               .record(authorKey)
@@ -335,7 +335,7 @@ class BookRepositoryImpl implements IBookRepository {
           } catch (e) {
             return Either.left(DataParsingFailure(e.toString()));
           }
-          final updatedBookIds = List<String>.from(tagModel.bookIds);
+          final updatedBookIds = List<String>.from(tagModel.bookIdPairs);
           if (isAdd) {
             if (!updatedBookIds.contains(key)) {
               updatedBookIds.add(key);
@@ -347,7 +347,7 @@ class BookRepositoryImpl implements IBookRepository {
             id: tagModel.id,
             name: tagModel.name,
             description: tagModel.description,
-            bookIds: updatedBookIds,
+            bookIdPairs: updatedBookIds,
           );
           await _database.tagsStore
               .record(tagKey)
@@ -404,5 +404,11 @@ class BookRepositoryImpl implements IBookRepository {
     } catch (e) {
       return Either.left(DatabaseReadFailure(e.toString()));
     }
+  }
+
+  @override
+  Future<Either<Failure, Book?>> getBookById({required BookIdPairs bookId}) {
+    // TODO: implement getBookById
+    throw UnimplementedError();
   }
 }

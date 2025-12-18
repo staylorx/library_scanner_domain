@@ -1,5 +1,5 @@
-import 'package:test/test.dart';
-import 'package:id_pair_set/id_pair_set.dart';
+import 'package:test/test.dart'
+    show test, expect, group, setUp, contains, Timeout;
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 // Extracted filtering logic from BookListScreen for testing
@@ -61,7 +61,7 @@ void main() {
       // Create test books
       testBooks = [
         Book(
-          idPairs: IdPairSet([
+          idPairs: BookIdPairs([
             BookIdPair(idType: BookIdType.local, idCode: '1'),
           ]),
           title: 'Dune',
@@ -69,7 +69,7 @@ void main() {
           tags: [testTags[0], testTags[1]], // Fiction, Science Fiction
         ),
         Book(
-          idPairs: IdPairSet([
+          idPairs: BookIdPairs([
             BookIdPair(idType: BookIdType.local, idCode: '2'),
           ]),
           title: 'The Hobbit',
@@ -77,7 +77,7 @@ void main() {
           tags: [testTags[0]], // Fiction
         ),
         Book(
-          idPairs: IdPairSet([
+          idPairs: BookIdPairs([
             BookIdPair(idType: BookIdType.local, idCode: '3'),
           ]),
           title: 'Sherlock Holmes',
@@ -85,7 +85,7 @@ void main() {
           tags: [testTags[2]], // Mystery
         ),
         Book(
-          idPairs: IdPairSet([
+          idPairs: BookIdPairs([
             BookIdPair(idType: BookIdType.local, idCode: '4'),
           ]),
           title: 'Pride and Prejudice',
@@ -98,19 +98,19 @@ void main() {
     test('No filters should return all books', () {
       final result = filterBooks(testBooks, testTags, [], false, '');
       expect(result.length, 4);
-    });
+    }, timeout: Timeout(Duration(seconds: 30)));
 
     test('Search filter should match title', () {
       final result = filterBooks(testBooks, testTags, [], false, 'dune');
       expect(result.length, 1);
       expect(result.first.title, 'Dune');
-    });
+    }, timeout: Timeout(Duration(seconds: 30)));
 
     test('Search filter should match ID', () {
       final result = filterBooks(testBooks, testTags, [], false, '2');
       expect(result.length, 1);
       expect(result.first.title, 'The Hobbit');
-    });
+    }, timeout: Timeout(Duration(seconds: 30)));
 
     test(
       'Exclusive tag filter (OR) with single tag should return matching books',
@@ -121,6 +121,7 @@ void main() {
         expect(result.map((b) => b.title), contains('The Hobbit'));
         expect(result.map((b) => b.title), contains('Pride and Prejudice'));
       },
+      timeout: Timeout(Duration(seconds: 30)),
     );
 
     test(
@@ -135,6 +136,7 @@ void main() {
         );
         expect(result.length, 4); // All books have Fiction or Mystery
       },
+      timeout: Timeout(Duration(seconds: 30)),
     );
 
     test(
@@ -143,6 +145,7 @@ void main() {
         final result = filterBooks(testBooks, testTags, ['fiction'], true, '');
         expect(result.length, 3); // Same as exclusive for single tag
       },
+      timeout: Timeout(Duration(seconds: 30)),
     );
 
     test(
@@ -161,6 +164,7 @@ void main() {
         ); // Only Dune has both Fiction and Science Fiction
         expect(result.first.title, 'Dune');
       },
+      timeout: Timeout(Duration(seconds: 30)),
     );
 
     test(
@@ -175,19 +179,24 @@ void main() {
         );
         expect(result.length, 0); // No book has both
       },
+      timeout: Timeout(Duration(seconds: 30)),
     );
 
-    test('Combined search and tag filter should work together', () {
-      // Search for "The" and filter by Fiction tag exclusively
-      final result = filterBooks(
-        testBooks,
-        testTags,
-        ['fiction'],
-        false,
-        'the',
-      );
-      expect(result.length, 1);
-      expect(result.first.title, 'The Hobbit');
-    });
+    test(
+      'Combined search and tag filter should work together',
+      () {
+        // Search for "The" and filter by Fiction tag exclusively
+        final result = filterBooks(
+          testBooks,
+          testTags,
+          ['fiction'],
+          false,
+          'the',
+        );
+        expect(result.length, 1);
+        expect(result.first.title, 'The Hobbit');
+      },
+      timeout: Timeout(Duration(seconds: 30)),
+    );
   });
 }

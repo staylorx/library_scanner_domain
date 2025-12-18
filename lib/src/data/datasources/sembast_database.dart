@@ -53,13 +53,15 @@ class SembastDatabase implements AbstractDatabaseService {
     required String collection,
     required String id,
     required Map<String, dynamic> data,
+    dynamic db,
   }) async {
     try {
-      final db = await database;
+      final database = db as DatabaseClient? ?? await this.database;
       final store = _getStore(collection);
-      await store.record(id).put(db, data);
+      await store.record(id).put(database, data);
       return right(null);
     } catch (e) {
+      print('Save failed: $e');
       return left(DatabaseFailure('Failed to save: $e'));
     }
   }
@@ -84,12 +86,13 @@ class SembastDatabase implements AbstractDatabaseService {
     required String collection,
     int? limit,
     int? offset,
+    dynamic db,
   }) async {
     try {
-      final db = await database;
+      final database = db as DatabaseClient? ?? await this.database;
       final store = _getStore(collection);
       final finder = Finder(limit: limit, offset: offset);
-      final records = await store.find(db, finder: finder);
+      final records = await store.find(database, finder: finder);
       return right(records.map((r) => r.value).toList());
     } catch (e) {
       return left(DatabaseFailure('Failed to get all: $e'));
@@ -102,9 +105,10 @@ class SembastDatabase implements AbstractDatabaseService {
     required Map<String, dynamic> filter,
     int? limit,
     int? offset,
+    dynamic db,
   }) async {
     try {
-      final db = await database;
+      final dbToUse = db as DatabaseClient? ?? await this.database;
       final store = _getStore(collection);
       Filter? queryFilter;
       if (filter.isNotEmpty) {
@@ -113,9 +117,16 @@ class SembastDatabase implements AbstractDatabaseService {
           final key = entry.key;
           final value = entry.value;
           if (value is Map && value.containsKey('\$in')) {
-            filters.add(
-              Filter.inList(key, (value['\$in'] as List).cast<Object>()),
-            );
+            final list = (value['\$in'] as List).cast<Object>();
+            if (list.isEmpty) {
+              // No filter
+            } else if (list.length == 1) {
+              filters.add(Filter.equals(key, list.first));
+            } else {
+              filters.add(
+                Filter.or(list.map((v) => Filter.equals(key, v)).toList()),
+              );
+            }
           } else {
             filters.add(Filter.equals(key, value));
           }
@@ -123,7 +134,10 @@ class SembastDatabase implements AbstractDatabaseService {
         queryFilter = Filter.and(filters);
       }
       final finder = Finder(filter: queryFilter, limit: limit, offset: offset);
-      final records = await store.find(db, finder: finder);
+      final records = await store.find(dbToUse, finder: finder);
+      print(
+        'Query collection: $collection, filter: $filter, found ${records.length} records',
+      );
       return right(records.map((r) => r.value).toList());
     } catch (e) {
       return left(DatabaseFailure('Failed to query: $e'));
@@ -134,11 +148,12 @@ class SembastDatabase implements AbstractDatabaseService {
   Future<Either<Failure, void>> delete({
     required String collection,
     required String id,
+    dynamic db,
   }) async {
     try {
-      final db = await database;
+      final database = db as DatabaseClient? ?? await this.database;
       final store = _getStore(collection);
-      await store.record(id).delete(db);
+      await store.record(id).delete(database);
       return right(null);
     } catch (e) {
       return left(DatabaseFailure('Failed to delete: $e'));
@@ -172,12 +187,12 @@ class SembastDatabase implements AbstractDatabaseService {
 
   @override
   Future<Either<Failure, void>> transaction({
-    required Function() operation,
+    required Future<void> Function(dynamic txn) operation,
   }) async {
     try {
       final db = await database;
       await db.transaction((txn) async {
-        await operation();
+        await operation(txn);
       });
       return right(null);
     } catch (e) {

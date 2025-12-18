@@ -2,20 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:id_pair_set/id_pair_set.dart';
 
 import '../../utils/isbn_utils.dart';
-
-enum BookIdType {
-  isbn('ISBN'),
-  isbn13('ISBN-13'),
-  asin('ASIN'),
-  doi('DOI'),
-  ean('EAN'),
-  local('LOCAL');
-
-  const BookIdType(this.displayName);
-  final String displayName;
-
-  String get name => toString().split('.').last;
-}
+import 'book_id_type.dart';
 
 // idPairs are used to represent a combination of an ID type and a business code ID code
 // this is not the same thing as our internal database ID of a book

@@ -15,7 +15,7 @@ class TagModel {
   final String color;
 
   /// The list of book identifiers associated with the tag.
-  final List<String> bookIds;
+  final List<String> bookIdPairs;
 
   /// Creates a [TagModel] instance.
   const TagModel({
@@ -25,7 +25,7 @@ class TagModel {
     this.color = '#FF0000',
 
     /// Default red color
-    required this.bookIds,
+    required this.bookIdPairs,
   });
 
   /// Creates a [TagModel] from a map representation.
@@ -35,7 +35,7 @@ class TagModel {
       name: map['name'] as String,
       description: map['description'] as String?,
       color: map['color'] as String? ?? '#FF0000',
-      bookIds: (map['bookIds'] as List<dynamic>?)?.cast<String>() ?? [],
+      bookIdPairs: (map['bookIdPairs'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -46,7 +46,7 @@ class TagModel {
       'name': name,
       'description': description,
       'color': color,
-      'bookIds': bookIds,
+      'bookIdPairs': bookIdPairs,
     };
   }
 
@@ -62,7 +62,7 @@ class TagModel {
       name: tag.name,
       description: tag.description,
       color: tag.color,
-      bookIds: [],
+      bookIdPairs: [],
 
       /// New tags start with no books
     );

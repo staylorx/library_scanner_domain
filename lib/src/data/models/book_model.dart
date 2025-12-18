@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:id_pair_set/id_pair_set.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:uuid/uuid.dart';
@@ -135,7 +134,7 @@ class BookModel {
   /// Converts this [BookModel] to a [Book] domain entity.
   Book toEntity({required List<Author> authors, required List<Tag> tags}) {
     return Book(
-      idPairs: IdPairSet(idPairs),
+      idPairs: BookIdPairs(idPairs),
       title: title,
       originalTitle: originalTitle,
       description: description,

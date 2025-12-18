@@ -1,12 +1,15 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
+// TODO: this isn't very abstract for a generic database. Just sembast?
+// Consider renaming or making more generic.
 abstract class AbstractDatabaseService {
   /// Saves data to the specified collection with the given id.
   Future<Either<Failure, void>> save({
     required String collection,
     required String id,
     required Map<String, dynamic> data,
+    dynamic db,
   });
 
   /// Retrieves data from the specified collection by id.
@@ -20,6 +23,7 @@ abstract class AbstractDatabaseService {
     required String collection,
     int? limit,
     int? offset,
+    dynamic db,
   });
 
   /// Queries data from the specified collection with filters.
@@ -28,12 +32,14 @@ abstract class AbstractDatabaseService {
     required Map<String, dynamic> filter,
     int? limit,
     int? offset,
+    dynamic db,
   });
 
   /// Deletes data from the specified collection by id.
   Future<Either<Failure, void>> delete({
     required String collection,
     required String id,
+    dynamic db,
   });
 
   /// Clears all data from the specified collection.
@@ -43,7 +49,9 @@ abstract class AbstractDatabaseService {
   Future<Either<Failure, void>> clearAll();
 
   /// Executes a transaction with the given operation.
-  Future<Either<Failure, void>> transaction({required Function() operation});
+  Future<Either<Failure, void>> transaction({
+    required Future<void> Function(dynamic txn) operation,
+  });
 
   /// Closes the database connection.
   Future<void> close();
