@@ -23,6 +23,9 @@ class AuthorIdPairs extends IdPairSet<AuthorIdPair> with EquatableMixin {
 
   bool get isNotEmpty => idPairs.isNotEmpty;
 
+  /// The primary ID code, which is the ID code of the first pair.
+  String get primaryIdCode => idPairs.first.idCode;
+
   @override
   List<Object?> get props => [idPairs];
 }

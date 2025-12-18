@@ -21,8 +21,7 @@ class Author with EquatableMixin {
   AuthorIdPairs get idPairs => _idPairs;
 
   /// The key for the author, which is the idCode.
-  /// TODO: i don't like idPairs.idPairs... etc. I don't like the duplication. Factory, something else?
-  String get key => idPairs.idPairs.first.idCode;
+  String get key => idPairs.primaryIdCode;
 
   /// Creates a copy of this [Author] with optional field updates.
   Author copyWith({AuthorIdPairs? idPairs, String? name, String? biography}) {
