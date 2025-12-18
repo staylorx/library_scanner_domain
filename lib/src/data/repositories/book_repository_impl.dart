@@ -195,13 +195,17 @@ class BookRepositoryImpl implements AbstractBookRepository {
 
       final key = book.key;
       final model = BookModel.fromEntity(book: book);
-      await _database.booksStore.record(key).put(db, model.toMap());
-      final result = await _updateRelationshipsForBook(
-        key: key,
-        book: book,
-        isAdd: true,
-      );
-      if (result.isLeft()) return result;
+      await db.transaction((txn) async {
+        await _database.booksStore.record(key).put(txn, model.toMap());
+        final result = await _updateRelationshipsForBook(
+          key: key,
+          book: book,
+          isAdd: true,
+          db: txn,
+        );
+        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        return unit;
+      });
       logger.info('BookRepositoryImpl: Success added book ${book.title}');
       logger.info('BookRepositoryImpl: Exiting addBook');
       return Either.right(unit);
@@ -227,22 +231,27 @@ class BookRepositoryImpl implements AbstractBookRepository {
       } catch (e) {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
-      if (existing != null) {
+      await db.transaction((txn) async {
+        if (existing != null) {
+          final result = await _updateRelationshipsForBook(
+            key: existing.key,
+            book: existing,
+            isAdd: false,
+            db: txn,
+          );
+          if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        }
+        final model = BookModel.fromEntity(book: book);
+        await _database.booksStore.record(key).put(txn, model.toMap());
         final result = await _updateRelationshipsForBook(
-          key: existing.key,
-          book: existing,
-          isAdd: false,
+          key: key,
+          book: book,
+          isAdd: true,
+          db: txn,
         );
-        if (result.isLeft()) return result;
-      }
-      final model = BookModel.fromEntity(book: book);
-      await _database.booksStore.record(key).put(db, model.toMap());
-      final result = await _updateRelationshipsForBook(
-        key: key,
-        book: book,
-        isAdd: true,
-      );
-      if (result.isLeft()) return result;
+        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        return unit;
+      });
       logger.info('BookRepositoryImpl: Success updated book ${book.title}');
       logger.info('TagRepositoryImpl: Exiting updateBook');
       return Either.right(unit);
@@ -263,14 +272,18 @@ class BookRepositoryImpl implements AbstractBookRepository {
       } catch (e) {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
-      final key = book.key;
-      await _database.booksStore.record(key).delete(db);
-      final result = await _updateRelationshipsForBook(
-        key: key,
-        book: book,
-        isAdd: false,
-      );
-      if (result.isLeft()) return result;
+      await db.transaction((txn) async {
+        final key = book.key;
+        await _database.booksStore.record(key).delete(txn);
+        final result = await _updateRelationshipsForBook(
+          key: key,
+          book: book,
+          isAdd: false,
+          db: txn,
+        );
+        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        return unit;
+      });
       logger.info('BookRepositoryImpl: Success deleted book ${book.title}');
       logger.info('BookRepositoryImpl: Exiting deleteBook');
       return Either.right(unit);
@@ -283,17 +296,12 @@ class BookRepositoryImpl implements AbstractBookRepository {
     required String key,
     required Book book,
     required bool isAdd,
+    required Transaction db,
   }) async {
     logger.info(
       'BookRepositoryImpl: Entering _updateRelationshipsForBook with book: ${book.title}, isAdd: $isAdd',
     );
     try {
-      Database db;
-      try {
-        db = await _database.database;
-      } catch (e) {
-        return Either.left(DatabaseConnectionFailure(e.toString()));
-      }
       for (final authorName in book.authors.map((a) => a.name)) {
         final authorRecord = await _database.authorsStore.findFirst(
           db,

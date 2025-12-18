@@ -289,6 +289,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           final updateResult = await _updateRelationshipsForAuthor(
             author.name,
             isAdd: false,
+            txn: txn,
           );
           if (updateResult.isLeft()) {
             throw Exception(

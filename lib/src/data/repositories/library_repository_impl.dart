@@ -576,11 +576,14 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
   Future<Either<Failure, Unit>> clearLibrary() async {
     logger.info('Entering clearLibrary');
     try {
-      final result = await _database.clearAll();
-      return result.fold((failure) => Left(failure), (_) {
-        logger.info('Successfully cleared library');
-        return Right(unit);
+      final db = await _database.database;
+      await db.transaction((txn) async {
+        await _database.authorsStore.delete(txn);
+        await _database.booksStore.delete(txn);
+        await _database.tagsStore.delete(txn);
       });
+      logger.info('Successfully cleared library');
+      return Right(unit);
     } catch (e) {
       logger.severe('Failed to clear library: $e');
       return Left(ServiceFailure('Failed to clear library: $e'));
