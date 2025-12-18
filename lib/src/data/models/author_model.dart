@@ -7,12 +7,16 @@ import 'package:uuid/uuid.dart';
 class AuthorModel {
   /// The unique identifier for the author, if assigned.
   final String? id;
+
   /// The list of identifier pairs for the author.
   final List<AuthorIdPair> idPairs;
+
   /// The name of the author.
   final String name;
+
   /// The biography of the author.
   final String? biography;
+
   /// The list of book identifiers associated with the author.
   final List<String> bookIds;
 

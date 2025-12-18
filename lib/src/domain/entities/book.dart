@@ -9,18 +9,28 @@ import 'tag.dart';
 class Book with EquatableMixin {
   /// The set of identifier pairs for the book, representing various identification codes like ISBNs.
   final IdPairSet<BookIdPair> _idPairs;
+
   /// The title of the book.
   final String title;
+
+  /// The original title of the book before cleaning.
+  final String? originalTitle;
+
   /// The description of the book.
   final String? description;
+
   /// The list of authors of the book.
   final List<Author> authors;
+
   /// The list of tags associated with the book.
   final List<Tag> tags;
+
   /// The published date of the book.
   final DateTime? publishedDate;
+
   /// The cover image data of the book.
   final Uint8List? coverImage;
+
   /// Additional notes for the book.
   final String? notes;
 
@@ -28,6 +38,7 @@ class Book with EquatableMixin {
   Book({
     required IdPairSet<BookIdPair> idPairs,
     required this.title,
+    this.originalTitle,
     this.description,
     required this.authors,
     required this.tags,
@@ -49,6 +60,7 @@ class Book with EquatableMixin {
   Book copyWith({
     IdPairSet<BookIdPair>? idPairs,
     String? title,
+    String? originalTitle,
     String? description,
     List<Author>? authors,
     List<Tag>? tags,
@@ -59,6 +71,7 @@ class Book with EquatableMixin {
     return Book(
       idPairs: idPairs ?? this.idPairs,
       title: title ?? this.title,
+      originalTitle: originalTitle ?? this.originalTitle,
       description: description ?? this.description,
       authors: authors ?? this.authors,
       tags: tags ?? this.tags,
@@ -69,5 +82,5 @@ class Book with EquatableMixin {
   }
 
   @override
-  List<Object?> get props => [idPairs, title, description];
+  List<Object?> get props => [idPairs, title, originalTitle, description];
 }

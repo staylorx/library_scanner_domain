@@ -1,14 +1,15 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for retrieving all authors.
 class GetAuthorsUsecase {
   final IAuthorRepository authorRepository;
 
-  GetAuthorsUsecase(this.authorRepository);
+  GetAuthorsUsecase({required this.authorRepository});
 
-  final logger = DevLogger('GetAuthorsUsecase');
+  final logger = Logger('GetAuthorsUsecase');
 
   /// Retrieves all authors.
   Future<Either<Failure, List<Author>>> call() async {

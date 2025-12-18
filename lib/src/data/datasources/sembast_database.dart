@@ -1,8 +1,9 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:sembast/sembast_io.dart';
+import 'package:sembast/sembast_memory.dart';
 
-class SembastDatabase implements DatabaseService {
+class SembastDatabase implements AbstractDatabaseService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
   static const String _tagsStoreName = 'tags';
@@ -40,16 +41,19 @@ class SembastDatabase implements DatabaseService {
   }
 
   Future<Database> _openDatabase() async {
-    final dbPath = testDbPath ?? 'test.db';
-    return await databaseFactoryIo.openDatabase(dbPath);
+    if (testDbPath == null) {
+      return await databaseFactoryMemory.openDatabase('');
+    } else {
+      return await databaseFactoryIo.openDatabase(testDbPath!);
+    }
   }
 
   @override
-  Future<Either<Failure, void>> save(
-    String collection,
-    String id,
-    Map<String, dynamic> data,
-  ) async {
+  Future<Either<Failure, void>> save({
+    required String collection,
+    required String id,
+    required Map<String, dynamic> data,
+  }) async {
     try {
       final db = await database;
       final store = _getStore(collection);
@@ -61,10 +65,10 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>?>> get(
-    String collection,
-    String id,
-  ) async {
+  Future<Either<Failure, Map<String, dynamic>?>> get({
+    required String collection,
+    required String id,
+  }) async {
     try {
       final db = await database;
       final store = _getStore(collection);
@@ -76,8 +80,8 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> getAll(
-    String collection, {
+  Future<Either<Failure, List<Map<String, dynamic>>>> getAll({
+    required String collection,
     int? limit,
     int? offset,
   }) async {
@@ -93,9 +97,9 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> query(
-    String collection,
-    Map<String, dynamic> filter, {
+  Future<Either<Failure, List<Map<String, dynamic>>>> query({
+    required String collection,
+    required Map<String, dynamic> filter,
     int? limit,
     int? offset,
   }) async {
@@ -127,7 +131,10 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, void>> delete(String collection, String id) async {
+  Future<Either<Failure, void>> delete({
+    required String collection,
+    required String id,
+  }) async {
     try {
       final db = await database;
       final store = _getStore(collection);
@@ -139,7 +146,7 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, void>> clear(String collection) async {
+  Future<Either<Failure, void>> clear({required String collection}) async {
     try {
       final db = await database;
       final store = _getStore(collection);
@@ -164,7 +171,9 @@ class SembastDatabase implements DatabaseService {
   }
 
   @override
-  Future<Either<Failure, void>> transaction(Function() operation) async {
+  Future<Either<Failure, void>> transaction({
+    required Function() operation,
+  }) async {
     try {
       final db = await database;
       await db.transaction((txn) async {

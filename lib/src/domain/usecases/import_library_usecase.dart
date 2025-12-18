@@ -1,14 +1,15 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase {
   final ILibraryRepository libraryRepository;
 
-  ImportLibraryUsecase(this.libraryRepository);
+  ImportLibraryUsecase({required this.libraryRepository});
 
-  final logger = DevLogger('ImportLibraryUsecase');
+  final logger = Logger('ImportLibraryUsecase');
 
   /// Imports a library from the specified file path.
   Future<Either<Failure, ImportResult>> call({
@@ -20,7 +21,7 @@ class ImportLibraryUsecase {
     );
     final result = await libraryRepository.importLibrary(filePath);
     result.fold(
-      (failure) => logger.error(
+      (failure) => logger.severe(
         'ImportLibraryUsecase: Failed to import library: ${failure.message}',
       ),
       (library) =>

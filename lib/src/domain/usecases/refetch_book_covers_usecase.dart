@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for refetching book covers from the API.
 ///
@@ -14,13 +15,13 @@ class RefetchBookCoversUsecase {
   final FetchBookMetadataByIsbnUsecase fetchBookMetadataByIsbnUsecase;
   final AbstractImageService imageService;
 
-  RefetchBookCoversUsecase(
-    this.bookRepository,
-    this.fetchBookMetadataByIsbnUsecase,
-    this.imageService,
-  );
+  RefetchBookCoversUsecase({
+    required this.bookRepository,
+    required this.fetchBookMetadataByIsbnUsecase,
+    required this.imageService,
+  });
 
-  final logger = DevLogger('RefetchBookCoversUsecase');
+  final logger = Logger('RefetchBookCoversUsecase');
 
   /// Refetches book covers based on the overwrite flag.
   ///
@@ -59,14 +60,16 @@ class RefetchBookCoversUsecase {
                   if (bookModel != null && bookModel.coverImageUrl != null) {
                     // Download image bytes to generate thumbnail
                     final bytesEither = await imageService
-                        .downloadImageBytesFromUrl(bookModel.coverImageUrl!);
+                        .downloadImageBytesFromUrl(
+                          url: bookModel.coverImageUrl!,
+                        );
                     Uint8List? coverImage;
                     if (bytesEither.isRight()) {
                       final bytes = bytesEither.getRight().getOrElse(
                         () => Uint8List(0),
                       );
                       final thumbnailEither = await imageService
-                          .generateThumbnail(bytes);
+                          .generateThumbnail(imageBytes: bytes);
                       if (thumbnailEither.isRight()) {
                         coverImage = thumbnailEither.getRight().getOrElse(
                           () => Uint8List(0),

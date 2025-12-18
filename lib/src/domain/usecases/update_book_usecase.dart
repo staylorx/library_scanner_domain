@@ -1,13 +1,14 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for updating an existing book in the repository.
 class UpdateBookUsecase {
   final IBookRepository bookRepository;
 
-  UpdateBookUsecase(this.bookRepository);
+  UpdateBookUsecase({required this.bookRepository});
 
-  final logger = DevLogger('UpdateBookUsecase');
+  final logger = Logger('UpdateBookUsecase');
 
   /// Updates an existing book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {

@@ -1,13 +1,14 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for adding a new author to the repository.
 class AddAuthorUsecase {
   final IAuthorRepository authorRepository;
 
-  AddAuthorUsecase(this.authorRepository);
+  AddAuthorUsecase({required this.authorRepository});
 
-  final logger = DevLogger('AddAuthorUsecase');
+  final logger = Logger('AddAuthorUsecase');
 
   /// Adds a new author and returns the updated list of authors.
   Future<Either<Failure, List<Author>>> call({required Author author}) async {

@@ -6,8 +6,10 @@ import 'author_id.dart';
 class Author with EquatableMixin {
   /// The set of identifier pairs for the author.
   final IdPairSet<AuthorIdPair> _idPairs;
+
   /// The name of the author.
   final String name;
+
   /// The biography of the author.
   final String? biography;
 

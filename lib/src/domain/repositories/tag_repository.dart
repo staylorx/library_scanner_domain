@@ -9,6 +9,5 @@ abstract class ITagRepository {
   });
   Future<Either<Failure, Unit>> addTag({required Tag tag});
   Future<Either<Failure, Unit>> updateTag({required Tag tag});
-  // TODO: verify that we're removing the tag from books when deleting
   Future<Either<Failure, Unit>> deleteTag({required Tag tag});
 }

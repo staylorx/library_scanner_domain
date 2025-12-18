@@ -12,5 +12,5 @@ export 'repositories/author_repository_impl.dart';
 export 'repositories/book_metadata_repository_impl.dart';
 export 'repositories/book_repository_impl.dart';
 export 'repositories/library_repository_impl.dart';
-export 'repositories/shared_preferences_settings_service_impl.dart';
+export 'repositories/in_memory_settings_service_impl.dart';
 export 'repositories/tag_repository_impl.dart';

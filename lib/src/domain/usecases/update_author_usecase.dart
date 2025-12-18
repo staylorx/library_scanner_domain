@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for updating an existing author in the repository.
 ///
@@ -13,9 +14,9 @@ import 'package:fpdart/fpdart.dart';
 class UpdateAuthorUsecase {
   final IAuthorRepository authorRepository;
 
-  UpdateAuthorUsecase(this.authorRepository);
+  UpdateAuthorUsecase({required this.authorRepository});
 
-  final logger = DevLogger('UpdateAuthorUsecase');
+  final logger = Logger('UpdateAuthorUsecase');
 
   /// Updates an existing author in the repository and returns the updated list of authors.
   ///

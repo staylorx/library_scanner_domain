@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving multiple tags by their IDs.
 ///
@@ -12,9 +13,9 @@ import 'package:fpdart/fpdart.dart';
 class GetTagsByNamesUsecase {
   final ITagRepository tagRepository;
 
-  GetTagsByNamesUsecase(this.tagRepository);
+  GetTagsByNamesUsecase({required this.tagRepository});
 
-  final logger = DevLogger('GetTagsByNamesUsecase');
+  final logger = Logger('GetTagsByNamesUsecase');
 
   /// Retrieves multiple tags by their unique IDs.
   ///

@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:sembast/sembast.dart';
+import 'package:logging/logging.dart';
 
 class BookRepositoryImpl implements IBookRepository {
   final SembastDatabase _database;
@@ -13,7 +14,7 @@ class BookRepositoryImpl implements IBookRepository {
   }) : _database = database,
        _isBookDuplicateUsecase = isBookDuplicateUsecase;
 
-  final logger = DevLogger('BookRepositoryImpl');
+  final logger = Logger('BookRepositoryImpl');
 
   @override
   Future<Either<Failure, List<Book>>> getBooks({
@@ -42,7 +43,7 @@ class BookRepositoryImpl implements IBookRepository {
         try {
           model = BookModel.fromMap(map: record.value);
         } catch (e) {
-          logger.error(
+          logger.severe(
             'BookRepositoryImpl: Failed to parse book record ${record.key}: $e',
           );
           return Either.left(DataParsingFailure(e.toString()));
@@ -190,7 +191,11 @@ class BookRepositoryImpl implements IBookRepository {
       final key = book.key;
       final model = BookModel.fromEntity(book: book);
       await _database.booksStore.record(key).put(db, model.toMap());
-      final result = await _updateRelationshipsForBook(key, book, isAdd: true);
+      final result = await _updateRelationshipsForBook(
+        key: key,
+        book: book,
+        isAdd: true,
+      );
       if (result.isLeft()) return result;
       logger.info('BookRepositoryImpl: Success added book ${book.title}');
       logger.info('BookRepositoryImpl: Exiting addBook');
@@ -219,15 +224,19 @@ class BookRepositoryImpl implements IBookRepository {
       }
       if (existing != null) {
         final result = await _updateRelationshipsForBook(
-          existing.key,
-          existing,
+          key: existing.key,
+          book: existing,
           isAdd: false,
         );
         if (result.isLeft()) return result;
       }
       final model = BookModel.fromEntity(book: book);
       await _database.booksStore.record(key).put(db, model.toMap());
-      final result = await _updateRelationshipsForBook(key, book, isAdd: true);
+      final result = await _updateRelationshipsForBook(
+        key: key,
+        book: book,
+        isAdd: true,
+      );
       if (result.isLeft()) return result;
       logger.info('BookRepositoryImpl: Success updated book ${book.title}');
       logger.info('TagRepositoryImpl: Exiting updateBook');
@@ -251,7 +260,11 @@ class BookRepositoryImpl implements IBookRepository {
       }
       final key = book.key;
       await _database.booksStore.record(key).delete(db);
-      final result = await _updateRelationshipsForBook(key, book, isAdd: false);
+      final result = await _updateRelationshipsForBook(
+        key: key,
+        book: book,
+        isAdd: false,
+      );
       if (result.isLeft()) return result;
       logger.info('BookRepositoryImpl: Success deleted book ${book.title}');
       logger.info('BookRepositoryImpl: Exiting deleteBook');
@@ -261,9 +274,9 @@ class BookRepositoryImpl implements IBookRepository {
     }
   }
 
-  Future<Either<Failure, Unit>> _updateRelationshipsForBook(
-    String key,
-    Book book, {
+  Future<Either<Failure, Unit>> _updateRelationshipsForBook({
+    required String key,
+    required Book book,
     required bool isAdd,
   }) async {
     logger.info(

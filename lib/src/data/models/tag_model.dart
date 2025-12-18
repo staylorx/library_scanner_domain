@@ -4,12 +4,16 @@ import '../../domain/entities/tag.dart';
 class TagModel {
   /// The unique identifier for the tag, if assigned.
   final String? id;
+
   /// The name of the tag.
   final String name;
+
   /// The description of the tag.
   final String? description;
+
   /// The color associated with the tag.
   final String color;
+
   /// The list of book identifiers associated with the tag.
   final List<String> bookIds;
 
@@ -18,7 +22,9 @@ class TagModel {
     this.id,
     required this.name,
     this.description,
-    this.color = '#FF0000', /// Default red color
+    this.color = '#FF0000',
+
+    /// Default red color
     required this.bookIds,
   });
 
@@ -56,7 +62,9 @@ class TagModel {
       name: tag.name,
       description: tag.description,
       color: tag.color,
-      bookIds: [], /// New tags start with no books
+      bookIds: [],
+
+      /// New tags start with no books
     );
   }
 }

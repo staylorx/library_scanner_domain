@@ -2,13 +2,14 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 import 'package:id_pair_set/id_pair_set.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for checking if two books are duplicates.
 
 class IsBookDuplicateUsecase {
   IsBookDuplicateUsecase();
 
-  final logger = DevLogger('IsBookDuplicateUsecase');
+  final logger = Logger('IsBookDuplicateUsecase');
 
   /// Checks if two books are duplicates based on title, authors, and non-local id pairs.
   Either<Failure, bool> call({required Book bookA, required Book bookB}) {

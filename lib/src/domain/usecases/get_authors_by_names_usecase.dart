@@ -1,13 +1,14 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for retrieving multiple authors by their names.
 class GetAuthorsByNamesUsecase {
   final IAuthorRepository authorRepository;
 
-  GetAuthorsByNamesUsecase(this.authorRepository);
+  GetAuthorsByNamesUsecase({required this.authorRepository});
 
-  final logger = DevLogger('GetAuthorsByNamesUsecase');
+  final logger = Logger('GetAuthorsByNamesUsecase');
 
   /// Retrieves multiple authors by their names.
   Future<Either<Failure, List<Author>>> call({

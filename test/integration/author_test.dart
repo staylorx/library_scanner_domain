@@ -1,40 +1,68 @@
-import 'dart:io';
+// ignore_for_file: avoid_print
 
 import 'package:test/test.dart';
-import 'package:path/path.dart';
+import 'package:logging/logging.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:id_pair_set/id_pair_set.dart';
 
 void main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   group('Author Integration Tests', () {
-    late Directory tempDir;
     late SembastDatabase database;
     late AuthorRepositoryImpl authorRepository;
+    late BookRepositoryImpl bookRepository;
     late GetAuthorsUsecase getAuthorsUsecase;
     late GetAuthorByNameUsecase getAuthorByNameUsecase;
     late AddAuthorUsecase addAuthorUsecase;
     late UpdateAuthorUsecase updateAuthorUsecase;
     late DeleteAuthorUsecase deleteAuthorUsecase;
+    late GetBooksUsecase getBooksUsecase;
+    late AddBookUsecase addBookUsecase;
+    late AddTagUsecase addTagUsecase;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('test_db');
-      final dbPath = join(tempDir.path, 'book_inventory.db');
-      database = SembastDatabase(testDbPath: dbPath);
+      final logger = Logger('AuthorTest');
+      logger.info('Starting setUp');
+      database = SembastDatabase(testDbPath: null);
+      logger.info('Database instance created');
       (await database.clearAll()).fold((l) => throw l, (r) => null);
+      logger.info('Database cleared');
       authorRepository = AuthorRepositoryImpl(databaseService: database);
+      bookRepository = BookRepositoryImpl(
+        database: database,
+        isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+      );
 
-      getAuthorsUsecase = GetAuthorsUsecase(authorRepository);
-      getAuthorByNameUsecase = GetAuthorByNameUsecase(authorRepository);
-      addAuthorUsecase = AddAuthorUsecase(authorRepository);
-      updateAuthorUsecase = UpdateAuthorUsecase(authorRepository);
-      deleteAuthorUsecase = DeleteAuthorUsecase(authorRepository);
+      getAuthorsUsecase = GetAuthorsUsecase(authorRepository: authorRepository);
+      getAuthorByNameUsecase = GetAuthorByNameUsecase(
+        authorRepository: authorRepository,
+      );
+      addAuthorUsecase = AddAuthorUsecase(authorRepository: authorRepository);
+      updateAuthorUsecase = UpdateAuthorUsecase(
+        authorRepository: authorRepository,
+      );
+      deleteAuthorUsecase = DeleteAuthorUsecase(
+        authorRepository: authorRepository,
+      );
+      getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
+      addBookUsecase = AddBookUsecase(bookRepository: bookRepository);
+      addTagUsecase = AddTagUsecase(
+        tagRepository: TagRepositoryImpl(databaseService: database),
+      );
     });
 
     tearDown(() async {
+      final logger = Logger('AuthorTest');
+      logger.info('Starting tearDown');
       // Close database
+      logger.info('Closing database');
       await database.close();
-      tempDir.deleteSync(recursive: true);
+      logger.info('tearDown completed');
     });
 
     test('GetAuthorsUsecase should return authors', () async {
@@ -138,6 +166,49 @@ void main() {
         (value) => value,
       );
       expect(afterAuthors.isEmpty, true);
+    });
+
+    test('DeleteAuthorUsecase should remove author from books', () async {
+      final authorToDelete = Author(
+        idPairs: IdPairSet([
+          AuthorIdPair(idType: AuthorIdType.local, idCode: 'Author to Delete from Books'),
+        ]),
+        name: 'Author to Delete from Books',
+      );
+      await addAuthorUsecase.call(author: authorToDelete);
+
+      final tag = Tag(name: 'Test Tag');
+      await addTagUsecase.call(tag: tag);
+
+      final book = Book(
+        title: 'Test Book',
+        authors: [authorToDelete],
+        tags: [tag],
+        publishedDate: DateTime(2023, 1, 1),
+        idPairs: IdPairSet([
+          BookIdPair(idType: BookIdType.local, idCode: "delete_test"),
+        ]),
+      );
+      await addBookUsecase.call(book: book);
+
+      // Verify book has the author
+      final booksBefore = await getBooksUsecase();
+      expect(booksBefore.isRight(), true);
+      final booksList = booksBefore.getRight().fold(() => [], (value) => value);
+      expect(booksList.length, 1);
+      expect(booksList.first.authors.length, 1);
+      expect(booksList.first.authors.first.name, authorToDelete.name);
+
+      // Delete the author
+      final deleteResult = await deleteAuthorUsecase.call(name: authorToDelete.name);
+      expect(deleteResult.isRight(), true);
+
+      // Verify author removed from book
+      final booksAfter = await getBooksUsecase();
+      expect(booksAfter.isRight(), true);
+      final booksAfterList = booksAfter.getRight().fold(() => [], (value) => value);
+      expect(booksAfterList.length, 1);
+      expect(booksAfterList.first.authors.isEmpty, true);
     });
   });
 }

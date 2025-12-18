@@ -6,14 +6,13 @@ import 'package:yaml/yaml.dart';
 import 'package:yaml_writer/yaml_writer.dart';
 import 'package:uuid/uuid.dart';
 import 'package:sembast/sembast.dart';
+import 'package:logging/logging.dart';
 
-// TODO: these aren't isolates anymore. Leave that to the presentation layer if needed?
-
-// Top-level functions for parsing in background isolates
+// Top-level functions for parsing
 Future<dynamic> parseYamlData(String yamlString) async => loadYaml(yamlString);
 
-// Parse authors in isolate
-Future<Map<String, Author>> parseAuthorsIsolate(dynamic yamlAuthors) async {
+// Parse authors
+Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
   final list = yamlAuthors as YamlList;
   final authors = <String, Author>{};
   for (final yamlAuthor in list) {
@@ -34,8 +33,8 @@ Future<Map<String, Author>> parseAuthorsIsolate(dynamic yamlAuthors) async {
   return authors;
 }
 
-// Parse tags in isolate
-Future<List<Tag>> parseTagsIsolate(dynamic yamlTags) async {
+// Parse tags
+Future<List<Tag>> parseTags(dynamic yamlTags) async {
   final list = yamlTags as YamlList;
   final tagMap = <String, Tag>{};
   for (final yamlTag in list) {
@@ -70,8 +69,8 @@ class BookParseResult {
   BookParseResult(this.books, this.errors, this.missingAuthors);
 }
 
-// Parse books in isolate
-Future<BookParseResult> parseBooksIsolate(BookParseParams params) async {
+// Parse books
+Future<BookParseResult> parseBooks(BookParseParams params) async {
   final list = params.yamlBooks as YamlList;
   final books = <Book>[];
   final errors = <String>[];
@@ -113,9 +112,11 @@ Future<BookParseResult> parseBooksIsolate(BookParseParams params) async {
           idPairs.add(
             BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
           );
+          final originalTitle = yamlBook['title'] as String;
           books.add(
             Book(
-              title: yamlBook['title'] as String,
+              title: cleanBookTitle(originalTitle),
+              originalTitle: originalTitle,
               authors: bookAuthors,
               tags: bookTags,
               publishedDate: yamlBook['year'] != null
@@ -136,9 +137,11 @@ Future<BookParseResult> parseBooksIsolate(BookParseParams params) async {
           idPairs.add(
             BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
           );
+          final originalTitle = yamlBook['title'] as String;
           books.add(
             Book(
-              title: yamlBook['title'] as String,
+              title: cleanBookTitle(originalTitle),
+              originalTitle: originalTitle,
               authors: bookAuthors,
               tags: bookTags,
               publishedDate: yamlBook['year'] != null
@@ -157,9 +160,11 @@ Future<BookParseResult> parseBooksIsolate(BookParseParams params) async {
           BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
         );
       }
+      final originalTitle = yamlBook['title'] as String;
       books.add(
         Book(
-          title: yamlBook['title'] as String,
+          title: cleanBookTitle(originalTitle),
+          originalTitle: originalTitle,
           authors: bookAuthors,
           tags: bookTags,
           publishedDate: yamlBook['year'] != null
@@ -193,8 +198,8 @@ class BookProcessingParams {
   BookProcessingParams(this.bookRecords, this.authorRecords, this.tagRecords);
 }
 
-// Process books in isolate
-Future<List<Book>> processBooksIsolate(BookProcessingParams params) async {
+// Process books
+Future<List<Book>> processBooks(BookProcessingParams params) async {
   final authorMap = <String, AuthorModel>{};
   for (final record in params.authorRecords) {
     try {
@@ -241,8 +246,8 @@ Future<List<Book>> processBooksIsolate(BookProcessingParams params) async {
   return books;
 }
 
-// Update relationships in isolate
-Future<RelationshipUpdateParams> updateRelationshipsIsolate(
+// Update relationships
+Future<RelationshipUpdateParams> updateRelationships(
   RelationshipUpdateParams params,
 ) async {
   // Author books are not stored in entity anymore
@@ -253,7 +258,7 @@ Future<RelationshipUpdateParams> updateRelationshipsIsolate(
 }
 
 class LibraryRepositoryImpl implements ILibraryRepository {
-  final logger = DevLogger('LibraryRepositoryImpl');
+  final logger = Logger('LibraryRepositoryImpl');
   final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
@@ -287,7 +292,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       );
 
       if (yamlData['books'] == null) {
-        logger.error('Books section is null or missing in YAML');
+        logger.severe('Books section is null or missing in YAML');
         return Left(
           ServiceFailure('Invalid YAML format: books section is required'),
         );
@@ -309,16 +314,16 @@ class LibraryRepositoryImpl implements ILibraryRepository {
         logger.info('Existing data cleared');
       }
 
-      // Parse authors in isolate (optional, default empty)
+      // Parse authors (optional, default empty)
       final authorMap = yamlData['authors'] != null
-          ? await parseAuthorsIsolate(yamlData['authors'])
+          ? await parseAuthors(yamlData['authors'])
           : <String, Author>{};
       final authors = authorMap.values.toList();
       logger.info('Parsed ${authors.length} authors');
 
-      // Parse tags in isolate (optional, default empty)
+      // Parse tags (optional, default empty)
       final tags = yamlData['tags'] != null
-          ? await parseTagsIsolate(yamlData['tags'])
+          ? await parseTags(yamlData['tags'])
           : <Tag>[];
       logger.info('Parsed ${tags.length} tags');
 
@@ -355,7 +360,6 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       );
 
       // Add missing authors
-      // TODO: Enhance this to parse first and last names if possible
       for (final authorName in missingAuthorNames) {
         final author = Author(
           idPairs: IdPairSet([
@@ -377,13 +381,13 @@ class LibraryRepositoryImpl implements ILibraryRepository {
         );
       }
 
-      // Parse books in isolate
+      // Parse books
       final bookParseParams = BookParseParams(
         yamlData['books'],
         authorMap,
         tags,
       );
-      final bookResult = await parseBooksIsolate(bookParseParams);
+      final bookResult = await parseBooks(bookParseParams);
       final parsedBooks = bookResult.books;
       logger.info('Parsed ${parsedBooks.length} books');
       if (bookResult.errors.isNotEmpty) {
@@ -427,7 +431,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
           authorRecords,
           tagRecords,
         );
-        final existingBooks = await processBooksIsolate(processingParams);
+        final existingBooks = await processBooks(processingParams);
         final List<Book> finalBooks = [];
         for (final book in books) {
           final isDuplicateExisting = existingBooks.any(
@@ -452,9 +456,9 @@ class LibraryRepositoryImpl implements ILibraryRepository {
         warnings.addAll(duplicateWarnings);
       }
 
-      // Update relationships in isolate
+      // Update relationships
       final relationshipParams = RelationshipUpdateParams(books, authors, tags);
-      await updateRelationshipsIsolate(relationshipParams);
+      await updateRelationships(relationshipParams);
       logger.info('Updated relationships');
 
       final db = await _database.database;
@@ -508,7 +512,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       logger.info('Successfully imported library');
       return Right(importResult);
     } catch (e) {
-      logger.error('Failed to import library: $e');
+      logger.severe('Failed to import library: $e');
       return Left(ServiceFailure('Failed to import library: $e'));
     }
   }
@@ -563,7 +567,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
       logger.info('Successfully exported library to $filePath');
       return Right(unit);
     } catch (e) {
-      logger.error('Failed to export library: $e');
+      logger.severe('Failed to export library: $e');
       return Left(ServiceFailure('Failed to export library: $e'));
     }
   }
@@ -578,7 +582,7 @@ class LibraryRepositoryImpl implements ILibraryRepository {
         return Right(unit);
       });
     } catch (e) {
-      logger.error('Failed to clear library: $e');
+      logger.severe('Failed to clear library: $e');
       return Left(ServiceFailure('Failed to clear library: $e'));
     }
   }

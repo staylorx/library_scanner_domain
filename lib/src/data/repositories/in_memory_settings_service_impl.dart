@@ -1,12 +1,12 @@
 import 'package:fpdart/fpdart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// Implementation of PersistenceService using SharedPreferences
-class SharedPreferencesSettingsService implements AbstractSettingsService {
-  final SharedPreferences _prefs;
+/// Implementation of PersistenceService using in-memory storage
+class InMemorySettingsService implements AbstractSettingsService {
+  final Map<String, Object?> _storage = {};
 
-  SharedPreferencesSettingsService(this._prefs);
+  InMemorySettingsService();
 
   @override
   Future<Either<Failure, Unit>> saveString({
@@ -14,7 +14,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required String value,
   }) async {
     try {
-      await _prefs.setString(key, value);
+      _storage[key] = value;
       return right(unit);
     } catch (e) {
       return left(ServiceFailure('Failed to save string: $e'));
@@ -24,7 +24,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, String?>> getString({required String key}) async {
     try {
-      final value = _prefs.getString(key);
+      final value = _storage[key] as String?;
       return right(value);
     } catch (e) {
       return left(ServiceFailure('Failed to get string: $e'));
@@ -34,7 +34,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, Unit>> remove({required String key}) async {
     try {
-      await _prefs.remove(key);
+      _storage.remove(key);
       return right(unit);
     } catch (e) {
       return left(ServiceFailure('Failed to remove key: $e'));
@@ -44,7 +44,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, TagColorMode>> getTagColorMode() async {
     try {
-      final value = _prefs.getString('tag_color_mode');
+      final value = _storage['tag_color_mode'] as String?;
       if (value != null) {
         final mode = TagColorMode.values.firstWhere(
           (e) => e.name == value,
@@ -64,7 +64,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required TagColorMode mode,
   }) async {
     try {
-      await _prefs.setString('tag_color_mode', mode.name);
+      _storage['tag_color_mode'] = mode.name;
       return right(unit);
     } catch (e) {
       return left(ServiceFailure('Failed to set tag color mode: $e'));
@@ -74,7 +74,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getFetchCoverArt() async {
     try {
-      final value = _prefs.getBool('fetch_cover_art');
+      final value = _storage['fetch_cover_art'] as bool?;
       return right(value ?? true); // Default to true
     } catch (e) {
       return left(ServiceFailure('Failed to get fetch cover art: $e'));
@@ -84,7 +84,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, Unit>> setFetchCoverArt({required bool fetch}) async {
     try {
-      await _prefs.setBool('fetch_cover_art', fetch);
+      _storage['fetch_cover_art'] = fetch;
       return right(unit);
     } catch (e) {
       return left(ServiceFailure('Failed to set fetch cover art: $e'));
@@ -94,7 +94,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getTagSelectionInclusive() async {
     try {
-      final value = _prefs.getBool('tag_selection_inclusive');
+      final value = _storage['tag_selection_inclusive'] as bool?;
       return right(value ?? false); // Default to false (exclusive)
     } catch (e) {
       return left(ServiceFailure('Failed to get tag selection inclusive: $e'));
@@ -106,7 +106,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required bool inclusive,
   }) async {
     try {
-      await _prefs.setBool('tag_selection_inclusive', inclusive);
+      _storage['tag_selection_inclusive'] = inclusive;
       return right(unit);
     } catch (e) {
       return left(ServiceFailure('Failed to set tag selection inclusive: $e'));
@@ -116,7 +116,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getBookListFiltersCollapsed() async {
     try {
-      final value = _prefs.getBool('book_list_filters_collapsed');
+      final value = _storage['book_list_filters_collapsed'] as bool?;
       return right(value ?? false); // Default to false (expanded)
     } catch (e) {
       return left(
@@ -130,7 +130,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required bool collapsed,
   }) async {
     try {
-      await _prefs.setBool('book_list_filters_collapsed', collapsed);
+      _storage['book_list_filters_collapsed'] = collapsed;
       return right(unit);
     } catch (e) {
       return left(
@@ -142,7 +142,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getBookListSortDropdownCollapsed() async {
     try {
-      final value = _prefs.getBool('book_list_sort_dropdown_collapsed');
+      final value = _storage['book_list_sort_dropdown_collapsed'] as bool?;
       return right(value ?? false); // Default to false (expanded)
     } catch (e) {
       return left(
@@ -156,7 +156,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required bool collapsed,
   }) async {
     try {
-      await _prefs.setBool('book_list_sort_dropdown_collapsed', collapsed);
+      _storage['book_list_sort_dropdown_collapsed'] = collapsed;
       return right(unit);
     } catch (e) {
       return left(
@@ -168,7 +168,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getBookListTagFilterDropdownCollapsed() async {
     try {
-      final value = _prefs.getBool('book_list_tag_filter_dropdown_collapsed');
+      final value = _storage['book_list_tag_filter_dropdown_collapsed'] as bool?;
       return right(value ?? false); // Default to false (expanded)
     } catch (e) {
       return left(
@@ -184,10 +184,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required bool collapsed,
   }) async {
     try {
-      await _prefs.setBool(
-        'book_list_tag_filter_dropdown_collapsed',
-        collapsed,
-      );
+      _storage['book_list_tag_filter_dropdown_collapsed'] = collapsed;
       return right(unit);
     } catch (e) {
       return left(
@@ -201,7 +198,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
   @override
   Future<Either<Failure, bool>> getAuthorListSortDropdownCollapsed() async {
     try {
-      final value = _prefs.getBool('author_list_sort_dropdown_collapsed');
+      final value = _storage['author_list_sort_dropdown_collapsed'] as bool?;
       return right(value ?? false); // Default to false (expanded)
     } catch (e) {
       return left(
@@ -215,7 +212,7 @@ class SharedPreferencesSettingsService implements AbstractSettingsService {
     required bool collapsed,
   }) async {
     try {
-      await _prefs.setBool('author_list_sort_dropdown_collapsed', collapsed);
+      _storage['author_list_sort_dropdown_collapsed'] = collapsed;
       return right(unit);
     } catch (e) {
       return left(

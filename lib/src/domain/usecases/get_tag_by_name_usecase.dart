@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving a single tag by its ID.
 ///
@@ -12,9 +13,9 @@ import 'package:fpdart/fpdart.dart';
 class GetTagByNameUsecase {
   final ITagRepository tagRepository;
 
-  GetTagByNameUsecase(this.tagRepository);
+  GetTagByNameUsecase({required this.tagRepository});
 
-  final logger = DevLogger('GetTagByNameUsecase');
+  final logger = Logger('GetTagByNameUsecase');
 
   /// Retrieves a tag by its unique ID.
   ///

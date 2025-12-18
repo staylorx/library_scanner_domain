@@ -1,6 +1,7 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for deleting a book from the repository.
 ///
@@ -14,9 +15,9 @@ import 'package:fpdart/fpdart.dart';
 class DeleteBookUsecase {
   final IBookRepository bookRepository;
 
-  DeleteBookUsecase(this.bookRepository);
+  DeleteBookUsecase({required this.bookRepository});
 
-  final logger = DevLogger('DeleteBookUsecase');
+  final logger = Logger('DeleteBookUsecase');
 
   /// Deletes a book by BookIdPair and returns the updated list of books.
   ///

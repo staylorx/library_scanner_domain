@@ -1,15 +1,16 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for fetching book metadata by ISBN, including cover art download if enabled.
 
 class FetchBookMetadataByIsbnUsecase {
   final IBookMetadataRepository bookMetadataRepository;
 
-  FetchBookMetadataByIsbnUsecase(this.bookMetadataRepository);
+  FetchBookMetadataByIsbnUsecase({required this.bookMetadataRepository});
 
-  final logger = DevLogger('FetchBookMetadataByIsbnUsecase');
+  final logger = Logger('FetchBookMetadataByIsbnUsecase');
 
   /// Fetches book metadata by ISBN.
   /// If fetch cover art is enabled, downloads the cover image locally.

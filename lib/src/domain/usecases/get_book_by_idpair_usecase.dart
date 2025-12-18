@@ -1,6 +1,7 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving a single book by its BookIdPair.
 ///
@@ -13,9 +14,9 @@ import 'package:fpdart/fpdart.dart';
 class GetBookByIdPairUsecase {
   final IBookRepository bookRepository;
 
-  GetBookByIdPairUsecase(this.bookRepository);
+  GetBookByIdPairUsecase({required this.bookRepository});
 
-  final logger = DevLogger('GetBookByIdPairpairUsecase');
+  final logger = Logger('GetBookByIdPairpairUsecase');
 
   /// Retrieves a book by its unique BookIdPair.
   ///

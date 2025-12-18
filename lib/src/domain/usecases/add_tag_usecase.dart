@@ -1,14 +1,15 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for adding a new tag to the repository.
 class AddTagUsecase {
   final ITagRepository tagRepository;
 
-  AddTagUsecase(this.tagRepository);
+  AddTagUsecase({required this.tagRepository});
 
-  final logger = DevLogger('AddTagUsecase');
+  final logger = Logger('AddTagUsecase');
 
   /// Adds a new tag to the repository and returns the updated list of tags.
   ///

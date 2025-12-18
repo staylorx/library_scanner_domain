@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for updating an existing tag in the repository.
 ///
@@ -13,9 +14,9 @@ import 'package:fpdart/fpdart.dart';
 class UpdateTagUsecase {
   final ITagRepository tagRepository;
 
-  UpdateTagUsecase(this.tagRepository);
+  UpdateTagUsecase({required this.tagRepository});
 
-  final logger = DevLogger('UpdateTagUsecase');
+  final logger = Logger('UpdateTagUsecase');
 
   /// Updates an existing tag in the repository and returns the updated list of tags.
   ///

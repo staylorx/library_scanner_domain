@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 
-class BookApiService implements IBookApiService {
+class BookApiService implements AbstractBookApiService {
   final Dio _dio;
-  final DevLogger _logger = DevLogger('BookApiService');
+  final Logger _logger = Logger('BookApiService');
 
   BookApiService({required Dio dio}) : _dio = dio;
 
@@ -18,14 +19,14 @@ class BookApiService implements IBookApiService {
       final response = await _dio.get(
         'https://www.googleapis.com/books/v1/volumes?q=isbn:$isbn',
       );
-      _logger.debug('API response status: ${response.statusCode}');
+      _logger.fine('API response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         try {
           final data = response.data as Map<String, dynamic>;
-          _logger.debug('Raw API response data: $data');
+          _logger.fine('Raw API response data: $data');
           final items = data['items'] as List<dynamic>?;
-          _logger.debug('Items count: ${items?.length ?? 0}');
+          _logger.fine('Items count: ${items?.length ?? 0}');
 
           if (items == null || items.isEmpty) {
             _logger.warning('No items found in response for ISBN: $isbn');
@@ -35,13 +36,13 @@ class BookApiService implements IBookApiService {
           final volumeInfo =
               (items.first as Map<String, dynamic>)['volumeInfo']
                   as Map<String, dynamic>;
-          _logger.debug('VolumeInfo: $volumeInfo');
+          _logger.fine('VolumeInfo: $volumeInfo');
 
           // Map authors to authorIds (using author names as temporary IDs)
           final authors = volumeInfo['authors'] as List<dynamic>? ?? [];
-          _logger.debug('Authors: $authors');
+          _logger.fine('Authors: $authors');
           final authorIds = authors.map((author) => author as String).toList();
-          _logger.debug('Author IDs: $authorIds');
+          _logger.fine('Author IDs: $authorIds');
 
           // Handle description
           final description = volumeInfo['description'] as String?;
@@ -58,7 +59,7 @@ class BookApiService implements IBookApiService {
               }
             }
           }
-          _logger.debug('Parsed published date: $publishedDate');
+          _logger.fine('Parsed published date: $publishedDate');
 
           // Extract cover image from imageLinks
           String? coverImageUrl;
@@ -66,7 +67,7 @@ class BookApiService implements IBookApiService {
           if (imageLinks != null) {
             coverImageUrl = imageLinks['thumbnail'] as String?;
           }
-          _logger.debug('Cover image URL: $coverImageUrl');
+          _logger.fine('Cover image URL: $coverImageUrl');
 
           _logger.info(
             'Successfully parsed book: ${volumeInfo['title'] ?? 'Unknown Title'} by ${authorIds.join(', ')}',
@@ -85,17 +86,19 @@ class BookApiService implements IBookApiService {
             ),
           );
         } catch (e) {
-          _logger.error('Failed to parse book data', error: e);
+          _logger.severe('Failed to parse book data', e);
           return Left(ParsingFailure('Failed to parse book data: $e'));
         }
       } else {
-        _logger.error('API request failed with status: ${response.statusCode}');
+        _logger.severe(
+          'API request failed with status: ${response.statusCode}',
+        );
         return Left(
           NetworkFailure('Failed to fetch book: ${response.statusCode}'),
         );
       }
     } on DioException catch (e) {
-      _logger.error('DioException during API call', error: e);
+      _logger.severe('DioException during API call', e);
       return Left(NetworkFailure('DioException: ${e.message}'));
     }
   }

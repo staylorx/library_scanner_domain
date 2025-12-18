@@ -1,6 +1,7 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving all tags from the repository.
 ///
@@ -13,9 +14,9 @@ import 'package:fpdart/fpdart.dart';
 class GetTagsUsecase {
   final ITagRepository tagRepository;
 
-  GetTagsUsecase(this.tagRepository);
+  GetTagsUsecase({required this.tagRepository});
 
-  final logger = DevLogger('GetTagsUsecase');
+  final logger = Logger('GetTagsUsecase');
 
   /// Retrieves all tags from the repository.
   ///

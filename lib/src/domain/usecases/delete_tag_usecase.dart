@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for deleting a tag from the repository.
 ///
@@ -16,7 +17,7 @@ class DeleteTagUsecase {
 
   DeleteTagUsecase(this.tagRepository);
 
-  final logger = DevLogger('DeleteTagUsecase');
+  final logger = Logger('DeleteTagUsecase');
 
   /// Deletes a tag by ID and returns the updated list of tags.
   ///

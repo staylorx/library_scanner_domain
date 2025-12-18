@@ -4,15 +4,15 @@ import 'package:fpdart/fpdart.dart';
 
 import 'package:id_pair_set/id_pair_set.dart';
 
-import '../../utils/title_utils.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for adding a new book to the repository.
 class AddBookUsecase {
   final IBookRepository bookRepository;
 
-  AddBookUsecase(this.bookRepository);
+  AddBookUsecase({required this.bookRepository});
 
-  final logger = DevLogger('AddBookUsecase');
+  final logger = Logger('AddBookUsecase');
 
   /// Adds a new book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
@@ -25,6 +25,7 @@ class AddBookUsecase {
     }
     final cleanedBook = book.copyWith(
       title: cleanBookTitle(book.title),
+      originalTitle: book.title,
       idPairs: IdPairSet(idPairs),
     );
     logger.info(

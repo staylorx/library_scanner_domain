@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for deleting an author from the repository.
 ///
@@ -13,9 +14,9 @@ import 'package:fpdart/fpdart.dart';
 class DeleteAuthorUsecase {
   final IAuthorRepository authorRepository;
 
-  DeleteAuthorUsecase(this.authorRepository);
+  DeleteAuthorUsecase({required this.authorRepository});
 
-  final logger = DevLogger('DeleteAuthorUsecase');
+  final logger = Logger('DeleteAuthorUsecase');
 
   /// Deletes an author by name and returns the updated list of authors.
   ///

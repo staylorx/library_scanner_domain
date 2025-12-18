@@ -1,5 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving a single author by their name.
 ///
@@ -12,9 +13,9 @@ import 'package:fpdart/fpdart.dart';
 class GetAuthorByNameUsecase {
   final IAuthorRepository authorRepository;
 
-  GetAuthorByNameUsecase(this.authorRepository);
+  GetAuthorByNameUsecase({required this.authorRepository});
 
-  final logger = DevLogger('GetAuthorByNameUsecase');
+  final logger = Logger('GetAuthorByNameUsecase');
 
   /// Retrieves an author by their name.
   ///

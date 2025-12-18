@@ -1,17 +1,20 @@
-import 'dart:io';
+// ignore_for_file: avoid_print
 
 import 'package:test/test.dart';
 import 'package:id_pair_set/id_pair_set.dart';
-import 'package:path/path.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:logging/logging.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 void main() {
-  SharedPreferences.setMockInitialValues({});
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
+
 
   group('Book Integration Tests', () {
-    late Directory tempDir;
     late SembastDatabase database;
     late BookRepositoryImpl bookRepository;
     late GetBooksUsecase getBooksUsecase;
@@ -23,25 +26,39 @@ void main() {
     late AddTagUsecase addTagUsecase;
 
     setUp(() async {
-      tempDir = await Directory.systemTemp.createTemp('test_db');
-      final dbPath = join(tempDir.path, 'book_inventory.db');
-      database = SembastDatabase(testDbPath: dbPath);
+      final logger = Logger('BookTest');
+      logger.info('Starting setUp');
+      database = SembastDatabase(testDbPath: null);
+      logger.info('Database instance created');
       (await database.clearAll()).fold((l) => throw l, (r) => null);
-      bookRepository = BookRepositoryImpl(database: database, isBookDuplicateUsecase: IsBookDuplicateUsecase());
+      logger.info('Database cleared');
+      bookRepository = BookRepositoryImpl(
+        database: database,
+        isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+      );
 
-      getBooksUsecase = GetBooksUsecase(bookRepository);
-      getBookByIdPairUsecase = GetBookByIdPairUsecase(bookRepository);
-      addBookUsecase = AddBookUsecase(bookRepository);
-      updateBookUsecase = UpdateBookUsecase(bookRepository);
-      deleteBookUsecase = DeleteBookUsecase(bookRepository);
-      addAuthorUsecase = AddAuthorUsecase(AuthorRepositoryImpl(databaseService: database));
-      addTagUsecase = AddTagUsecase(TagRepositoryImpl(databaseService: database));
+      getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
+      getBookByIdPairUsecase = GetBookByIdPairUsecase(
+        bookRepository: bookRepository,
+      );
+      addBookUsecase = AddBookUsecase(bookRepository: bookRepository);
+      updateBookUsecase = UpdateBookUsecase(bookRepository: bookRepository);
+      deleteBookUsecase = DeleteBookUsecase(bookRepository: bookRepository);
+      addAuthorUsecase = AddAuthorUsecase(
+        authorRepository: AuthorRepositoryImpl(databaseService: database),
+      );
+      addTagUsecase = AddTagUsecase(
+        tagRepository: TagRepositoryImpl(databaseService: database),
+      );
     });
 
     tearDown(() async {
+      final logger = Logger('BookTest');
+      logger.info('Starting tearDown');
       // Close database
+      logger.info('Closing database');
       await database.close();
-      tempDir.deleteSync(recursive: true);
+      logger.info('tearDown completed');
     });
 
     test('GetBooksUsecase should return empty list initially', () async {

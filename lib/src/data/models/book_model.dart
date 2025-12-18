@@ -9,22 +9,34 @@ import 'package:uuid/uuid.dart';
 class BookModel {
   /// The unique identifier for the book, if assigned.
   final String? id;
+
   /// The list of identifier pairs for the book.
   final List<BookIdPair> idPairs;
+
   /// The title of the book.
   final String title;
+
+  /// The original title of the book before cleaning.
+  final String? originalTitle;
+
   /// The description of the book.
   final String? description;
+
   /// The list of author identifiers associated with the book.
   final List<String> authorIds;
+
   /// The list of tag identifiers associated with the book.
   final List<String> tagIds;
+
   /// The published date of the book.
   final DateTime? publishedDate;
+
   /// The cover image data of the book.
   final Uint8List? coverImage;
+
   /// The URL of the cover image.
   final String? coverImageUrl;
+
   /// Additional notes for the book.
   final String? notes;
 
@@ -33,6 +45,7 @@ class BookModel {
     this.id,
     required this.idPairs,
     required this.title,
+    this.originalTitle,
     this.description,
     required this.authorIds,
     required this.tagIds,
@@ -85,6 +98,7 @@ class BookModel {
       id: map['id'] as String?,
       idPairs: idPairs,
       title: map['title'] as String,
+      originalTitle: map['originalTitle'] as String?,
       description: map['description'] as String?,
       authorIds: (map['authorIds'] as List<dynamic>?)?.cast<String>() ?? [],
       tagIds: (map['tagIds'] as List<dynamic>?)?.cast<String>() ?? [],
@@ -107,6 +121,7 @@ class BookModel {
           .map((p) => {'idType': p.idType.name, 'idCode': p.idCode})
           .toList(),
       'title': title,
+      'originalTitle': originalTitle,
       'description': description,
       'authorIds': authorIds,
       'tagIds': tagIds,
@@ -122,6 +137,7 @@ class BookModel {
     return Book(
       idPairs: IdPairSet(idPairs),
       title: title,
+      originalTitle: originalTitle,
       description: description,
       authors: authors,
       tags: tags,
@@ -142,6 +158,7 @@ class BookModel {
       id: book.key,
       idPairs: effectiveIdPairs,
       title: book.title,
+      originalTitle: book.originalTitle,
       description: book.description,
       authorIds: book.authors.map((a) => a.name).toList(),
       tagIds: book.tags.map((t) => t.name).toList(),
@@ -157,6 +174,7 @@ class BookModel {
     String? id,
     List<BookIdPair>? idPairs,
     String? title,
+    String? originalTitle,
     String? description,
     List<String>? authorIds,
     List<String>? tagIds,
@@ -169,6 +187,7 @@ class BookModel {
       id: id ?? this.id,
       idPairs: idPairs ?? this.idPairs,
       title: title ?? this.title,
+      originalTitle: originalTitle ?? this.originalTitle,
       description: description ?? this.description,
       authorIds: authorIds ?? this.authorIds,
       tagIds: tagIds ?? this.tagIds,

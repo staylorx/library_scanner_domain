@@ -4,7 +4,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 class BookMetadataRepositoryImpl implements IBookMetadataRepository {
-  final IBookApiService apiService;
+  final AbstractBookApiService apiService;
   final AbstractImageService imageService;
   final AbstractSettingsService settingsService;
 
@@ -40,7 +40,7 @@ class BookMetadataRepositoryImpl implements IBookMetadataRepository {
 
     // Download the cover image bytes
     final downloadEither = await imageService.downloadImageBytesFromUrl(
-      bookModel.coverImageUrl!,
+      url: bookModel.coverImageUrl!,
     );
     if (downloadEither.isLeft()) {
       return Right(bookModel.toBookMetadata());
@@ -49,7 +49,9 @@ class BookMetadataRepositoryImpl implements IBookMetadataRepository {
     final bytes = downloadEither.getRight().getOrElse(() => Uint8List(0));
     if (bytes.isEmpty) return Right(bookModel.toBookMetadata());
 
-    final thumbnailEither = await imageService.generateThumbnail(bytes);
+    final thumbnailEither = await imageService.generateThumbnail(
+      imageBytes: bytes,
+    );
     if (thumbnailEither.isLeft()) {
       return Right(bookModel.toBookMetadata());
     }

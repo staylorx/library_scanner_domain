@@ -1,14 +1,15 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
+import 'package:logging/logging.dart';
 
 /// Use case for retrieving all books from the repository.
 class GetBooksUsecase {
   final IBookRepository bookRepository;
 
-  GetBooksUsecase(this.bookRepository);
+  GetBooksUsecase({required this.bookRepository});
 
-  final logger = DevLogger('GetBooksUsecase');
+  final logger = Logger('GetBooksUsecase');
 
   /// Retrieves all books from the repository.
   Future<Either<Failure, List<Book>>> call() async {
