@@ -2,7 +2,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:logging/logging.dart';
 
-class AuthorRepositoryImpl implements IAuthorRepository {
+class AuthorRepositoryImpl implements AbstractAuthorRepository {
   final AbstractDatabaseService _databaseService;
 
   AuthorRepositoryImpl({required AbstractDatabaseService databaseService})

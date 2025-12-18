@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import '../../utils/failure.dart';
 import '../entities/author.dart';
 
-abstract class IAuthorRepository {
+abstract class AbstractAuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthors();
   Future<Either<Failure, Author?>> getAuthorByName({required String name});
   Future<Either<Failure, List<Author>>> getAuthorsByNames({

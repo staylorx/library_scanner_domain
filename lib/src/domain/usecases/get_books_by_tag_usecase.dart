@@ -3,9 +3,9 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 class GetBooksByTagUseCase {
-  final IBookRepository _bookRepository;
+  final AbstractBookRepository _bookRepository;
 
-  GetBooksByTagUseCase({required IBookRepository bookRepository})
+  GetBooksByTagUseCase({required AbstractBookRepository bookRepository})
     : _bookRepository = bookRepository;
 
   Future<Either<Failure, List<Book>>> call({required Tag tag}) async {

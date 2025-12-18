@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for adding a new tag to the repository.
 class AddTagUsecase {
-  final ITagRepository tagRepository;
+  final AbstractTagRepository tagRepository;
 
   AddTagUsecase({required this.tagRepository});
 

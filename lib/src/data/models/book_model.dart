@@ -159,7 +159,7 @@ class BookModel {
       title: book.title,
       originalTitle: book.originalTitle,
       description: book.description,
-      authorIds: book.authors.map((a) => a.name).toList(),
+      authorIds: book.authors.map((a) => a.key).toList(),
       tagIds: book.tags.map((t) => t.name).toList(),
       publishedDate: book.publishedDate,
       coverImage: book.coverImage,

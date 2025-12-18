@@ -12,7 +12,7 @@ import 'package:logging/logging.dart';
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
 class GetBookByIdPairUsecase {
-  final IBookRepository bookRepository;
+  final AbstractBookRepository bookRepository;
 
   GetBookByIdPairUsecase({required this.bookRepository});
 

@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-class BookMetadataRepositoryImpl implements IBookMetadataRepository {
+class BookMetadataRepositoryImpl implements AbstractBookMetadataRepository {
   final AbstractBookApiService apiService;
   final AbstractImageService imageService;
   final AbstractSettingsService settingsService;

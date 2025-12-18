@@ -11,7 +11,7 @@ import 'package:logging/logging.dart';
 /// the cover image is missing. It handles errors gracefully by skipping
 /// failed fetches and provides a success message with the count of updated books.
 class RefetchBookCoversUsecase {
-  final IBookRepository bookRepository;
+  final AbstractBookRepository bookRepository;
   final FetchBookMetadataByIsbnUsecase fetchBookMetadataByIsbnUsecase;
   final AbstractImageService imageService;
 

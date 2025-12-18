@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for retrieving all books from the repository.
 class GetBooksUsecase {
-  final IBookRepository bookRepository;
+  final AbstractBookRepository bookRepository;
 
   GetBooksUsecase({required this.bookRepository});
 

@@ -35,49 +35,7 @@ flutter pub get
 
 ## Usage
 
-### Basic Setup
-
-Import the package:
-
-```dart
-import 'package:library_scanner_domain/library_scanner_domain.dart';
-```
-
-Initialize repositories and services (example using Riverpod):
-
-```dart
-final bookRepository = BookRepositoryImpl(databaseService: sembastDatabase);
-final authorRepository = AuthorRepositoryImpl(databaseService: sembastDatabase);
-// ... initialize other repositories
-```
-
-### Adding a Book
-
-```dart
-final addBookUseCase = AddBookUseCase(bookRepository: bookRepository);
-final book = Book(
-  id: BookId('unique-id'),
-  title: 'Sample Book',
-  authors: [Author(name: 'Author Name')],
-  isbn: '978-1234567890',
-  // ... other fields
-);
-await addBookUseCase(book);
-```
-
-### Fetching Book Metadata
-
-```dart
-final fetchMetadataUseCase = FetchBookMetadataByIsbnUseCase(bookApiService: bookApiService);
-final metadata = await fetchMetadataUseCase('978-1234567890');
-```
-
-### Querying Books
-
-```dart
-final getBooksUseCase = GetBooksUseCase(bookRepository: bookRepository);
-final books = await getBooksUseCase();
-```
+See the test files for detailed usage examples and how the code works.
 
 ## API Reference
 
@@ -101,4 +59,4 @@ Contributions are welcome! Please follow these steps:
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache 2 License - see the [LICENSE](LICENSE) file for details.

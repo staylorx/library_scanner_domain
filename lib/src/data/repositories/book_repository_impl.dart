@@ -4,7 +4,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:sembast/sembast.dart';
 import 'package:logging/logging.dart';
 
-class BookRepositoryImpl implements IBookRepository {
+class BookRepositoryImpl implements AbstractBookRepository {
   final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
@@ -52,14 +52,19 @@ class BookRepositoryImpl implements IBookRepository {
         tagIds.addAll(model.tagIds.cast<String>());
       }
 
-      final authorRecords = authorIds.isNotEmpty
-          ? (await _database.authorsStore.records(authorIds.toList()).get(db))
-                .whereType<RecordSnapshot>()
-                .toList()
-          : [];
+      final authorRecords = <RecordSnapshot>[];
+      if (authorIds.isNotEmpty) {
+        for (final authorId in authorIds) {
+          final records = await _database.authorsStore.find(
+            db,
+            finder: Finder(filter: Filter.equals('id', authorId)),
+          );
+          authorRecords.addAll(records);
+        }
+      }
 
       final tagRecords = tagIds.isNotEmpty
-          ? (await _database.tagsStore.records(tagIds.cast<String>()).get(db))
+          ? (await _database.tagsStore.records(tagIds.toList()).get(db))
                 .whereType<RecordSnapshot>()
                 .toList()
           : [];
@@ -95,8 +100,8 @@ class BookRepositoryImpl implements IBookRepository {
               .whereType<AuthorModel>()
               .map((m) => m.toEntity())
               .toList();
-          print('model.authorIds: ${model.authorIds}');
-          print('authors length: ${authors.length}');
+          logger.info('model.authorIds: ${model.authorIds}');
+          logger.info('authors length: ${authors.length}');
           final tags = model.tagIds
               .map((id) => tagMap[id])
               .whereType<TagModel>()

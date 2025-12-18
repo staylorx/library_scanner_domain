@@ -1,7 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-abstract class ITagRepository {
+abstract class AbstractTagRepository {
   Future<Either<Failure, List<Tag>>> getTags();
   Future<Either<Failure, Tag?>> getTagByName({required String name});
   Future<Either<Failure, List<Tag>>> getTagsByNames({

@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
-class TagRepositoryImpl implements ITagRepository {
+class TagRepositoryImpl implements AbstractTagRepository {
   final AbstractDatabaseService _databaseService;
 
   TagRepositoryImpl({required AbstractDatabaseService databaseService})

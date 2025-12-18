@@ -1,5 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:logging/logging.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
@@ -7,6 +8,8 @@ class SembastDatabase implements AbstractDatabaseService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
   static const String _tagsStoreName = 'tags';
+
+  final Logger logger = Logger('SembastDatabase');
 
   final String? testDbPath;
 
@@ -56,12 +59,12 @@ class SembastDatabase implements AbstractDatabaseService {
     dynamic db,
   }) async {
     try {
-      final database = db as DatabaseClient? ?? await this.database;
+      final client = db as DatabaseClient? ?? await database;
       final store = _getStore(collection);
-      await store.record(id).put(database, data);
+      await store.record(id).put(client, data);
       return right(null);
     } catch (e) {
-      print('Save failed: $e');
+      logger.severe('Save failed: $e');
       return left(DatabaseFailure('Failed to save: $e'));
     }
   }
@@ -89,10 +92,10 @@ class SembastDatabase implements AbstractDatabaseService {
     dynamic db,
   }) async {
     try {
-      final database = db as DatabaseClient? ?? await this.database;
+      final client = db as DatabaseClient? ?? await database;
       final store = _getStore(collection);
       final finder = Finder(limit: limit, offset: offset);
-      final records = await store.find(database, finder: finder);
+      final records = await store.find(client, finder: finder);
       return right(records.map((r) => r.value).toList());
     } catch (e) {
       return left(DatabaseFailure('Failed to get all: $e'));
@@ -108,7 +111,7 @@ class SembastDatabase implements AbstractDatabaseService {
     dynamic db,
   }) async {
     try {
-      final dbToUse = db as DatabaseClient? ?? await this.database;
+      final dbToUse = db as DatabaseClient? ?? await database;
       final store = _getStore(collection);
       Filter? queryFilter;
       if (filter.isNotEmpty) {
@@ -135,7 +138,7 @@ class SembastDatabase implements AbstractDatabaseService {
       }
       final finder = Finder(filter: queryFilter, limit: limit, offset: offset);
       final records = await store.find(dbToUse, finder: finder);
-      print(
+      logger.info(
         'Query collection: $collection, filter: $filter, found ${records.length} records',
       );
       return right(records.map((r) => r.value).toList());
@@ -151,9 +154,9 @@ class SembastDatabase implements AbstractDatabaseService {
     dynamic db,
   }) async {
     try {
-      final database = db as DatabaseClient? ?? await this.database;
+      final client = db as DatabaseClient? ?? await database;
       final store = _getStore(collection);
-      await store.record(id).delete(database);
+      await store.record(id).delete(client);
       return right(null);
     } catch (e) {
       return left(DatabaseFailure('Failed to delete: $e'));

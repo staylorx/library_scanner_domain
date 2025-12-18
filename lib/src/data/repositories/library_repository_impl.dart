@@ -257,7 +257,7 @@ Future<RelationshipUpdateParams> updateRelationships(
   return params; // Return updated params
 }
 
-class LibraryRepositoryImpl implements ILibraryRepository {
+class LibraryRepositoryImpl implements AbstractLibraryRepository {
   final logger = Logger('LibraryRepositoryImpl');
   final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;

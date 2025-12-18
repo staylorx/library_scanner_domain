@@ -6,7 +6,7 @@ import '../../utils/failure.dart';
 import '../value_objects/book_id_pairs.dart';
 import '../value_objects/book_id_pair.dart';
 
-abstract class IBookRepository {
+abstract class AbstractBookRepository {
   Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});
   Future<Either<Failure, Book?>> getBookByIdPair({
     required BookIdPair bookIdPair,

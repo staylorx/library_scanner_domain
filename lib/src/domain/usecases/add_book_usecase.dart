@@ -6,7 +6,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for adding a new book to the repository.
 class AddBookUsecase {
-  final IBookRepository bookRepository;
+  final AbstractBookRepository bookRepository;
 
   AddBookUsecase({required this.bookRepository});
 
