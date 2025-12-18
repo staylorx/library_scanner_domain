@@ -63,11 +63,16 @@ class BookRepositoryImpl implements AbstractBookRepository {
         }
       }
 
-      final tagRecords = tagIds.isNotEmpty
-          ? (await _database.tagsStore.records(tagIds.toList()).get(db))
-                .whereType<RecordSnapshot>()
-                .toList()
-          : [];
+      final tagRecords = <RecordSnapshot>[];
+      if (tagIds.isNotEmpty) {
+        for (final tagId in tagIds) {
+          final records = await _database.tagsStore.find(
+            db,
+            finder: Finder(filter: Filter.equals('name', tagId)),
+          );
+          tagRecords.addAll(records);
+        }
+      }
 
       final authorMap = <String, AuthorModel>{};
       for (final record in authorRecords) {
