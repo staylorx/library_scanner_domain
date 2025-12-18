@@ -1,0 +1,94 @@
+import 'package:id_pair_set/id_pair_set.dart';
+import '../../domain/entities/author.dart';
+import '../../domain/entities/author_id.dart';
+import 'package:uuid/uuid.dart';
+
+class AuthorModel {
+  final String? id;
+  final List<AuthorIdPair> idPairs;
+  final String name;
+  final String? biography;
+  final List<String> bookIds;
+
+  const AuthorModel({
+    this.id,
+    required this.idPairs,
+    required this.name,
+    this.biography,
+    required this.bookIds,
+  });
+
+  factory AuthorModel.fromMap({required Map<String, dynamic> map}) {
+    final idPairs =
+        (map['idPairs'] as List<dynamic>?)
+            ?.map(
+              (e) => AuthorIdPair(
+                idType: AuthorIdType.values.byName(
+                  e['idType'] as String? ?? 'local',
+                ),
+                idCode: e['idCode'] as String,
+              ),
+            )
+            .toList() ??
+        [];
+    return AuthorModel(
+      id: map['id'] as String?,
+      idPairs: idPairs,
+      name: map['name'] as String,
+      biography: map['biography'] as String?,
+      bookIds: (map['bookIds'] as List<dynamic>?)?.cast<String>() ?? [],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      if (id != null) 'id': id,
+      'idPairs': idPairs
+          .map((p) => {'idType': p.idType.name, 'idCode': p.idCode})
+          .toList(),
+      'name': name,
+      'biography': biography,
+      'bookIds': bookIds,
+    };
+  }
+
+  Author toEntity() {
+    return Author(
+      idPairs: IdPairSet(idPairs),
+      name: name,
+      biography: biography,
+    );
+  }
+
+  factory AuthorModel.fromEntity(Author author) {
+    // Ensure author always has at least one AuthorIdPair
+    final List<AuthorIdPair> effectiveIdPairs =
+        author.idPairs.idPairs.isNotEmpty
+        ? author.idPairs.idPairs
+        : [AuthorIdPair(idType: AuthorIdType.local, idCode: const Uuid().v4())];
+
+    return AuthorModel(
+      id: author.key,
+      idPairs: effectiveIdPairs,
+      name: author.name,
+      biography: author.biography,
+      bookIds: [],
+    );
+  }
+
+  AuthorModel copyWith({
+    String? id,
+    List<AuthorIdPair>? idPairs,
+    String? name,
+    String? biography,
+    List<String>? bookIds,
+  }) {
+    return AuthorModel(
+      id: id ?? this.id,
+      idPairs: idPairs ?? this.idPairs,
+      name: name ?? this.name,
+      biography: biography ?? this.biography,
+      bookIds: bookIds ?? this.bookIds,
+    );
+  }
+}

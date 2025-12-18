@@ -1,0 +1,1063 @@
+authors:
+  - firstName: Neil
+    lastName: Gaiman
+    Biography: English author and screenwriter
+
+  - firstName: Laura
+    lastName: Esquivel
+    Biography: Mexican novelist
+
+  - firstName: George
+    lastName: Orwell
+    Biography: English novelist and essayist
+
+  - firstName: Jane
+    lastName: Austen
+    Biography: English novelist
+
+  - firstName: F. Scott
+    lastName: Fitzgerald
+    Biography: American novelist
+
+  - firstName: Harper
+    lastName: Lee
+    Biography: American novelist
+
+  - firstName: J.K.
+    lastName: Rowling
+    Biography: British author
+
+  - firstName: Stephen
+    lastName: King
+    Biography: American author
+
+  - firstName: Agatha
+    lastName: Christie
+    Biography: English writer
+
+  - firstName: Ray
+    lastName: Bradbury
+    Biography: American author
+
+  - firstName: Mark
+    lastName: Twain
+    Biography: American writer
+
+  - firstName: Charles
+    lastName: Dickens
+    Biography: English novelist
+
+  - firstName: William
+    lastName: Shakespeare
+    Biography: English playwright
+
+  - firstName: Ernest
+    lastName: Hemingway
+    Biography: American novelist
+
+  - firstName: Toni
+    lastName: Morrison
+    Biography: American novelist
+
+  - firstName: Gabriel
+    lastName: García Márquez
+    Biography: Colombian novelist
+
+  - firstName: Virginia
+    lastName: Woolf
+    Biography: English writer
+
+  - firstName: Franz
+    lastName: Kafka
+    Biography: Czech writer
+
+  - firstName: Leo
+    lastName: Tolstoy
+    Biography: Russian writer
+
+  - firstName: Fyodor
+    lastName: Dostoevsky
+    Biography: Russian novelist
+
+  - firstName: Albert
+    lastName: Camus
+    Biography: French philosopher
+
+  - firstName: Simone
+    lastName: de Beauvoir
+    Biography: French writer
+
+  - firstName: James
+    lastName: Joyce
+    Biography: Irish novelist
+
+  - firstName: Herman
+    lastName: Melville
+    Biography: American novelist
+
+  - firstName: Emily
+    lastName: Brontë
+    Biography: English novelist
+
+  - firstName: Charlotte
+    lastName: Brontë
+    Biography: English novelist
+
+  - firstName: Arthur
+    lastName: Conan Doyle
+    Biography: Scottish writer
+
+  - firstName: Oscar
+    lastName: Wilde
+    Biography: Irish playwright
+
+tags:
+  - name: Fiction
+    color: "#FF6B6B"
+
+  - name: Non-Fiction
+    color: "#4ECDC4"
+
+  - name: Science Fiction
+    color: "#45B7D1"
+
+  - name: Mystery
+    color: "#96CEB4"
+
+  - name: Romance
+    color: "#FFEAA7"
+
+  - name: Biography
+    color: "#DDA0DD"
+
+  - name: History
+    color: "#98D8C8"
+
+  - name: Philosophy
+    color: "#F7DC6F"
+
+  - name: Drama
+    color: "#BB8FCE"
+
+  - name: Poetry
+    color: "#85C1E9"
+
+  - name: Classic
+    color: "#F8C471"
+
+  - name: Modern
+    color: "#82E0AA"
+
+  - name: Adventure
+    color: "#F1948A"
+
+  - name: Horror
+    color: "#C39BD3"
+
+  - name: Comedy
+    color: "#7DCEA0"
+
+    # should be ignored since we're case-insensitive matching and we have Comedy already
+  - name: comedy
+    color: "#7DCEA0"
+
+# Don't trust the tags in the books section to be valid; most made up to start
+# TODO: however, we lost the idpairs somewhere along the line; need to re-add those
+books:
+  - title: "1984"
+    authorNames:
+      - "George Orwell"
+    tagNames:
+      - Fiction
+      - Science Fiction
+      - Classic
+    year: 1949
+    isbn: "9780451524935"
+
+  - title: Pride and Prejudice
+    authorNames:
+      - "Jane Austen"
+    tagNames:
+      - Fiction
+      - Romance
+      - Classic
+    year: 1813
+    isbn: "9780486284736"
+
+  - title: The Great Gatsby
+    authorNames:
+      - "F. Scott Fitzgerald"
+    tagNames:
+      - Fiction
+      - Classic
+      - Modern
+    year: 1925
+    isbn: "9780743273565"
+
+  - title: To Kill a Mockingbird
+    authorNames:
+      - "Harper Lee"
+    tagNames:
+      - Fiction
+      - Classic
+    year: 1960
+    isbn: "9780061120084"
+
+  - title: Harry Potter and the Philosopher's Stone
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Fiction
+      - Adventure
+    year: 1997
+    isbn: "9780747532699"
+
+  - title: The Catcher in the Rye
+    authorNames:
+      - "Stephen King"
+    tagNames:
+      - Fiction
+    year: 1906
+
+  - title: Lord of the Flies
+    authorNames:
+      - "Agatha Christie"
+    tagNames:
+      - Non-Fiction
+    year: 1907
+
+  - title: Animal Farm
+    authorNames:
+      - "George Orwell"
+    tagNames:
+      - Science Fiction
+    year: 1908
+
+  - title: Brave New World
+    authorNames:
+      - "George Orwell"
+    # This has a tag that isn't in the tag list to test robustness
+    # it should still be added, with a default color
+    tagNames:
+      - Science
+      - Distopian
+      - Fiction
+    year: 1909
+
+  - title: Fahrenheit 451
+    authorNames:
+      - "Ray Bradbury"
+    tagNames:
+      - Dystopian
+      - Fiction
+      - Science Fiction
+    year: 1910
+
+  - title: The Hobbit
+    authorNames:
+      - "R.R. Tolkien"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1911
+
+  - title: The Lord of the Rings
+    authorNames:
+      - "R.R. Tolkien"
+    tagNames:
+      - Fantasy
+      - Fiction
+      - Adventure
+    year: 1912
+
+  - title: Dune
+    authorNames:
+      - "Frank Herbert"
+    tagNames:
+      - Science Fiction
+      - Adventure
+    year: 1978
+
+  - title: Foundation
+    authorNames:
+      - "Isaac Asimov"
+    tagNames:
+      - Science Fiction
+    year: 1914
+
+  - title: NeuRomancer
+    authorNames:
+      - "Franz Kafka"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1915
+
+  - title: The Hitchhiker's Guide to the Galaxy
+    authorNames:
+      - "Leo Tolstoy"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1916
+
+  - title: Ender's Game
+    authorNames:
+      - "Fyodor Dostoevsky"
+    tagNames:
+      - Modern
+      - Adventure
+      - Horror
+    year: 1917
+
+  - title: The Martian
+    authorNames:
+      - "Albert Camus"
+    tagNames:
+      - Adventure
+      - Horror
+      - Comedy
+    year: 1918
+
+  - title: Ready Player One
+    authorNames:
+      - "Simone de Beauvoir"
+    tagNames:
+      - Horror
+      - Comedy
+      - Fiction
+    year: 1919
+
+  - title: The Name of the Wind
+    authorNames:
+      - "James Joyce"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1920
+
+  - title: American Gods
+    authorNames:
+      - "Neil Gaiman"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1921
+
+  - title: Good Omens
+    authorNames:
+      - "Neil Gaiman"
+    tagNames:
+      - Non-Fiction
+      - Science Fiction
+      - Mystery
+    year: 1922
+
+  - title: The Ocean at the End of the Lane
+    authorNames:
+      - "Charlotte Brontë"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1923
+
+  - title: Neverwhere
+    authorNames:
+      - "Arthur Conan Doyle"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1924
+
+  - title: Stardust
+    authorNames:
+      - "Neil Gaiman"
+    tagNames:
+      - Romance
+      - Magical Realism
+    year: 1925
+
+  - title: The Princess Bride
+    authorNames:
+      - "George Orwell"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1926
+
+  - title: Watership Down
+    authorNames:
+      - "Jane Austen"
+    tagNames:
+      - History
+      - Philosophy
+      - Drama
+    year: 1927
+
+  - title: The Wind in the Willows
+    authorNames:
+      - "F. Scott Fitzgerald"
+    tagNames:
+      - Philosophy
+      - Drama
+      - Poetry
+    year: 1928
+
+  - title: Alice's Adventures in Wonderland
+    authorNames:
+      - "Harper Lee"
+    tagNames:
+      - Drama
+      - Poetry
+      - Classic
+    year: 1929
+
+  - title: Peter Pan
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1930
+
+  - title: The Wizard of Oz
+    authorNames:
+      - "Stephen King"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1931
+
+  - title: Treasure Island
+    authorNames:
+      - "Agatha Christie"
+    tagNames:
+      - Modern
+      - Adventure
+      - Horror
+    year: 1932
+
+  - title: Robinson Crusoe
+    authorNames:
+      - "Mark Twain"
+    tagNames:
+      - Adventure
+      - Horror
+      - Comedy
+    year: 1933
+
+  - title: Moby-Dick
+    authorNames:
+      - "Herman Melville"
+    tagNames:
+      - Horror
+      - Comedy
+      - Fiction
+    year: 1934
+
+  - title: The Adventures of Huckleberry Finn
+    authorNames:
+      - "Mark Twain"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1935
+
+  - title: The Adventures of Tom Sawyer
+    authorNames:
+      - "Mark Twain"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1936
+
+  - title: Little Women
+    authorNames:
+      - "Emily Brontë"
+    year: 1937
+
+  - title: Anne of Green Gables
+    authorNames:
+      - "Gabriel García Márquez"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1938
+
+  - title: The Secret Garden
+    authorNames:
+      - "Virginia Woolf"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1939
+
+  - title: Heidi
+    authorNames:
+      - "Franz Kafka"
+    tagNames:
+      - Romance
+      - Biography
+      - History
+    year: 1940
+
+  - title: Black Beauty
+    authorNames:
+      - "Leo Tolstoy"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1941
+
+  - title: The Jungle Book
+    authorNames:
+      - "Fyodor Dostoevsky"
+    tagNames:
+      - History
+      - Philosophy
+      - Drama
+    year: 1942
+
+  - title: Winnie-the-Pooh
+    authorNames:
+      - "Albert Camus"
+    tagNames:
+      - Philosophy
+      - Drama
+      - Poetry
+    year: 1943
+
+  - title: Mary Poppins
+    authorNames:
+      - "Simone de Beauvoir"
+    tagNames:
+      - Drama
+      - Poetry
+      - Classic
+    year: 1944
+
+  - title: "The Chronicles of Narnia: The Lion, the Witch and the Wardrobe"
+    authorNames:
+      - "T.S. Eliot"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1945
+
+  - title: Harry Potter and the Chamber of Secrets
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1946
+
+  - title: Harry Potter and the Prisoner of Azkaban
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Adventure
+    year: 1947
+
+  - title: Harry Potter and the Goblet of Fire
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Adventure
+    year: 1948
+
+  - title: Harry Potter and the Order of the Phoenix
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Young Adult
+      - Adventure
+    year: 1949
+
+  - title: Harry Potter and the Half-Blood Prince
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1950
+
+  - title: Harry Potter and the Deathly Hallows
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1951
+
+  - title: The Da Vinci Code
+    authorNames:
+      - "Jane Austen"
+    tagNames:
+      - Non-Fiction
+      - Science Fiction
+      - Mystery
+    year: 1952
+
+  - title: "Angels & Demons"
+    authorNames:
+      - "F. Scott Fitzgerald"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1953
+
+  - title: The Lost Symbol
+    authorNames:
+      - "Harper Lee"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1954
+
+  - title: Inferno
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Romance
+      - Biography
+      - History
+    year: 1955
+
+  - title: Origin
+    authorNames:
+      - "Stephen King"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1956
+
+  - title: The Girl with the Dragon Tattoo
+    authorNames:
+      - "Stieg Larsson"
+    tagNames:
+      - Thriller
+      - Mystery
+    year: 1957
+
+  - title: The Girl Who Played with Fire
+    authorNames:
+      - "Stieg Larsson"
+    tagNames:
+      - Thriller
+      - Mystery
+    year: 1958
+
+  - title: The Girl Who Kicked the Hornet's Nest
+    authorNames:
+      - "Stieg Larsson"
+    tagNames:
+      - Thriller
+
+    year: 1959
+
+  - title: Gone Girl
+    authorNames:
+      - "William Shakespeare"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1960
+
+  - title: Sharp Objects
+    authorNames:
+      - "Ernest Hemingway"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1961
+
+  - title: Dark Places
+    authorNames:
+      - "Toni Morrison"
+    tagNames:
+      - Modern
+      - Adventure
+      - Horror
+    year: 1962
+
+  - title: The Silent Patient
+    authorNames:
+      - "Gabriel García Márquez"
+    tagNames:
+      - Adventure
+      - Horror
+      - Comedy
+    year: 1963
+
+  - title: The Woman in the Window
+    authorNames:
+      - "Virginia Woolf"
+    tagNames:
+      - Horror
+      - Comedy
+      - Fiction
+    year: 1964
+
+  - title: Behind Closed Doors
+    authorNames:
+      - "Franz Kafka"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1965
+
+  - title: The Couple Next Door
+    authorNames:
+      - "Leo Tolstoy"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1966
+
+  - title: Big Little Lies
+    authorNames:
+      - "Fyodor Dostoevsky"
+    tagNames:
+      - Non-Fiction
+      - Science Fiction
+      - Mystery
+    year: 1967
+
+  - title: The Undoing
+    authorNames:
+      - "Albert Camus"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1968
+
+  - title: Little Fires Everywhere
+    authorNames:
+      - "Simone de Beauvoir"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1969
+
+  - title: Normal People
+    authorNames:
+      - "James Joyce"
+    tagNames:
+      - Romance
+      - Biography
+      - History
+    year: 1970
+
+  - title: Conversations with Friends
+    authorNames:
+      - "Herman Melville"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1971
+
+  - title: The Testaments
+    authorNames:
+      - "Emily Brontë"
+    tagNames:
+      - History
+      - Philosophy
+      - Drama
+    year: 1972
+
+  - title: The Handmaid's Tale
+    authorNames:
+      - "Charlotte Brontë"
+    tagNames:
+      - Philosophy
+      - Drama
+      - Poetry
+    year: 1973
+
+  - title: Oryx and Crake
+    authorNames:
+      - "Arthur Conan Doyle"
+    tagNames:
+      - Drama
+      - Poetry
+      - Classic
+    year: 1974
+
+  - title: The Year of the Flood
+    authorNames:
+      - "Oscar Wilde"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1975
+
+  - title: MaddAddam
+    authorNames:
+      - "George Orwell"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1976
+
+  - title: Station Eleven
+    authorNames:
+      - "Jane Austen"
+    tagNames:
+      - Modern
+      - Adventure
+      - Horror
+    year: 1977
+
+  - title: The Ministry for the Future
+    authorNames:
+      - "F. Scott Fitzgerald"
+    tagNames:
+      - Adventure
+      - Horror
+      - Comedy
+    year: 1978
+
+  - title: Klara and the Sun
+    authorNames:
+      - "Harper Lee"
+    tagNames:
+      - Horror
+      - Comedy
+      - Fiction
+    year: 1979
+
+  - title: The Midnight Library
+    authorNames:
+      - "J.K. Rowling"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1980
+
+  - title: The Seven Husbands of Evelyn Hugo
+    authorNames:
+      - "Stephen King"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1981
+
+  - title: "Red, White & Royal Blue"
+    authorNames:
+      - "Agatha Christie"
+    tagNames:
+      - Non-Fiction
+      - Science Fiction
+      - Mystery
+    year: 1982
+
+  - title: Aristotle and Dante Discover the Secrets of the Universe
+    authorNames:
+      - "Mark Twain"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1983
+
+  - title: Simon vs. the Homo Sapiens Agenda
+    authorNames:
+      - "Charles Dickens"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1984
+
+  - title: The House in the Cerulean Sea
+    authorNames:
+      - "William Shakespeare"
+    tagNames:
+      - Romance
+      - Biography
+      - History
+    year: 1985
+
+  - title: Gideon the Ninth
+    authorNames:
+      - "Ernest Hemingway"
+    tagNames:
+      - Biography
+      - History
+      - Philosophy
+    year: 1986
+
+  - title: The Priory of the Orange Tree
+    authorNames:
+      - "Toni Morrison"
+    tagNames:
+      - History
+      - Philosophy
+      - Drama
+    year: 1987
+
+  - title: Mexican Gothic
+    authorNames:
+      - "Gabriel García Márquez"
+    tagNames:
+      - Philosophy
+      - Drama
+      - Poetry
+    year: 1988
+
+  - title: The Only Good Indians
+    authorNames:
+      - "Virginia Woolf"
+    tagNames:
+      - Drama
+      - Poetry
+      - Classic
+    year: 1989
+
+  - title: The Good House
+    authorNames:
+      - "Franz Kafka"
+    tagNames:
+      - Poetry
+      - Classic
+      - Modern
+    year: 1990
+
+  - title: The Year of the Witching
+    authorNames:
+      - "Leo Tolstoy"
+    tagNames:
+      - Classic
+      - Modern
+      - Adventure
+    year: 1991
+
+  - title: Raybearer
+    authorNames:
+      - "Fyodor Dostoevsky"
+    tagNames:
+      - Modern
+      - Adventure
+      - Horror
+    year: 1992
+
+  - title: These Violent Delights
+    authorNames:
+      - "Albert Camus"
+    tagNames:
+      - Adventure
+      - Horror
+      - Comedy
+    year: 1993
+
+  - title: They Wish They Were Us
+    authorNames:
+      - "Simone de Beauvoir"
+    tagNames:
+      - Horror
+      - Comedy
+      - Fiction
+    year: 1994
+
+  - title: The Cheerleaders
+    authorNames:
+      - "James Joyce"
+    tagNames:
+      - Comedy
+      - Fiction
+      - Non-Fiction
+    year: 1995
+
+  - title: One of Us Is Lying
+    authorNames:
+      - "Herman Melville"
+    tagNames:
+      - Fiction
+      - Non-Fiction
+      - Science Fiction
+    year: 1996
+
+  - title: Two Can Keep a Secret
+    authorNames:
+      - "Emily Brontë"
+    tagNames:
+      - Non-Fiction
+      - Science Fiction
+      - Mystery
+    year: 1997
+
+  - title: The Cousins
+    authorNames:
+      - "Charlotte Brontë"
+    tagNames:
+      - Science Fiction
+      - Mystery
+      - Romance
+    year: 1998
+
+  - title: The Girl from Widow Hills
+    authorNames:
+      - "Arthur Conan Doyle"
+    tagNames:
+      - Mystery
+      - Romance
+      - Biography
+    year: 1999
+
+  - title: The Girl from Widow Hills
+    authorNames:
+      - "Oscar Wilde"
+    tagNames:
+      - Romance
+      - Biography
+      - History
+    year: 1900
+
+  - title: Like Water for Chocolate
+    authorNames:
+      - "Laura Esquivel"
+    tagNames:
+      - Romance
+    year: 1901
+    isbn: "0385420161"
+
+  - title: Redneck Manifesto
+    authorNames:
+      - "Jim Goad"
+    tagNames:
+      - Non-Fiction
+    isbn: "0684838648"
