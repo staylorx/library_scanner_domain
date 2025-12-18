@@ -208,7 +208,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
           isAdd: true,
           db: txn,
         );
-        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        if (result.isLeft()) {
+          throw result.getLeft().getOrElse(
+            () => DatabaseFailure('Transaction failed'),
+          );
+        }
         return unit;
       });
       logger.info('BookRepositoryImpl: Success added book ${book.title}');
@@ -244,7 +248,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
             isAdd: false,
             db: txn,
           );
-          if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+          if (result.isLeft()) {
+            throw result.getLeft().getOrElse(
+              () => DatabaseFailure('Transaction failed'),
+            );
+          }
         }
         final model = BookModel.fromEntity(book: book);
         await _database.booksStore.record(key).put(txn, model.toMap());
@@ -254,7 +262,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
           isAdd: true,
           db: txn,
         );
-        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        if (result.isLeft()) {
+          throw result.getLeft().getOrElse(
+            () => DatabaseFailure('Transaction failed'),
+          );
+        }
         return unit;
       });
       logger.info('BookRepositoryImpl: Success updated book ${book.title}');
@@ -286,7 +298,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
           isAdd: false,
           db: txn,
         );
-        if (result.isLeft()) throw result.getLeft().getOrElse(() => DatabaseFailure('Transaction failed'));
+        if (result.isLeft()) {
+          throw result.getLeft().getOrElse(
+            () => DatabaseFailure('Transaction failed'),
+          );
+        }
         return unit;
       });
       logger.info('BookRepositoryImpl: Success deleted book ${book.title}');

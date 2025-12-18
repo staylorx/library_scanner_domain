@@ -133,7 +133,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           }
           logger.info('Author saved, updating relationships');
           final updateResult = await _updateRelationshipsForAuthor(
-            author.name,
+            authorName: author.name,
             isAdd: true,
             txn: txn,
           );
@@ -178,7 +178,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               'Removing relationships for existing author ${existing.name}',
             );
             final removeResult = await _updateRelationshipsForAuthor(
-              existing.name,
+              authorName: existing.name,
               isAdd: false,
               txn: txn,
             );
@@ -223,7 +223,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           }
           logger.info('Adding relationships for updated author ${author.name}');
           final addResult = await _updateRelationshipsForAuthor(
-            author.name,
+            authorName: author.name,
             isAdd: true,
           );
           if (addResult.isLeft()) {
@@ -287,7 +287,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             'Updating relationships for deleted author ${author.name}',
           );
           final updateResult = await _updateRelationshipsForAuthor(
-            author.name,
+            authorName: author.name,
             isAdd: false,
             txn: txn,
           );
@@ -311,8 +311,8 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
-  Future<Either<Failure, Unit>> _updateRelationshipsForAuthor(
-    String authorName, {
+  Future<Either<Failure, Unit>> _updateRelationshipsForAuthor({
+    required String authorName,
     required bool isAdd,
     dynamic txn,
   }) async {

@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+import 'dart:io';
 
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
@@ -9,7 +9,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 void main() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    stdout.writeln('${record.level.name}: ${record.time}: ${record.message}');
   });
 
   group('Author Integration Tests', () {
