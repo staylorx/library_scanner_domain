@@ -4,6 +4,8 @@ import 'package:fpdart/fpdart.dart';
 
 import 'package:id_pair_set/id_pair_set.dart';
 
+import '../../utils/title_utils.dart';
+
 /// Use case for adding a new book to the repository.
 class AddBookUsecase {
   final IBookRepository bookRepository;

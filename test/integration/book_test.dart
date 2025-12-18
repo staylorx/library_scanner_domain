@@ -27,7 +27,7 @@ void main() {
       final dbPath = join(tempDir.path, 'book_inventory.db');
       database = SembastDatabase(testDbPath: dbPath);
       (await database.clearAll()).fold((l) => throw l, (r) => null);
-      bookRepository = BookRepositoryImpl(databaseService: database, isBookDuplicateUsecase: IsBookDuplicateUsecase());
+      bookRepository = BookRepositoryImpl(database: database, isBookDuplicateUsecase: IsBookDuplicateUsecase());
 
       getBooksUsecase = GetBooksUsecase(bookRepository);
       getBookByIdPairUsecase = GetBookByIdPairUsecase(bookRepository);

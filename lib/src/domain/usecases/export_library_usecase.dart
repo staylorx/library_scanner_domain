@@ -1,8 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import '../entities/library.dart';
-import '../repositories/library_repository.dart';
 
 /// Use case for exporting a library to a file.
 class ExportLibraryUsecase {

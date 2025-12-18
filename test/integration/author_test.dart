@@ -7,7 +7,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:id_pair_set/id_pair_set.dart';
 
 void main() {
-
   group('Author Integration Tests', () {
     late Directory tempDir;
     late SembastDatabase database;

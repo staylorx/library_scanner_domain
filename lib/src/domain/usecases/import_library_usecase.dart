@@ -2,9 +2,6 @@ import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-import '../entities/import_result.dart';
-import '../repositories/library_repository.dart';
-
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase {
   final ILibraryRepository libraryRepository;

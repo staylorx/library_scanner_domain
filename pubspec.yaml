@@ -25,6 +25,7 @@ dependencies:
   uuid: ^4.5.2
   id_pair_set: ^1.0.0
   sembast: ^3.8.5+2
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   lints: ^6.0.0

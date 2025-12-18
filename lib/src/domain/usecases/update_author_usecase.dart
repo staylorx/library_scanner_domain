@@ -1,9 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
 
-import '../entities/author.dart';
-import '../repositories/author_repository.dart';
-
 /// Use case responsible for updating an existing author in the repository.
 ///
 /// This use case encapsulates the business logic for updating an author,

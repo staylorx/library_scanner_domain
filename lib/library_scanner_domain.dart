@@ -1,3 +1,4 @@
+/// A library providing domain models and services for library scanning.
 library;
 
 export 'src/utils/failure.dart';

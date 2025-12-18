@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:flutter/foundation.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_pair_set/id_pair_set.dart';
 import 'package:yaml/yaml.dart';
 import 'package:yaml_writer/yaml_writer.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sembast/sembast.dart';
 
 // TODO: these aren't isolates anymore. Leave that to the presentation layer if needed?
 
@@ -252,17 +252,15 @@ Future<RelationshipUpdateParams> updateRelationshipsIsolate(
   return params; // Return updated params
 }
 
-@Injectable(as: ILibraryRepository)
-@lazySingleton
 class LibraryRepositoryImpl implements ILibraryRepository {
   final logger = DevLogger('LibraryRepositoryImpl');
-  final DatabaseService _databaseService;
+  final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
   LibraryRepositoryImpl({
-    required DatabaseService databaseService,
+    required SembastDatabase database,
     required IsBookDuplicateUsecase isBookDuplicateUsecase,
-  }) : _databaseService = databaseService,
+  }) : _database = database,
        _isBookDuplicateUsecase = isBookDuplicateUsecase; // Initialize database
 
   @override
@@ -574,14 +572,11 @@ class LibraryRepositoryImpl implements ILibraryRepository {
   Future<Either<Failure, Unit>> clearLibrary() async {
     logger.info('Entering clearLibrary');
     try {
-      final result = await _databaseService.clearAll();
-      return result.fold(
-        (failure) => Left(failure),
-        (_) {
-          logger.info('Successfully cleared library');
-          return Right(unit);
-        },
-      );
+      final result = await _database.clearAll();
+      return result.fold((failure) => Left(failure), (_) {
+        logger.info('Successfully cleared library');
+        return Right(unit);
+      });
     } catch (e) {
       logger.error('Failed to clear library: $e');
       return Left(ServiceFailure('Failed to clear library: $e'));

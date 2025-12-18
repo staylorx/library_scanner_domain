@@ -2,9 +2,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-import '../repositories/book_metadata_repository.dart';
-import '../entities/book_metadata.dart';
-
 /// Use case for fetching book metadata by ISBN, including cover art download if enabled.
 
 class FetchBookMetadataByIsbnUsecase {

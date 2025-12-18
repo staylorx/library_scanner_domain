@@ -1,15 +1,16 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:sembast/sembast.dart';
 
 class BookRepositoryImpl implements IBookRepository {
-  final DatabaseService _databaseService;
+  final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
   BookRepositoryImpl({
-    required DatabaseService databaseService,
+    required SembastDatabase database,
     required IsBookDuplicateUsecase isBookDuplicateUsecase,
-  }) : _databaseService = databaseService,
+  }) : _database = database,
        _isBookDuplicateUsecase = isBookDuplicateUsecase;
 
   final logger = DevLogger('BookRepositoryImpl');
@@ -89,9 +90,7 @@ class BookRepositoryImpl implements IBookRepository {
       final books = <Book>[];
       for (final record in records) {
         try {
-          final model = BookModel.fromMap(
-            map: record.value as Map<String, dynamic>,
-          );
+          final model = BookModel.fromMap(map: record.value);
           final authors = model.authorIds
               .map((id) => authorMap[id])
               .whereType<AuthorModel>()

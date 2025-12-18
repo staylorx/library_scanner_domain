@@ -3,13 +3,20 @@ import '../../domain/entities/author.dart';
 import '../../domain/entities/author_id.dart';
 import 'package:uuid/uuid.dart';
 
+/// A data model representing an author with their metadata and identifiers.
 class AuthorModel {
+  /// The unique identifier for the author, if assigned.
   final String? id;
+  /// The list of identifier pairs for the author.
   final List<AuthorIdPair> idPairs;
+  /// The name of the author.
   final String name;
+  /// The biography of the author.
   final String? biography;
+  /// The list of book identifiers associated with the author.
   final List<String> bookIds;
 
+  /// Creates an [AuthorModel] instance.
   const AuthorModel({
     this.id,
     required this.idPairs,
@@ -18,6 +25,7 @@ class AuthorModel {
     required this.bookIds,
   });
 
+  /// Creates an [AuthorModel] from a map representation.
   factory AuthorModel.fromMap({required Map<String, dynamic> map}) {
     final idPairs =
         (map['idPairs'] as List<dynamic>?)
@@ -40,6 +48,7 @@ class AuthorModel {
     );
   }
 
+  /// Converts this [AuthorModel] to a map representation.
   Map<String, dynamic> toMap() {
     return {
       if (id != null) 'id': id,
@@ -52,6 +61,7 @@ class AuthorModel {
     };
   }
 
+  /// Converts this [AuthorModel] to an [Author] domain entity.
   Author toEntity() {
     return Author(
       idPairs: IdPairSet(idPairs),
@@ -60,8 +70,9 @@ class AuthorModel {
     );
   }
 
+  /// Creates an [AuthorModel] from an [Author] domain entity.
   factory AuthorModel.fromEntity(Author author) {
-    // Ensure author always has at least one AuthorIdPair
+    /// Ensure author always has at least one AuthorIdPair
     final List<AuthorIdPair> effectiveIdPairs =
         author.idPairs.idPairs.isNotEmpty
         ? author.idPairs.idPairs
@@ -76,6 +87,7 @@ class AuthorModel {
     );
   }
 
+  /// Creates a copy of this [AuthorModel] with optional field updates.
   AuthorModel copyWith({
     String? id,
     List<AuthorIdPair>? idPairs,

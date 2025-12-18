@@ -3,9 +3,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-import 'fetch_book_metadata_by_isbn_usecase.dart';
-import '../services/image_service.dart';
-
 /// Use case responsible for refetching book covers from the API.
 ///
 /// This use case retrieves all books from the repository, checks for books

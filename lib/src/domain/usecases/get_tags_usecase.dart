@@ -2,9 +2,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-import '../entities/tag.dart';
-import '../repositories/tag_repository.dart';
-
 /// Use case responsible for retrieving all tags from the repository.
 ///
 /// This use case encapsulates the business logic for fetching the complete

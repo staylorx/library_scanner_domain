@@ -2,9 +2,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-import '../entities/book.dart';
-import '../repositories/book_repository.dart';
-
 /// Use case for retrieving all books from the repository.
 class GetBooksUsecase {
   final IBookRepository bookRepository;
