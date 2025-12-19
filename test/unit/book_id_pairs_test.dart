@@ -7,6 +7,9 @@ void main() {
   group('BookIdPairs Tests', () {
     late BookIdPair validIsbnPair;
     late BookIdPair validAsinPair;
+    late BookIdPair validLocalPair;
+    late BookIdPairs book1;
+    late BookIdPairs book2;
 
     setUp(() {
       validIsbnPair = const BookIdPair(
@@ -17,13 +20,20 @@ void main() {
         idType: BookIdType.asin,
         idCode: 'B000000000',
       );
+      validLocalPair = const BookIdPair(
+        idType: BookIdType.local,
+        idCode: 'local-12345',
+      );
+      // these books should never be equal
+      book1 = BookIdPairs([validIsbnPair, validAsinPair]);
+      book2 = BookIdPairs([validIsbnPair, validLocalPair]);
     });
 
     group('constructor and factory', () {
       test(
         'creates BookIdPairs with given pairs',
         () {
-          final pairs = [validIsbnPair, validAsinPair];
+          final pairs = [validIsbnPair, validAsinPair, validLocalPair];
           final bookIdPairs = BookIdPairs(pairs);
 
           expect(bookIdPairs.idPairs, pairs);
@@ -53,6 +63,20 @@ void main() {
           final newPairs = bookIdPairs.add(pair: validAsinPair);
 
           expect(newPairs.idPairs, [validIsbnPair, validAsinPair]);
+          expect(bookIdPairs.idPairs, [validIsbnPair]); // original unchanged
+        },
+        timeout: Timeout(Duration(seconds: 30)),
+      );
+
+      test(
+        'does not add duplicate pair to the collection',
+        () {
+          final initialPairs = [validIsbnPair];
+          final bookIdPairs = BookIdPairs(initialPairs);
+
+          final newPairs = bookIdPairs.add(pair: validIsbnPair);
+
+          expect(newPairs.idPairs, [validIsbnPair]);
           expect(bookIdPairs.idPairs, [validIsbnPair]); // original unchanged
         },
         timeout: Timeout(Duration(seconds: 30)),

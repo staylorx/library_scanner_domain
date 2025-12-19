@@ -134,9 +134,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
   Future<Either<Failure, Book?>> getBookByIdPair({
     required BookIdPair bookIdPair,
   }) async {
-    logger.info(
-      'BookRepositoryImpl: Entering getBookByIdPairPair with bookIdPair: $bookIdPair',
-    );
+    logger.info('Entering getBookByIdPair with bookIdPair: $bookIdPair');
     try {
       final booksEither = await getBooks();
       if (booksEither.isLeft()) {
@@ -150,8 +148,8 @@ class BookRepositoryImpl implements AbstractBookRepository {
       final book = books
           .where((b) => b.idPairs.idPairs.any((p) => p == bookIdPair))
           .firstOrNull;
-      logger.info('BookRepositoryImpl: Output: ${book?.title ?? 'null'}');
-      logger.info('BookRepositoryImpl: Exiting getBookByIdPairPair');
+      logger.fine('Output: ${book?.title ?? 'null'}');
+      logger.fine('Exiting getBookByIdPair');
       return Either.right(book);
     } catch (e) {
       return Either.left(DatabaseReadFailure(e.toString()));
@@ -270,7 +268,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
         return unit;
       });
       logger.info('BookRepositoryImpl: Success updated book ${book.title}');
-      logger.info('TagRepositoryImpl: Exiting updateBook');
+      logger.info('BookRepositoryImpl: Exiting updateBook');
       return Either.right(unit);
     } catch (e) {
       return Either.left(DatabaseWriteFailure(e.toString()));
@@ -441,8 +439,26 @@ class BookRepositoryImpl implements AbstractBookRepository {
   }
 
   @override
-  Future<Either<Failure, Book?>> getBookById({required BookIdPairs bookId}) {
-    // TODO: implement getBookById
-    throw UnimplementedError();
+  Future<Either<Failure, Book?>> getBookById({
+    required BookIdPairs bookId,
+  }) async {
+    logger.info('Entering getBookById with bookId: $bookId');
+    try {
+      final booksEither = await getBooks();
+      if (booksEither.isLeft()) {
+        return Either.left(
+          booksEither.getLeft().getOrElse(
+            () => DatabaseFailure('Failed to get books'),
+          ),
+        );
+      }
+      final books = booksEither.getRight().getOrElse(() => []);
+      final book = books.where((b) => b.idPairs == bookId).firstOrNull;
+      logger.info('Output: ${book?.title ?? 'null'}');
+      logger.info('Exiting getBookById');
+      return Either.right(book);
+    } catch (e) {
+      return Either.left(DatabaseReadFailure(e.toString()));
+    }
   }
 }
