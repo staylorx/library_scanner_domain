@@ -6,17 +6,16 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 class BookMetadataRepositoryImpl implements AbstractBookMetadataRepository {
   final AbstractBookApiService apiService;
   final AbstractImageService imageService;
-  final AbstractSettingsService settingsService;
 
   BookMetadataRepositoryImpl({
     required this.apiService,
     required this.imageService,
-    required this.settingsService,
   });
 
   @override
   Future<Either<Failure, BookMetadata?>> fetchBookByIsbn({
     required String isbn,
+    bool fetchCoverArt = true,
   }) async {
     final fetchEither = await apiService.fetchBookByIsbn(isbn: isbn);
     if (fetchEither.isLeft()) {
@@ -29,10 +28,6 @@ class BookMetadataRepositoryImpl implements AbstractBookMetadataRepository {
     if (bookModel == null || bookModel.coverImageUrl == null) {
       return Right(bookModel?.toBookMetadata());
     }
-
-    // Check if fetch cover art is enabled
-    final settingsEither = await settingsService.getFetchCoverArt();
-    final fetchCoverArt = settingsEither.getOrElse((failure) => true);
 
     if (!fetchCoverArt) {
       return Right(bookModel.toBookMetadata());

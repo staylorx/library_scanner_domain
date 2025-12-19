@@ -57,5 +57,4 @@ export 'value_objects/author_id_pair.dart';
 export 'services/barcode_scanner_service.dart';
 export 'services/database_service.dart';
 export 'services/image_service.dart';
-export 'services/settings_service.dart';
 export 'services/book_api_service.dart';
