@@ -29,7 +29,6 @@ void main() {
         );
         final bookRepository = BookRepositoryImpl(
           database: database,
-          isBookDuplicateUsecase: IsBookDuplicateUsecase(),
         );
 
         final getAuthorsUsecase = GetAuthorsUsecase(
@@ -48,7 +47,10 @@ void main() {
           authorRepository: authorRepository,
         );
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
-        final addBookUsecase = AddBookUsecase(bookRepository: bookRepository);
+        final addBookUsecase = AddBookUsecase(
+          bookRepository: bookRepository,
+          isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+        );
         final addTagUsecase = AddTagUsecase(
           tagRepository: TagRepositoryImpl(databaseService: database),
         );

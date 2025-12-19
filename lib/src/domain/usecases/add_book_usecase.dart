@@ -7,8 +7,12 @@ import 'package:logging/logging.dart';
 /// Use case for adding a new book to the repository.
 class AddBookUsecase {
   final AbstractBookRepository bookRepository;
+  final IsBookDuplicateUsecase isBookDuplicateUsecase;
 
-  AddBookUsecase({required this.bookRepository});
+  AddBookUsecase({
+    required this.bookRepository,
+    required this.isBookDuplicateUsecase,
+  });
 
   final logger = Logger('AddBookUsecase');
 
@@ -31,6 +35,34 @@ class AddBookUsecase {
     logger.info(
       'AddBookUsecase: Entering call with book: ${cleanedBook.title} (idPairs: ${cleanedBook.idPairs})',
     );
+
+    // Check for duplicates
+    final existingBooksEither = await bookRepository.getBooks();
+    if (existingBooksEither.isLeft()) {
+      return Left(
+        existingBooksEither.getLeft().getOrElse(
+          () => DatabaseFailure('Failed to check existing books'),
+        ),
+      );
+    }
+    final existingBooks = existingBooksEither.getRight().getOrElse(() => []);
+    final isDuplicate = existingBooks.any(
+      (existing) => isBookDuplicateUsecase
+          .call(bookA: cleanedBook, bookB: existing)
+          .getRight()
+          .getOrElse(() => false),
+    );
+    if (isDuplicate) {
+      logger.warning(
+        'AddBookUsecase: Duplicate book detected: ${cleanedBook.title}',
+      );
+      return Left(
+        ValidationFailure(
+          'A book with the same title, authors, and ID pairs already exists',
+        ),
+      );
+    }
+
     final addEither = await bookRepository.addBook(book: cleanedBook);
     return addEither.fold((failure) => Future.value(Left(failure)), (_) async {
       final getEither = await bookRepository.getBooks();

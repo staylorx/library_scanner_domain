@@ -6,13 +6,9 @@ import 'package:logging/logging.dart';
 
 class BookRepositoryImpl implements AbstractBookRepository {
   final SembastDatabase _database;
-  final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
-  BookRepositoryImpl({
-    required SembastDatabase database,
-    required IsBookDuplicateUsecase isBookDuplicateUsecase,
-  }) : _database = database,
-       _isBookDuplicateUsecase = isBookDuplicateUsecase;
+  BookRepositoryImpl({required SembastDatabase database})
+    : _database = database;
 
   final logger = Logger('BookRepositoryImpl');
 
@@ -169,33 +165,6 @@ class BookRepositoryImpl implements AbstractBookRepository {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
 
-      // Check for duplicates
-      final existingBooksEither = await getBooks();
-      if (existingBooksEither.isLeft()) {
-        return Either.left(
-          existingBooksEither.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to check existing books'),
-          ),
-        );
-      }
-      final existingBooks = existingBooksEither.getRight().getOrElse(() => []);
-      final isDuplicate = existingBooks.any(
-        (existing) => _isBookDuplicateUsecase
-            .call(bookA: book, bookB: existing)
-            .getRight()
-            .getOrElse(() => false),
-      );
-      if (isDuplicate) {
-        logger.warning(
-          'BookRepositoryImpl: Duplicate book detected: ${book.title}',
-        );
-        return Either.left(
-          ValidationFailure(
-            'A book with the same title, authors, and ID pairs already exists',
-          ),
-        );
-      }
-
       final key = book.key;
       final model = BookModel.fromEntity(book: book);
       await db.transaction((txn) async {
@@ -321,10 +290,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
       'BookRepositoryImpl: Entering _updateRelationshipsForBook with book: ${book.title}, isAdd: $isAdd',
     );
     try {
-      for (final authorName in book.authors.map((a) => a.name)) {
+      for (final author in book.authors) {
+        final authorId = author.key;
         final authorRecord = await _database.authorsStore.findFirst(
           db,
-          finder: Finder(filter: Filter.equals('name', authorName)),
+          finder: Finder(filter: Filter.equals('id', authorId)),
         );
         if (authorRecord != null) {
           final authorKey = authorRecord.key;
