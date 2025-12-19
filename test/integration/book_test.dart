@@ -24,9 +24,7 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
-        final bookRepository = BookRepositoryImpl(
-          database: database,
-        );
+        final bookRepository = BookRepositoryImpl(database: database);
 
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
         final getBookByIdPairUsecase = GetBookByIdPairUsecase(
@@ -34,7 +32,9 @@ void main() {
         );
         final addBookUsecase = AddBookUsecase(
           bookRepository: bookRepository,
-          isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+          isBookDuplicateUsecase: IsBookDuplicateUsecase(
+            bookRepository: bookRepository,
+          ),
         );
         final updateBookUsecase = UpdateBookUsecase(
           bookRepository: bookRepository,
