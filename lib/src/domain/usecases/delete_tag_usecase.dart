@@ -15,7 +15,7 @@ import 'package:logging/logging.dart';
 class DeleteTagUsecase {
   final AbstractTagRepository tagRepository;
 
-  DeleteTagUsecase(this.tagRepository);
+  DeleteTagUsecase({required this.tagRepository});
 
   final logger = Logger('DeleteTagUsecase');
 
