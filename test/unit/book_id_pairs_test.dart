@@ -8,8 +8,6 @@ void main() {
     late BookIdPair validIsbnPair;
     late BookIdPair validAsinPair;
     late BookIdPair validLocalPair;
-    late BookIdPairs book1;
-    late BookIdPairs book2;
 
     setUp(() {
       validIsbnPair = const BookIdPair(
@@ -24,9 +22,6 @@ void main() {
         idType: BookIdType.local,
         idCode: 'local-12345',
       );
-      // these books should never be equal
-      book1 = BookIdPairs([validIsbnPair, validAsinPair]);
-      book2 = BookIdPairs([validIsbnPair, validLocalPair]);
     });
 
     group('constructor and factory', () {
@@ -34,7 +29,7 @@ void main() {
         'creates BookIdPairs with given pairs',
         () {
           final pairs = [validIsbnPair, validAsinPair, validLocalPair];
-          final bookIdPairs = BookIdPairs(pairs);
+          final bookIdPairs = BookIdPairs(pairs: pairs);
 
           expect(bookIdPairs.idPairs, pairs);
         },
@@ -58,7 +53,7 @@ void main() {
         'adds a new pair to the collection',
         () {
           final initialPairs = [validIsbnPair];
-          final bookIdPairs = BookIdPairs(initialPairs);
+          final bookIdPairs = BookIdPairs(pairs: initialPairs);
 
           final newPairs = bookIdPairs.add(pair: validAsinPair);
 
@@ -72,7 +67,7 @@ void main() {
         'does not add duplicate pair to the collection',
         () {
           final initialPairs = [validIsbnPair];
-          final bookIdPairs = BookIdPairs(initialPairs);
+          final bookIdPairs = BookIdPairs(pairs: initialPairs);
 
           final newPairs = bookIdPairs.add(pair: validIsbnPair);
 
@@ -88,7 +83,7 @@ void main() {
         'removes an existing pair from the collection',
         () {
           final pairs = [validIsbnPair, validAsinPair];
-          final bookIdPairs = BookIdPairs(pairs);
+          final bookIdPairs = BookIdPairs(pairs: pairs);
 
           final newPairs = bookIdPairs.remove(pair: validIsbnPair);
 
@@ -102,7 +97,7 @@ void main() {
         'does not change collection when removing non-existent pair',
         () {
           final pairs = [validIsbnPair];
-          final bookIdPairs = BookIdPairs(pairs);
+          final bookIdPairs = BookIdPairs(pairs: pairs);
 
           final newPairs = bookIdPairs.remove(pair: validAsinPair);
 
@@ -116,7 +111,7 @@ void main() {
       test(
         'isEmpty returns true for empty collection',
         () {
-          final bookIdPairs = BookIdPairs([]);
+          final bookIdPairs = BookIdPairs(pairs: []);
 
           expect(bookIdPairs.isEmpty, true);
           expect(bookIdPairs.isNotEmpty, false);
@@ -128,7 +123,7 @@ void main() {
         'isNotEmpty returns true for non-empty collection',
         () {
           final pairs = [validIsbnPair];
-          final bookIdPairs = BookIdPairs(pairs);
+          final bookIdPairs = BookIdPairs(pairs: pairs);
 
           expect(bookIdPairs.isEmpty, false);
           expect(bookIdPairs.isNotEmpty, true);
@@ -144,8 +139,8 @@ void main() {
           final pairs1 = [validIsbnPair, validAsinPair];
           final pairs2 = [validIsbnPair, validAsinPair];
 
-          final bookIdPairs1 = BookIdPairs(pairs1);
-          final bookIdPairs2 = BookIdPairs(pairs2);
+          final bookIdPairs1 = BookIdPairs(pairs: pairs1);
+          final bookIdPairs2 = BookIdPairs(pairs: pairs2);
 
           expect(bookIdPairs1, bookIdPairs2);
         },
@@ -158,8 +153,8 @@ void main() {
           final pairs1 = [validIsbnPair];
           final pairs2 = [validAsinPair];
 
-          final bookIdPairs1 = BookIdPairs(pairs1);
-          final bookIdPairs2 = BookIdPairs(pairs2);
+          final bookIdPairs1 = BookIdPairs(pairs: pairs1);
+          final bookIdPairs2 = BookIdPairs(pairs: pairs2);
 
           expect(bookIdPairs1, isNot(bookIdPairs2));
         },

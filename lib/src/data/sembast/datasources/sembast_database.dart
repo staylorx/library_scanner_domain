@@ -4,7 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
-class SembastDatabase implements AbstractDatabaseService {
+class SembastDatabase implements AbstractSembastService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
   static const String _tagsStoreName = 'tags';

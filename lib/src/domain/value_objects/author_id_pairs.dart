@@ -5,18 +5,19 @@ import 'author_id_pair.dart';
 
 // AuthorIdPairs is a collection of AuthorIdPairs that uniquely identifies a Author
 class AuthorIdPairs extends IdPairSet<AuthorIdPair> with EquatableMixin {
-  AuthorIdPairs(Iterable<AuthorIdPair> pairs) : super(pairs.toList());
+  AuthorIdPairs({required Iterable<AuthorIdPair> pairs})
+    : super(pairs.toList());
 
   factory AuthorIdPairs.fromPairs(String id, Iterable<AuthorIdPair> pairs) {
-    return AuthorIdPairs(pairs);
+    return AuthorIdPairs(pairs: pairs);
   }
 
   AuthorIdPairs add({required AuthorIdPair pair}) {
-    return AuthorIdPairs([...idPairs, pair]);
+    return AuthorIdPairs(pairs: [...idPairs, pair]);
   }
 
   AuthorIdPairs remove({required AuthorIdPair pair}) {
-    return AuthorIdPairs(idPairs.where((p) => p != pair));
+    return AuthorIdPairs(pairs: idPairs.where((p) => p != pair));
   }
 
   bool get isEmpty => idPairs.isEmpty;

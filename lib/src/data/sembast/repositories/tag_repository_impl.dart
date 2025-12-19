@@ -3,9 +3,9 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
 class TagRepositoryImpl implements AbstractTagRepository {
-  final AbstractDatabaseService _databaseService;
+  final AbstractSembastService _databaseService;
 
-  TagRepositoryImpl({required AbstractDatabaseService databaseService})
+  TagRepositoryImpl({required AbstractSembastService databaseService})
     : _databaseService = databaseService;
 
   final logger = Logger('TagRepositoryImpl');

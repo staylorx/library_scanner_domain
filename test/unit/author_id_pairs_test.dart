@@ -8,8 +8,6 @@ void main() {
     late AuthorIdPair validIsniPair;
     late AuthorIdPair validOrcidPair;
     late AuthorIdPair validLocalPair;
-    late AuthorIdPairs author1;
-    late AuthorIdPairs author2;
 
     setUp(() {
       validIsniPair = const AuthorIdPair(
@@ -24,9 +22,6 @@ void main() {
         idType: AuthorIdType.local,
         idCode: 'local-12345',
       );
-      // these authors should never be equal
-      author1 = AuthorIdPairs([validIsniPair, validOrcidPair]);
-      author2 = AuthorIdPairs([validIsniPair, validLocalPair]);
     });
 
     group('constructor and factory', () {
@@ -34,7 +29,7 @@ void main() {
         'creates AuthorIdPairs with given pairs',
         () {
           final pairs = [validIsniPair, validOrcidPair, validLocalPair];
-          final authorIdPairs = AuthorIdPairs(pairs);
+          final authorIdPairs = AuthorIdPairs(pairs: pairs);
 
           expect(authorIdPairs.idPairs, pairs);
         },
@@ -58,7 +53,7 @@ void main() {
         'adds a new pair to the collection',
         () {
           final initialPairs = [validIsniPair];
-          final authorIdPairs = AuthorIdPairs(initialPairs);
+          final authorIdPairs = AuthorIdPairs(pairs: initialPairs);
 
           final newPairs = authorIdPairs.add(pair: validOrcidPair);
 
@@ -72,7 +67,7 @@ void main() {
         'does not add duplicate pair to the collection',
         () {
           final initialPairs = [validIsniPair];
-          final authorIdPairs = AuthorIdPairs(initialPairs);
+          final authorIdPairs = AuthorIdPairs(pairs: initialPairs);
 
           final newPairs = authorIdPairs.add(pair: validIsniPair);
 
@@ -88,7 +83,7 @@ void main() {
         'removes an existing pair from the collection',
         () {
           final pairs = [validIsniPair, validOrcidPair];
-          final authorIdPairs = AuthorIdPairs(pairs);
+          final authorIdPairs = AuthorIdPairs(pairs: pairs);
 
           final newPairs = authorIdPairs.remove(pair: validIsniPair);
 
@@ -102,7 +97,7 @@ void main() {
         'does not change collection when removing non-existent pair',
         () {
           final pairs = [validIsniPair];
-          final authorIdPairs = AuthorIdPairs(pairs);
+          final authorIdPairs = AuthorIdPairs(pairs: pairs);
 
           final newPairs = authorIdPairs.remove(pair: validOrcidPair);
 
@@ -116,7 +111,7 @@ void main() {
       test(
         'isEmpty returns true for empty collection',
         () {
-          final authorIdPairs = AuthorIdPairs([]);
+          final authorIdPairs = AuthorIdPairs(pairs: []);
 
           expect(authorIdPairs.isEmpty, true);
           expect(authorIdPairs.isNotEmpty, false);
@@ -128,7 +123,7 @@ void main() {
         'isNotEmpty returns true for non-empty collection',
         () {
           final pairs = [validIsniPair];
-          final authorIdPairs = AuthorIdPairs(pairs);
+          final authorIdPairs = AuthorIdPairs(pairs: pairs);
 
           expect(authorIdPairs.isEmpty, false);
           expect(authorIdPairs.isNotEmpty, true);
@@ -144,8 +139,8 @@ void main() {
           final pairs1 = [validIsniPair, validOrcidPair];
           final pairs2 = [validIsniPair, validOrcidPair];
 
-          final authorIdPairs1 = AuthorIdPairs(pairs1);
-          final authorIdPairs2 = AuthorIdPairs(pairs2);
+          final authorIdPairs1 = AuthorIdPairs(pairs: pairs1);
+          final authorIdPairs2 = AuthorIdPairs(pairs: pairs2);
 
           expect(authorIdPairs1, authorIdPairs2);
         },
@@ -158,8 +153,8 @@ void main() {
           final pairs1 = [validIsniPair];
           final pairs2 = [validOrcidPair];
 
-          final authorIdPairs1 = AuthorIdPairs(pairs1);
-          final authorIdPairs2 = AuthorIdPairs(pairs2);
+          final authorIdPairs1 = AuthorIdPairs(pairs: pairs1);
+          final authorIdPairs2 = AuthorIdPairs(pairs: pairs2);
 
           expect(authorIdPairs1, isNot(authorIdPairs2));
         },

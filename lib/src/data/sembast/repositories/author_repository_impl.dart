@@ -3,9 +3,9 @@ import 'package:fpdart/fpdart.dart';
 import 'package:logging/logging.dart';
 
 class AuthorRepositoryImpl implements AbstractAuthorRepository {
-  final AbstractDatabaseService _databaseService;
+  final AbstractSembastService _databaseService;
 
-  AuthorRepositoryImpl({required AbstractDatabaseService databaseService})
+  AuthorRepositoryImpl({required AbstractSembastService databaseService})
     : _databaseService = databaseService;
 
   final logger = Logger('AuthorRepositoryImpl');

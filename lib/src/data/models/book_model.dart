@@ -134,7 +134,7 @@ class BookModel {
   /// Converts this [BookModel] to a [Book] domain entity.
   Book toEntity({required List<Author> authors, required List<Tag> tags}) {
     return Book(
-      idPairs: BookIdPairs(idPairs),
+      idPairs: BookIdPairs(pairs: idPairs),
       title: title,
       originalTitle: originalTitle,
       description: description,

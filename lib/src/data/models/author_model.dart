@@ -69,7 +69,7 @@ class AuthorModel {
   /// Converts this [AuthorModel] to an [Author] domain entity.
   Author toEntity() {
     return Author(
-      idPairs: AuthorIdPairs(idPairs),
+      idPairs: AuthorIdPairs(pairs: idPairs),
       name: name,
       biography: biography,
     );

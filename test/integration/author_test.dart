@@ -61,7 +61,7 @@ void main() {
 
         // Add one record
         final newAuthor = Author(
-          idPairs: AuthorIdPairs([
+          idPairs: AuthorIdPairs(pairs: [
             AuthorIdPair(idType: AuthorIdType.local, idCode: 'Test Author'),
           ]),
           name: 'Test Author',
@@ -88,7 +88,7 @@ void main() {
 
         // Add another record
         final secondAuthor = Author(
-          idPairs: AuthorIdPairs([
+          idPairs: AuthorIdPairs(pairs: [
             AuthorIdPair(idType: AuthorIdType.local, idCode: 'Second Author'),
           ]),
           name: 'Second Author',
@@ -129,7 +129,7 @@ void main() {
           authors: [secondAuthor],
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
-          idPairs: BookIdPairs([
+          idPairs: BookIdPairs(pairs: [
             BookIdPair(idType: BookIdType.local, idCode: "test_book"),
           ]),
         );
