@@ -3,7 +3,7 @@ import 'package:id_pair_set/id_pair_set.dart';
 
 import 'book_id_pair.dart';
 
-// BookIdPairs is a collection of bookIdPairs that uniquely identifies a book
+/// A collection of [BookIdPair] instances that uniquely identifies a book.
 class BookIdPairs extends IdPairSet<BookIdPair> with EquatableMixin {
   BookIdPairs({required Iterable<BookIdPair> pairs}) : super(pairs.toList());
 

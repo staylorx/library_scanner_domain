@@ -61,9 +61,11 @@ void main() {
 
         // Add one record
         final newAuthor = Author(
-          idPairs: AuthorIdPairs(pairs: [
-            AuthorIdPair(idType: AuthorIdType.local, idCode: 'Test Author'),
-          ]),
+          idPairs: AuthorIdPairs(
+            pairs: [
+              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Test Author'),
+            ],
+          ),
           name: 'Test Author',
         );
         await addAuthorUsecase.call(author: newAuthor);
@@ -88,9 +90,11 @@ void main() {
 
         // Add another record
         final secondAuthor = Author(
-          idPairs: AuthorIdPairs(pairs: [
-            AuthorIdPair(idType: AuthorIdType.local, idCode: 'Second Author'),
-          ]),
+          idPairs: AuthorIdPairs(
+            pairs: [
+              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Second Author'),
+            ],
+          ),
           name: 'Second Author',
         );
         await addAuthorUsecase.call(author: secondAuthor);
@@ -129,9 +133,9 @@ void main() {
           authors: [secondAuthor],
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
-          idPairs: BookIdPairs(pairs: [
-            BookIdPair(idType: BookIdType.local, idCode: "test_book"),
-          ]),
+          idPairs: BookIdPairs(
+            pairs: [BookIdPair(idType: BookIdType.local, idCode: "test_book")],
+          ),
         );
         await addBookUsecase.call(book: book);
 

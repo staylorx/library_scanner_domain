@@ -61,33 +61,33 @@ void main() {
       // Create test books
       testBooks = [
         Book(
-          idPairs: BookIdPairs(pairs: [
-            BookIdPair(idType: BookIdType.local, idCode: '1'),
-          ]),
+          idPairs: BookIdPairs(
+            pairs: [BookIdPair(idType: BookIdType.local, idCode: '1')],
+          ),
           title: 'Dune',
           authors: [], // Simplified for test
           tags: [testTags[0], testTags[1]], // Fiction, Science Fiction
         ),
         Book(
-          idPairs: BookIdPairs(pairs: [
-            BookIdPair(idType: BookIdType.local, idCode: '2'),
-          ]),
+          idPairs: BookIdPairs(
+            pairs: [BookIdPair(idType: BookIdType.local, idCode: '2')],
+          ),
           title: 'The Hobbit',
           authors: [],
           tags: [testTags[0]], // Fiction
         ),
         Book(
-          idPairs: BookIdPairs(pairs: [
-            BookIdPair(idType: BookIdType.local, idCode: '3'),
-          ]),
+          idPairs: BookIdPairs(
+            pairs: [BookIdPair(idType: BookIdType.local, idCode: '3')],
+          ),
           title: 'Sherlock Holmes',
           authors: [],
           tags: [testTags[2]], // Mystery
         ),
         Book(
-          idPairs: BookIdPairs(pairs: [
-            BookIdPair(idType: BookIdType.local, idCode: '4'),
-          ]),
+          idPairs: BookIdPairs(
+            pairs: [BookIdPair(idType: BookIdType.local, idCode: '4')],
+          ),
           title: 'Pride and Prejudice',
           authors: [],
           tags: [testTags[0], testTags[3]], // Fiction, Romance
