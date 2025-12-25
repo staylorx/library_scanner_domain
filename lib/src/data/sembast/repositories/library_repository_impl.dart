@@ -17,14 +17,26 @@ Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
   final authors = <String, Author>{};
   for (final yamlAuthor in list) {
     try {
-      final name =
-          '${yamlAuthor['firstName'] as String} ${yamlAuthor['lastName'] as String}';
+      final name = yamlAuthor['name'] as String;
+      final idPairs = <AuthorIdPair>[];
+      if (yamlAuthor['id_pairs'] != null) {
+        final yamlIdPairs = yamlAuthor['id_pairs'] as List;
+        for (final yamlId in yamlIdPairs) {
+          final idType = AuthorIdType.values.firstWhere(
+            (e) => e.name == yamlId['id_type'],
+          );
+          idPairs.add(
+            AuthorIdPair(idType: idType, idCode: yamlId['id_code'] as String),
+          );
+        }
+      }
+      if (idPairs.isEmpty) {
+        idPairs.add(AuthorIdPair(idType: AuthorIdType.local, idCode: name));
+      }
       authors[name] = Author(
-        idPairs: AuthorIdPairs(
-          pairs: [AuthorIdPair(idType: AuthorIdType.local, idCode: name)],
-        ),
+        idPairs: AuthorIdPairs(pairs: idPairs),
         name: name,
-        biography: yamlAuthor['Biography'] as String?,
+        biography: yamlAuthor['biography'] as String?,
       );
     } catch (e) {
       rethrow;
@@ -78,11 +90,13 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
   for (int i = 0; i < list.length; i++) {
     final yamlBook = list[i];
     try {
-      final authorNames = List<String>.from(yamlBook['authorNames'] as List);
-      final tagNames = yamlBook['tagNames'] != null
-          ? List<String>.from(
-              yamlBook['tagNames'] as List,
-            ).map((name) => name.toLowerCase()).toList()
+      final authorNames = (yamlBook['authors'] as List)
+          .map((a) => a['name'] as String)
+          .toList();
+      final tagNames = yamlBook['tags'] != null
+          ? (yamlBook['tags'] as List)
+                .map((t) => (t['name'] as String).toLowerCase())
+                .toList()
           : <String>[];
       final bookAuthors = <Author>[];
       for (final name in authorNames) {
@@ -96,64 +110,19 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
       final bookTags = params.tags
           .where((t) => tagNames.contains(t.name))
           .toList();
-      final isbnRaw = yamlBook['isbn'];
       final idPairs = <BookIdPair>[];
-      if (isbnRaw != null) {
-        String isbn = isbnRaw is int ? isbnRaw.toString() : isbnRaw as String;
-        // Normalize
-        if (isbn.length == 9) {
-          isbn = '0$isbn';
-        } else if (isbn.length == 12) {
-          isbn = '0$isbn';
-        } else if (isbn.length == 10 || isbn.length == 13) {
-          // fine
-        } else {
-          // invalid, add local
+      if (yamlBook['id_pairs'] != null) {
+        final yamlIdPairs = yamlBook['id_pairs'] as List;
+        for (final yamlId in yamlIdPairs) {
+          final idType = BookIdType.values.firstWhere(
+            (e) => e.name == yamlId['id_type'],
+          );
           idPairs.add(
-            BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
+            BookIdPair(idType: idType, idCode: yamlId['id_code'] as String),
           );
-          final originalTitle = yamlBook['title'] as String;
-          books.add(
-            Book(
-              title: cleanBookTitle(originalTitle),
-              originalTitle: originalTitle,
-              authors: bookAuthors,
-              tags: bookTags,
-              publishedDate: yamlBook['year'] != null
-                  ? DateTime(yamlBook['year'] as int, 1, 1)
-                  : null,
-              idPairs: BookIdPairs(pairs: idPairs),
-            ),
-          );
-          continue;
         }
-        BookIdType bookIdType;
-        if (isbn.length == 10) {
-          bookIdType = BookIdType.isbn;
-        } else if (isbn.length == 13) {
-          bookIdType = BookIdType.isbn13;
-        } else {
-          // shouldn't happen
-          idPairs.add(
-            BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
-          );
-          final originalTitle = yamlBook['title'] as String;
-          books.add(
-            Book(
-              title: cleanBookTitle(originalTitle),
-              originalTitle: originalTitle,
-              authors: bookAuthors,
-              tags: bookTags,
-              publishedDate: yamlBook['year'] != null
-                  ? DateTime(yamlBook['year'] as int, 1, 1)
-                  : null,
-              idPairs: BookIdPairs(pairs: idPairs),
-            ),
-          );
-          continue;
-        }
-        idPairs.add(BookIdPair(idType: bookIdType, idCode: isbn));
-      } else {
+      }
+      if (idPairs.isEmpty) {
         // Ensure every book has at least one local ID to prevent crashes
         // when accessing book.idPairs.first in BookListScreen.
         idPairs.add(
@@ -161,15 +130,16 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
         );
       }
       final originalTitle = yamlBook['title'] as String;
+      final publishedDate = yamlBook['published_date'] != null
+          ? DateTime.parse(yamlBook['published_date'] as String)
+          : null;
       books.add(
         Book(
           title: cleanBookTitle(originalTitle),
           originalTitle: originalTitle,
           authors: bookAuthors,
           tags: bookTags,
-          publishedDate: yamlBook['year'] != null
-              ? DateTime(yamlBook['year'] as int, 1, 1)
-              : null,
+          publishedDate: publishedDate,
           idPairs: BookIdPairs(pairs: idPairs),
         ),
       );
@@ -332,13 +302,15 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       final allBookTagNames = <String>{};
       final allBookAuthorNames = <String>{};
       for (final yamlBook in yamlBooks) {
-        final tagNames = yamlBook['tagNames'] != null
-            ? List<String>.from(
-                yamlBook['tagNames'] as List,
-              ).map((name) => name.toLowerCase()).toSet()
+        final tagNames = yamlBook['tags'] != null
+            ? (yamlBook['tags'] as List)
+                  .map((t) => (t['name'] as String).toLowerCase())
+                  .toSet()
             : <String>{};
         allBookTagNames.addAll(tagNames);
-        final authorNames = List<String>.from(yamlBook['authorNames'] as List);
+        final authorNames = (yamlBook['authors'] as List)
+            .map((a) => a['name'] as String)
+            .toList();
         allBookAuthorNames.addAll(authorNames);
       }
 
@@ -533,13 +505,14 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
         data['description'] = library.description;
       }
       data['authors'] = library.authors.map((author) {
-        final names = author.name.split(' ');
         final Map<String, dynamic> authorMap = {
-          'firstName': names.first,
-          'lastName': names.length > 1 ? names.sublist(1).join(' ') : '',
+          'name': author.name,
+          'id_pairs': author.idPairs.idPairs
+              .map((id) => {'id_type': id.idType.name, 'id_code': id.idCode})
+              .toList(),
         };
         if (author.biography != null) {
-          authorMap['Biography'] = author.biography;
+          authorMap['biography'] = author.biography;
         }
         return authorMap;
       }).toList();

@@ -19,7 +19,10 @@ class ImportLibraryUsecase {
     logger.info(
       'ImportLibraryUsecase: Importing library from $filePath, overwrite: $overwrite',
     );
-    final result = await libraryRepository.importLibrary(filePath);
+    final result = await libraryRepository.importLibrary(
+      filePath,
+      overwrite: overwrite,
+    );
     result.fold(
       (failure) => logger.severe(
         'ImportLibraryUsecase: Failed to import library: ${failure.message}',
