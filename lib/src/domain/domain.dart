@@ -26,6 +26,8 @@ export 'usecases/delete_book_usecase.dart';
 export 'usecases/delete_tag_usecase.dart';
 export 'usecases/export_library_usecase.dart';
 export 'usecases/fetch_book_metadata_by_isbn_usecase.dart';
+export 'usecases/filter_authors_usecase.dart';
+export 'usecases/filter_books_usecase.dart';
 export 'usecases/get_author_by_name_usecase.dart';
 export 'usecases/get_authors_by_names_usecase.dart';
 export 'usecases/get_authors_usecase.dart';
@@ -44,6 +46,7 @@ export 'usecases/refetch_book_covers_usecase.dart';
 export 'usecases/update_author_usecase.dart';
 export 'usecases/update_book_usecase.dart';
 export 'usecases/update_tag_usecase.dart';
+export 'usecases/validate_book_usecase.dart';
 
 // Value Objects
 export 'value_objects/book_id_pair.dart';
@@ -54,7 +57,10 @@ export 'value_objects/author_id_type.dart';
 export 'value_objects/author_id_pair.dart';
 
 // Services
+export 'services/author_filtering_service.dart';
 export 'services/barcode_scanner_service.dart';
-export 'services/image_service.dart';
 export 'services/book_api_service.dart';
+export 'services/book_filtering_service.dart';
+export 'services/book_validation_service.dart';
 export 'services/database_service.dart';
+export 'services/image_service.dart';
