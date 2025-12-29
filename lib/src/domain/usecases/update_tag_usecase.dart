@@ -30,11 +30,12 @@ class UpdateTagUsecase {
   /// If an error occurs during the process, it logs the error and rethrows
   /// the exception to allow higher layers to handle it appropriately.
   ///
-  /// [tag] - The tag entity with updated information to be saved.
+  /// [oldTag] - The original tag entity.
+  /// [newTag] - The tag entity with updated information to be saved.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all tags on the right.
-  Future<Either<Failure, List<Tag>>> call({required Tag tag}) async {
-    logger.info('UpdateTagUsecase: Entering call with tag: ${tag.name}');
-    final updateEither = await tagRepository.updateTag(tag: tag);
+  Future<Either<Failure, List<Tag>>> call({required Tag oldTag, required Tag newTag}) async {
+    logger.info('UpdateTagUsecase: Entering call with oldTag: ${oldTag.name}, newTag: ${newTag.name}');
+    final updateEither = await tagRepository.updateTag(oldTag: oldTag, newTag: newTag);
     return updateEither.fold((failure) => Future.value(Left(failure)), (
       _,
     ) async {

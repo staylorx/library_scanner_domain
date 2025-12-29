@@ -7,6 +7,7 @@ enum SortDirection {
 
   final String displayName;
 
+  /// Returns the opposite sort direction.
   SortDirection get opposite {
     return this == SortDirection.ascending
         ? SortDirection.descending

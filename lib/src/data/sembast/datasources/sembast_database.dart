@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
+/// Database service using Sembast for local storage.
 class SembastDatabase implements AbstractSembastService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
@@ -13,6 +14,7 @@ class SembastDatabase implements AbstractSembastService {
 
   final String? testDbPath;
 
+  /// Creates a SembastDatabase instance.
   SembastDatabase({this.testDbPath});
 
   Database? _database;
@@ -37,6 +39,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Gets the database instance.
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _openDatabase();
@@ -51,6 +54,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Saves data to the specified collection.
   @override
   Future<Either<Failure, void>> save({
     required String collection,
@@ -59,9 +63,16 @@ class SembastDatabase implements AbstractSembastService {
     dynamic db,
   }) async {
     try {
+      logger.fine(
+        'SembastDatabase: Entering save, collection: $collection, id: $id',
+      );
       final client = db as DatabaseClient? ?? await database;
+      logger.fine('SembastDatabase: Got database client');
       final store = _getStore(collection);
+      logger.fine('SembastDatabase: Got store for collection $collection');
+      logger.fine('SembastDatabase: About to put record');
       await store.record(id).put(client, data);
+      logger.fine('SembastDatabase: Put completed successfully');
       return right(null);
     } catch (e) {
       logger.severe('Save failed: $e');
@@ -69,6 +80,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Retrieves data from the specified collection by id.
   @override
   Future<Either<Failure, Map<String, dynamic>?>> get({
     required String collection,
@@ -84,6 +96,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Retrieves all records from the collection with optional pagination.
   @override
   Future<Either<Failure, List<Map<String, dynamic>>>> getAll({
     required String collection,
@@ -102,6 +115,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Queries records from the collection with filters.
   @override
   Future<Either<Failure, List<Map<String, dynamic>>>> query({
     required String collection,
@@ -147,6 +161,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Deletes a record from the collection.
   @override
   Future<Either<Failure, void>> delete({
     required String collection,
@@ -163,6 +178,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Clears all records from the collection.
   @override
   Future<Either<Failure, void>> clear({required String collection}) async {
     try {
@@ -175,6 +191,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Clears all records from all collections.
   @override
   Future<Either<Failure, void>> clearAll() async {
     try {
@@ -188,6 +205,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Executes an operation within a database transaction.
   @override
   Future<Either<Failure, void>> transaction({
     required Future<void> Function(dynamic txn) operation,
@@ -203,6 +221,7 @@ class SembastDatabase implements AbstractSembastService {
     }
   }
 
+  /// Closes the database connection.
   @override
   Future<void> close() async {
     final db = _database;

@@ -3,7 +3,7 @@ import 'package:id_pair_set/id_pair_set.dart';
 
 import 'author_id_pair.dart';
 
-// AuthorIdPairs is a collection of AuthorIdPairs that uniquely identifies a Author
+/// A collection of author identifier pairs.
 class AuthorIdPairs extends IdPairSet<AuthorIdPair> with EquatableMixin {
   AuthorIdPairs({required Iterable<AuthorIdPair> pairs})
     : super(pairs.toList());

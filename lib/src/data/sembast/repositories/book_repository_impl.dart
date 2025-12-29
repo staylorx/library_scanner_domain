@@ -4,14 +4,17 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:sembast/sembast.dart';
 import 'package:logging/logging.dart';
 
+/// Implementation of book repository using Sembast.
 class BookRepositoryImpl implements AbstractBookRepository {
   final SembastDatabase _database;
 
+  /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({required SembastDatabase database})
     : _database = database;
 
   final logger = Logger('BookRepositoryImpl');
 
+  /// Retrieves books from the database with optional pagination.
   @override
   Future<Either<Failure, List<Book>>> getBooks({
     int? limit,
@@ -126,6 +129,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Retrieves a book by its ID pair.
   @override
   Future<Either<Failure, Book?>> getBookByIdPair({
     required BookIdPair bookIdPair,
@@ -152,6 +156,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Adds a new book to the database.
   @override
   Future<Either<Failure, Unit>> addBook({required Book book}) async {
     logger.info(
@@ -190,6 +195,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Updates an existing book in the database.
   @override
   Future<Either<Failure, Unit>> updateBook({required Book book}) async {
     logger.info(
@@ -244,6 +250,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Deletes a book from the database.
   @override
   Future<Either<Failure, Unit>> deleteBook({required Book book}) async {
     logger.info(
@@ -364,6 +371,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Retrieves books by a specific author.
   @override
   Future<Either<Failure, List<Book>>> getBooksByAuthor({
     required Author author,
@@ -387,6 +395,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Retrieves books by a specific tag.
   @override
   Future<Either<Failure, List<Book>>> getBooksByTag({required Tag tag}) async {
     logger.info(
@@ -408,6 +417,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Retrieves a book by its ID pairs.
   @override
   Future<Either<Failure, Book?>> getBookById({
     required BookIdPairs bookId,

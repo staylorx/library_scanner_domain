@@ -3,15 +3,18 @@ import 'dart:typed_data';
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
+/// Implementation of book metadata repository.
 class BookMetadataRepositoryImpl implements AbstractBookMetadataRepository {
   final AbstractBookApiService apiService;
   final AbstractImageService imageService;
 
+  /// Creates a BookMetadataRepositoryImpl instance.
   BookMetadataRepositoryImpl({
     required this.apiService,
     required this.imageService,
   });
 
+  /// Fetches book metadata by ISBN, optionally including cover art.
   @override
   Future<Either<Failure, BookMetadata?>> fetchBookByIsbn({
     required String isbn,

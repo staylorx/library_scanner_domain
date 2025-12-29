@@ -2,14 +2,17 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
+/// Implementation of tag repository using Sembast.
 class TagRepositoryImpl implements AbstractTagRepository {
   final AbstractSembastService _databaseService;
 
+  /// Creates a TagRepositoryImpl instance.
   TagRepositoryImpl({required AbstractSembastService databaseService})
     : _databaseService = databaseService;
 
   final logger = Logger('TagRepositoryImpl');
 
+  /// Retrieves all tags from the database.
   @override
   Future<Either<Failure, List<Tag>>> getTags() async {
     logger.info('TagRepositoryImpl: Entering getTags');
@@ -39,6 +42,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
     }
   }
 
+  /// Retrieves a tag by name.
   @override
   Future<Either<Failure, Tag?>> getTagByName({required String name}) async {
     logger.info('TagRepositoryImpl: Entering getTagByName with name: $name');
@@ -70,6 +74,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
     }
   }
 
+  /// Retrieves tags by a list of names.
   @override
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
@@ -113,6 +118,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
     }
   }
 
+  /// Adds a new tag to the database.
   @override
   Future<Either<Failure, Unit>> addTag({required Tag tag}) async {
     logger.info('TagRepositoryImpl: Entering addTag with tag: ${tag.name}');
@@ -133,26 +139,43 @@ class TagRepositoryImpl implements AbstractTagRepository {
     }
   }
 
+  /// Updates an existing tag in the database.
   @override
-  Future<Either<Failure, Unit>> updateTag({required Tag tag}) async {
-    logger.info('TagRepositoryImpl: Entering updateTag with tag: ${tag.name}');
+  Future<Either<Failure, Unit>> updateTag({required Tag oldTag, required Tag newTag}) async {
+    logger.info('TagRepositoryImpl: Entering updateTag with oldTag: ${oldTag.name}, newTag: ${newTag.name}');
     try {
-      final model = TagModel.fromEntity(tag);
+      // If name changed, delete the old tag
+      if (oldTag.name != newTag.name) {
+        logger.info('TagRepositoryImpl: Name changed, deleting old tag ${oldTag.name}');
+        final deleteResult = await _databaseService.delete(
+          collection: 'tags',
+          id: oldTag.name,
+        );
+        if (deleteResult.isLeft()) {
+          return Either.left(deleteResult.getLeft().getOrElse(() => DatabaseFailure('Delete failed')));
+        }
+      }
+      final model = TagModel.fromEntity(newTag);
+      logger.info('TagRepositoryImpl: Created model for tag ${newTag.name}, id: ${newTag.name}');
+      logger.info('TagRepositoryImpl: About to call database save');
       final result = await _databaseService.save(
         collection: 'tags',
-        id: tag.name,
+        id: newTag.name,
         data: model.toMap(),
       );
+      logger.info('TagRepositoryImpl: Database save completed');
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('TagRepositoryImpl: Success updated tag ${tag.name}');
+        logger.info('TagRepositoryImpl: Success updated tag ${newTag.name}');
         logger.info('TagRepositoryImpl: Exiting updateTag');
         return Either.right(unit);
       });
     } catch (e) {
+      logger.severe('TagRepositoryImpl: Exception in updateTag: $e');
       return Either.left(DatabaseWriteFailure(e.toString()));
     }
   }
 
+  /// Deletes a tag from the database.
   @override
   Future<Either<Failure, Unit>> deleteTag({required Tag tag}) async {
     logger.info('TagRepositoryImpl: Entering deleteTag with tag: ${tag.name}');

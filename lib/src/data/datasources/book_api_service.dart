@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
+/// Service for fetching book data from external APIs.
 class BookApiService implements AbstractBookApiService {
   final Dio _dio;
   final Logger _logger = Logger('BookApiService');

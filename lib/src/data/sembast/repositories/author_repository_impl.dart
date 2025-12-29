@@ -2,14 +2,17 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:logging/logging.dart';
 
+/// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl implements AbstractAuthorRepository {
   final AbstractSembastService _databaseService;
 
+  /// Creates an AuthorRepositoryImpl instance.
   AuthorRepositoryImpl({required AbstractSembastService databaseService})
     : _databaseService = databaseService;
 
   final logger = Logger('AuthorRepositoryImpl');
 
+  /// Retrieves all authors from the database.
   @override
   Future<Either<Failure, List<Author>>> getAuthors() async {
     logger.info('Entering getAuthors');
@@ -35,6 +38,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
+  /// Retrieves an author by name.
   @override
   Future<Either<Failure, Author?>> getAuthorByName({
     required String name,
@@ -68,6 +72,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
+  /// Retrieves authors by a list of names.
   @override
   Future<Either<Failure, List<Author>>> getAuthorsByNames({
     required List<String> names,
@@ -109,6 +114,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
+  /// Adds a new author to the database.
   @override
   Future<Either<Failure, Unit>> addAuthor({required Author author}) async {
     logger.info('Entering addAuthor with author: ${author.name}');
@@ -157,6 +163,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
+  /// Updates an existing author in the database.
   @override
   Future<Either<Failure, Unit>> updateAuthor({required Author author}) async {
     logger.info('Entering updateAuthor with author: ${author.name}');
@@ -246,6 +253,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
     }
   }
 
+  /// Deletes an author from the database.
   @override
   Future<Either<Failure, Unit>> deleteAuthor({required Author author}) async {
     logger.info('Entering deleteAuthor with author: ${author.name}');

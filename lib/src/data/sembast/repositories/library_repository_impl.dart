@@ -9,9 +9,10 @@ import 'package:sembast/sembast.dart';
 import 'package:logging/logging.dart';
 
 // Top-level functions for parsing
+/// Parses YAML data from a string.
 Future<dynamic> parseYamlData(String yamlString) async => loadYaml(yamlString);
 
-// Parse authors
+/// Parses authors from YAML data.
 Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
   final list = yamlAuthors as YamlList;
   final authors = <String, Author>{};
@@ -45,7 +46,7 @@ Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
   return authors;
 }
 
-// Parse tags
+/// Parses tags from YAML data.
 Future<List<Tag>> parseTags(dynamic yamlTags) async {
   final list = yamlTags as YamlList;
   final tagMap = <String, Tag>{};
@@ -63,7 +64,7 @@ Future<List<Tag>> parseTags(dynamic yamlTags) async {
   return tagMap.values.toList();
 }
 
-// Data class for book parsing parameters
+/// Parameters for book parsing.
 class BookParseParams {
   final dynamic yamlBooks;
   final Map<String, Author> authorMap;
@@ -72,7 +73,7 @@ class BookParseParams {
   BookParseParams(this.yamlBooks, this.authorMap, this.tags);
 }
 
-// Data class for book parsing result
+/// Result of book parsing.
 class BookParseResult {
   final List<Book> books;
   final List<String> errors;
@@ -81,7 +82,7 @@ class BookParseResult {
   BookParseResult(this.books, this.errors, this.missingAuthors);
 }
 
-// Parse books
+/// Parses books from YAML data with parameters.
 Future<BookParseResult> parseBooks(BookParseParams params) async {
   final list = params.yamlBooks as YamlList;
   final books = <Book>[];
@@ -150,7 +151,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
   return BookParseResult(books, errors, missingAuthors.toList());
 }
 
-// Data class for relationship update parameters
+/// Parameters for relationship updates.
 class RelationshipUpdateParams {
   final List<Book> books;
   final List<Author> authors;
@@ -159,7 +160,7 @@ class RelationshipUpdateParams {
   RelationshipUpdateParams(this.books, this.authors, this.tags);
 }
 
-// Data class for book processing parameters
+/// Parameters for book processing.
 class BookProcessingParams {
   final List<RecordSnapshot<dynamic, dynamic>> bookRecords;
   final List<RecordSnapshot<dynamic, dynamic>> authorRecords;
@@ -168,7 +169,7 @@ class BookProcessingParams {
   BookProcessingParams(this.bookRecords, this.authorRecords, this.tagRecords);
 }
 
-// Process books
+/// Processes book records into entities.
 Future<List<Book>> processBooks(BookProcessingParams params) async {
   final authorMap = <String, AuthorModel>{};
   for (final record in params.authorRecords) {
@@ -216,7 +217,7 @@ Future<List<Book>> processBooks(BookProcessingParams params) async {
   return books;
 }
 
-// Update relationships
+/// Updates relationships between entities.
 Future<RelationshipUpdateParams> updateRelationships(
   RelationshipUpdateParams params,
 ) async {
@@ -227,6 +228,7 @@ Future<RelationshipUpdateParams> updateRelationships(
   return params; // Return updated params
 }
 
+/// Implementation of library repository.
 class LibraryRepositoryImpl implements AbstractLibraryRepository {
   final logger = Logger('LibraryRepositoryImpl');
   final SembastDatabase _database;
@@ -238,6 +240,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
   }) : _database = database,
        _isBookDuplicateUsecase = isBookDuplicateUsecase; // Initialize database
 
+  /// Imports a library from a YAML file.
   @override
   Future<Either<Failure, ImportResult>> importLibrary(
     String filePath, {
@@ -491,6 +494,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
     }
   }
 
+  /// Exports a library to a YAML file.
   @override
   Future<Either<Failure, Unit>> exportLibrary({
     required String filePath,
@@ -547,6 +551,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
     }
   }
 
+  /// Clears all data from the library.
   @override
   Future<Either<Failure, Unit>> clearLibrary() async {
     logger.info('Entering clearLibrary');
