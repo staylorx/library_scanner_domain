@@ -28,7 +28,7 @@ class AddBookUsecase {
       );
     }
     final cleanedBook = book.copyWith(
-      title: cleanBookTitle(book.title),
+      title: cleanBookTitle(title: book.title),
       originalTitle: book.title,
       idPairs: idPairs,
     );

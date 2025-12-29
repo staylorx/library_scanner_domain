@@ -356,6 +356,8 @@ class BookRepositoryImpl implements AbstractBookRepository {
             id: tagModel.id,
             name: tagModel.name,
             description: tagModel.description,
+            color: tagModel.color,
+            slug: tagModel.slug,
             bookIdPairs: updatedBookIds,
           );
           await _database.tagsStore

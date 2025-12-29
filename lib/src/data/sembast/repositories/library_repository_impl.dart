@@ -52,16 +52,34 @@ Future<List<Tag>> parseTags(dynamic yamlTags) async {
   final tagMap = <String, Tag>{};
   for (final yamlTag in list) {
     try {
-      final name = (yamlTag['name'] as String).toLowerCase();
-      // Skip if already exists (case-insensitive duplicate)
-      if (!tagMap.containsKey(name)) {
-        tagMap[name] = Tag(name: name, color: yamlTag['color'] as String);
+      final name = yamlTag['name'] as String;
+      // Compute slug for uniqueness check
+      final slug = _computeSlug(name);
+      // Skip if already exists (slug-based duplicate)
+      if (!tagMap.containsKey(slug)) {
+        tagMap[slug] = Tag(name: name, color: yamlTag['color'] as String);
       }
     } catch (e) {
       rethrow;
     }
   }
   return tagMap.values.toList();
+}
+
+/// Computes a slug from a string.
+String _computeSlug(String input) {
+  var slug = input
+      .toLowerCase()
+      .replaceAll(
+        RegExp(r'[^a-z0-9\s-]'),
+        '',
+      ) // Remove special chars except spaces and hyphens
+      .replaceAll(RegExp(r'\s+'), '-') // Replace spaces with hyphens
+      .replaceAll(RegExp(r'-+'), '-') // Replace multiple hyphens with single
+      .trim();
+  if (slug.startsWith('-')) slug = slug.substring(1);
+  if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
+  return slug;
 }
 
 /// Parameters for book parsing.
@@ -95,9 +113,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
           .map((a) => a['name'] as String)
           .toList();
       final tagNames = yamlBook['tags'] != null
-          ? (yamlBook['tags'] as List)
-                .map((t) => (t['name'] as String).toLowerCase())
-                .toList()
+          ? (yamlBook['tags'] as List).map((t) => t['name'] as String).toList()
           : <String>[];
       final bookAuthors = <Author>[];
       for (final name in authorNames) {
@@ -108,8 +124,10 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
           missingAuthors.add(name);
         }
       }
+      // Match tags by slug
+      final tagSlugs = tagNames.map(_computeSlug).toSet();
       final bookTags = params.tags
-          .where((t) => tagNames.contains(t.name))
+          .where((t) => tagSlugs.contains(t.slug))
           .toList();
       final idPairs = <BookIdPair>[];
       if (yamlBook['id_pairs'] != null) {
@@ -136,7 +154,7 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
           : null;
       books.add(
         Book(
-          title: cleanBookTitle(originalTitle),
+          title: cleanBookTitle(title: originalTitle),
           originalTitle: originalTitle,
           authors: bookAuthors,
           tags: bookTags,
@@ -306,9 +324,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       final allBookAuthorNames = <String>{};
       for (final yamlBook in yamlBooks) {
         final tagNames = yamlBook['tags'] != null
-            ? (yamlBook['tags'] as List)
-                  .map((t) => (t['name'] as String).toLowerCase())
-                  .toSet()
+            ? (yamlBook['tags'] as List).map((t) => t['name'] as String).toSet()
             : <String>{};
         allBookTagNames.addAll(tagNames);
         final authorNames = (yamlBook['authors'] as List)
@@ -317,11 +333,13 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
         allBookAuthorNames.addAll(authorNames);
       }
 
-      // Get existing tag names
-      final existingTagNames = tags.map((t) => t.name).toSet();
+      // Get existing tag slugs
+      final existingTagSlugs = tags.map((t) => t.slug).toSet();
 
-      // Find missing tags
-      final missingTagNames = allBookTagNames.difference(existingTagNames);
+      // Find missing tags (by slug)
+      final missingTagNames = allBookTagNames
+          .where((name) => !existingTagSlugs.contains(_computeSlug(name)))
+          .toSet();
 
       // Add missing tags
       for (final tagName in missingTagNames) {

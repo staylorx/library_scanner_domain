@@ -14,6 +14,9 @@ class TagModel {
   /// The color associated with the tag.
   final String color;
 
+  /// The slug version of the name for uniqueness.
+  final String slug;
+
   /// The list of book identifiers associated with the tag.
   final List<String> bookIdPairs;
 
@@ -25,6 +28,7 @@ class TagModel {
     this.color = '#FF0000',
 
     /// Default red color
+    required this.slug,
     required this.bookIdPairs,
   });
 
@@ -35,6 +39,7 @@ class TagModel {
       name: map['name'] as String,
       description: map['description'] as String?,
       color: map['color'] as String? ?? '#FF0000',
+      slug: map['slug'] as String? ?? '',
       bookIdPairs: (map['bookIdPairs'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
@@ -46,6 +51,7 @@ class TagModel {
       'name': name,
       'description': description,
       'color': color,
+      'slug': slug,
       'bookIdPairs': bookIdPairs,
     };
   }
@@ -62,6 +68,7 @@ class TagModel {
       name: tag.name,
       description: tag.description,
       color: tag.color,
+      slug: tag.slug,
       bookIdPairs: [],
 
       /// New tags start with no books

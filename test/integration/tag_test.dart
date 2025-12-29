@@ -43,7 +43,7 @@ void main() {
       expect(result.isRight(), true);
       tags = result.fold((l) => [], (r) => r);
       expect(tags.length, 1);
-      expect(tags.first.name, 'test tag'); // lowercase
+      expect(tags.first.name, 'Test Tag');
 
       // Update the record
       final updatedTag = newTag.copyWith(
@@ -59,7 +59,7 @@ void main() {
       expect(updateResult.isRight(), true);
       final updatedTags = updateResult.fold((l) => [], (r) => r);
       expect(updatedTags.length, 1);
-      expect(updatedTags.first.name, 'updated test tag');
+      expect(updatedTags.first.name, 'Updated Test Tag');
       expect(updatedTags.first.description, 'Updated description');
 
       // Verify count remains the same
@@ -87,7 +87,7 @@ void main() {
       expect(result.isRight(), true);
       tags = result.fold((l) => [], (r) => r);
       expect(tags.length, 1);
-      expect(tags.first.name, 'second tag');
+      expect(tags.first.name, 'Second Tag');
 
       // Close database
       logger.info('Closing database');
@@ -123,7 +123,7 @@ void main() {
       expect(failure.runtimeType, ValidationFailure);
       expect(
         failure!.message,
-        'A tag with the name "unique tag" already exists.',
+        'A tag with the slug "unique-tag" already exists.',
       );
 
       // Close database

@@ -5,8 +5,8 @@
 /// Handles case insensitivity and capitalizes the moved article.
 /// Currently supports English articles by default. For other languages, provide custom articles.
 /// Note: Original title should be saved separately for preservation.
-String cleanBookTitle(
-  String title, {
+String cleanBookTitle({
+  required String title,
   List<String> articles = const ['the ', 'a ', 'an '],
 }) {
   final lowerTitle = title.toLowerCase();

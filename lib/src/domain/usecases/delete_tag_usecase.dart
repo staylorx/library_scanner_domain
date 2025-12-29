@@ -32,7 +32,7 @@ class DeleteTagUsecase {
   /// If an error occurs during the process, it logs the error and rethrows
   /// the exception to allow higher layers to handle it appropriately.
   ///
-  /// [id] - The unique identifier of the tag to be deleted.
+  /// [name] - The name of the tag to be deleted.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all tags on the right.
   Future<Either<Failure, List<Tag>>> call({required String name}) async {
     logger.info('DeleteTagUsecase: Entering call with name: $name');

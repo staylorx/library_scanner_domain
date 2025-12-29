@@ -3,7 +3,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 /// Utility functions for ISBN handling and validation.
 
 /// Determines the BookIdType for an ISBN based on its length.
-BookIdType? getIsbnIdType(String isbn) {
+BookIdType? getIsbnIdType({required String isbn}) {
   if (isbn.length == 10) {
     return BookIdType.isbn;
   } else if (isbn.length == 13) {
@@ -14,7 +14,7 @@ BookIdType? getIsbnIdType(String isbn) {
 }
 
 /// Validates an ISBN-10 string using regex and checksum.
-bool isValidISBN10(String code) {
+bool isValidISBN10({required String code}) {
   if (!RegExp(r'^\d{9}[\dX]$').hasMatch(code)) return false;
   int sum = 0;
   for (int i = 0; i < 9; i++) {
@@ -30,7 +30,7 @@ bool isValidISBN10(String code) {
 }
 
 /// Validates an ISBN-13 string using regex and checksum.
-bool isValidISBN13(String code) {
+bool isValidISBN13({required String code}) {
   if (!RegExp(r'^\d{13}$').hasMatch(code)) return false;
   int sum = 0;
   for (int i = 0; i < 12; i++) {

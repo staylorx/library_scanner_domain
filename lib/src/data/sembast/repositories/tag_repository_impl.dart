@@ -12,6 +12,22 @@ class TagRepositoryImpl implements AbstractTagRepository {
 
   final logger = Logger('TagRepositoryImpl');
 
+  /// Computes a slug from a string.
+  String _computeSlug(String input) {
+    var slug = input
+        .toLowerCase()
+        .replaceAll(
+          RegExp(r'[^a-z0-9\s-]'),
+          '',
+        ) // Remove special chars except spaces and hyphens
+        .replaceAll(RegExp(r'\s+'), '-') // Replace spaces with hyphens
+        .replaceAll(RegExp(r'-+'), '-') // Replace multiple hyphens with single
+        .trim();
+    if (slug.startsWith('-')) slug = slug.substring(1);
+    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
+    return slug;
+  }
+
   /// Retrieves all tags from the database.
   @override
   Future<Either<Failure, List<Tag>>> getTags() async {
@@ -47,9 +63,11 @@ class TagRepositoryImpl implements AbstractTagRepository {
   Future<Either<Failure, Tag?>> getTagByName({required String name}) async {
     logger.info('TagRepositoryImpl: Entering getTagByName with name: $name');
     try {
+      // Compute slug from the input name for lookup
+      final slug = _computeSlug(name);
       final result = await _databaseService.query(
         collection: 'tags',
-        filter: {'name': name},
+        filter: {'slug': slug},
       );
       return result.fold((failure) => Either.left(failure), (records) {
         if (records.isEmpty) {
@@ -79,19 +97,23 @@ class TagRepositoryImpl implements AbstractTagRepository {
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
   }) async {
-    logger.info('TagRepositoryImpl: Entering getTagsByNames with ids: $names');
+    logger.info(
+      'TagRepositoryImpl: Entering getTagsByNames with names: $names',
+    );
     try {
       if (names.isEmpty) {
-        logger.info('TagRepositoryImpl: ids is empty, returning empty list');
+        logger.info('TagRepositoryImpl: names is empty, returning empty list');
         logger.info('TagRepositoryImpl: Output: []');
         logger.info('TagRepositoryImpl: Exiting getTagsByNames');
         return Either.right([]);
       }
 
+      // Compute slugs for the names
+      final slugs = names.map(_computeSlug).toList();
       final result = await _databaseService.query(
         collection: 'tags',
         filter: {
-          'name': {'\$in': names},
+          'slug': {'\$in': slugs},
         },
       );
       return result.fold((failure) => Either.left(failure), (records) {
@@ -123,23 +145,26 @@ class TagRepositoryImpl implements AbstractTagRepository {
   Future<Either<Failure, Unit>> addTag({required Tag tag}) async {
     logger.info('TagRepositoryImpl: Entering addTag with tag: ${tag.name}');
     try {
-      // Check if a tag with the same name already exists
-      final existingTagEither = await getTagByName(name: tag.name);
-      if (existingTagEither.isLeft()) {
+      // Check if a tag with the same slug already exists
+      final queryResult = await _databaseService.query(
+        collection: 'tags',
+        filter: {'slug': tag.slug},
+      );
+      if (queryResult.isLeft()) {
         return Either.left(
-          existingTagEither.getLeft().getOrElse(
+          queryResult.getLeft().getOrElse(
             () => DatabaseFailure('Failed to check existing tag'),
           ),
         );
       }
-      final existingTag = existingTagEither.getRight().getOrElse(() => null);
-      if (existingTag != null) {
+      final records = queryResult.getRight().getOrElse(() => []);
+      if (records.isNotEmpty) {
         logger.info(
-          'TagRepositoryImpl: Tag with name ${tag.name} already exists',
+          'TagRepositoryImpl: Tag with slug ${tag.slug} already exists',
         );
         return Either.left(
           ValidationFailure(
-            'A tag with the name "${tag.name}" already exists.',
+            'A tag with the slug "${tag.slug}" already exists.',
           ),
         );
       }

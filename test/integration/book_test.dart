@@ -86,7 +86,7 @@ void main() {
         expect(books.length, 1);
         expect(books.first.title, 'New Test Book');
         expect(books.first.authors.first.name, 'Test Author');
-        expect(books.first.tags.first.name, 'test tag');
+        expect(books.first.tags.first.name, 'Test Tag');
 
         // Edit the record
         final updatedBook = newBook.copyWith(title: 'Updated Test Book');
