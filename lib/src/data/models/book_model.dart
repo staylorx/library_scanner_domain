@@ -160,7 +160,7 @@ class BookModel {
       originalTitle: book.originalTitle,
       description: book.description,
       authorIds: book.authors.map((a) => a.key).toList(),
-      tagIds: book.tags.map((t) => t.name).toList(),
+      tagIds: book.tags.map((t) => t.id).toList(),
       publishedDate: book.publishedDate,
       coverImage: book.coverImage,
       coverImageUrl: null, // Entity doesn't have URL

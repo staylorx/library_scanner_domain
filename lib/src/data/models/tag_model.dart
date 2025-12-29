@@ -2,8 +2,8 @@ import '../../domain/entities/tag.dart';
 
 /// A data model representing a tag with its metadata.
 class TagModel {
-  /// The unique identifier for the tag, if assigned.
-  final String? id;
+  /// The unique identifier for the tag.
+  final String id;
 
   /// The name of the tag.
   final String name;
@@ -19,7 +19,7 @@ class TagModel {
 
   /// Creates a [TagModel] instance.
   const TagModel({
-    this.id,
+    required this.id,
     required this.name,
     this.description,
     this.color = '#FF0000',
@@ -31,7 +31,7 @@ class TagModel {
   /// Creates a [TagModel] from a map representation.
   factory TagModel.fromMap({required Map<String, dynamic> map}) {
     return TagModel(
-      id: map['id'] as String?,
+      id: map['id'] as String? ?? map['name'] as String,
       name: map['name'] as String,
       description: map['description'] as String?,
       color: map['color'] as String? ?? '#FF0000',
@@ -42,7 +42,7 @@ class TagModel {
   /// Converts this [TagModel] to a map representation.
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id,
+      'id': id,
       'name': name,
       'description': description,
       'color': color,
@@ -52,13 +52,13 @@ class TagModel {
 
   /// Converts this [TagModel] to a [Tag] domain entity.
   Tag toEntity() {
-    return Tag(name: name, description: description, color: color);
+    return Tag(id: id, name: name, description: description, color: color);
   }
 
   /// Creates a [TagModel] from a [Tag] domain entity.
   factory TagModel.fromEntity(Tag tag) {
     return TagModel(
-      id: tag.name,
+      id: tag.id,
       name: tag.name,
       description: tag.description,
       color: tag.color,

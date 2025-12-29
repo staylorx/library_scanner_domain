@@ -8,6 +8,9 @@ abstract class AbstractTagRepository {
     required List<String> names,
   });
   Future<Either<Failure, Unit>> addTag({required Tag tag});
-  Future<Either<Failure, Unit>> updateTag({required Tag oldTag, required Tag newTag});
+  Future<Either<Failure, Unit>> updateTag({
+    required Tag oldTag,
+    required Tag newTag,
+  });
   Future<Either<Failure, Unit>> deleteTag({required Tag tag});
 }

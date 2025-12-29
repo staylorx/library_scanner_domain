@@ -67,7 +67,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
         for (final tagId in tagIds) {
           final records = await _database.tagsStore.find(
             db,
-            finder: Finder(filter: Filter.equals('name', tagId)),
+            finder: Finder(filter: Filter.equals('id', tagId)),
           );
           tagRecords.addAll(records);
         }
@@ -331,10 +331,10 @@ class BookRepositoryImpl implements AbstractBookRepository {
               .put(db, updatedAuthorModel.toMap());
         }
       }
-      for (final tagName in book.tags.map((t) => t.name)) {
+      for (final tagId in book.tags.map((t) => t.id)) {
         final tagRecord = await _database.tagsStore.findFirst(
           db,
-          finder: Finder(filter: Filter.equals('name', tagName)),
+          finder: Finder(filter: Filter.equals('id', tagId)),
         );
         if (tagRecord != null) {
           final tagKey = tagRecord.key;
@@ -405,7 +405,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
       final booksEither = await getBooks(); // Get all books
       return booksEither.map((allBooks) {
         final booksByTag = allBooks
-            .where((book) => book.tags.any((t) => t.name == tag.name))
+            .where((book) => book.tags.any((t) => t.id == tag.id))
             .toList();
         logger.info(
           'BookRepositoryImpl: Found ${booksByTag.length} books for tag ${tag.name}',

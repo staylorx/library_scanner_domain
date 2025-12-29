@@ -94,5 +94,42 @@ void main() {
       await database.close();
       logger.info('Test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
+
+    test('Duplicate Tag Name Test', () async {
+      final logger = Logger('DuplicateTagTest');
+      logger.info('Starting duplicate tag test');
+
+      final database = SembastDatabase(testDbPath: null);
+      logger.info('Database instance created');
+      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      logger.info('Database cleared');
+
+      final tagRepository = TagRepositoryImpl(databaseService: database);
+      final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
+
+      // Add first tag
+      final tag = Tag(name: 'Unique Tag', description: 'A unique tag');
+      var result = await addTagUsecase.call(tag: tag);
+      expect(result.isRight(), true);
+
+      // Try to add duplicate tag
+      final duplicateTag = Tag(
+        name: 'Unique Tag',
+        description: 'Another description',
+      );
+      result = await addTagUsecase.call(tag: duplicateTag);
+      expect(result.isLeft(), true);
+      final failure = result.fold((l) => l, (r) => null);
+      expect(failure.runtimeType, ValidationFailure);
+      expect(
+        failure!.message,
+        'A tag with the name "unique tag" already exists.',
+      );
+
+      // Close database
+      logger.info('Closing database');
+      await database.close();
+      logger.info('Duplicate tag test completed');
+    }, timeout: Timeout(Duration(seconds: 60)));
   });
 }
