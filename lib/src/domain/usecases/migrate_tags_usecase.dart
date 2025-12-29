@@ -64,10 +64,7 @@ class MigrateTagsUsecase {
 
       // Update tags with new IDs
       for (final updatedTag in updatedTags) {
-        final updateEither = await tagRepository.updateTag(
-          oldTag: tags.firstWhere((t) => t.name == updatedTag.name),
-          newTag: updatedTag,
-        );
+        final updateEither = await tagRepository.updateTag(tag: updatedTag);
         if (updateEither.isLeft()) {
           return Left(
             updateEither.getLeft().getOrElse(

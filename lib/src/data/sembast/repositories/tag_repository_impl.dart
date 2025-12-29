@@ -187,17 +187,14 @@ class TagRepositoryImpl implements AbstractTagRepository {
 
   /// Updates an existing tag in the database.
   @override
-  Future<Either<Failure, Unit>> updateTag({
-    required Tag oldTag,
-    required Tag newTag,
-  }) async {
+  Future<Either<Failure, Unit>> updateTag({required Tag tag}) async {
     logger.info(
-      'TagRepositoryImpl: Entering updateTag with oldTag: ${oldTag.name}, newTag: ${newTag.name}',
+      'TagRepositoryImpl: Entering updateTag with tag: ${tag.name}',
     );
     try {
-      final model = TagModel.fromEntity(newTag);
+      final model = TagModel.fromEntity(tag);
       logger.info(
-        'TagRepositoryImpl: Created model for tag ${newTag.name}, id: ${model.id}',
+        'TagRepositoryImpl: Created model for tag ${tag.name}, id: ${model.id}',
       );
       logger.info('TagRepositoryImpl: About to call database save');
       final result = await _databaseService.save(
@@ -207,7 +204,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
       );
       logger.info('TagRepositoryImpl: Database save completed');
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('TagRepositoryImpl: Success updated tag ${newTag.name}');
+        logger.info('TagRepositoryImpl: Success updated tag ${tag.name}');
         logger.info('TagRepositoryImpl: Exiting updateTag');
         return Either.right(unit);
       });

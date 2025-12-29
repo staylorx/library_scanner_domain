@@ -51,10 +51,7 @@ void main() {
         description: 'Updated description',
       );
       logger.info('About to call updateTagUsecase');
-      final updateResult = await updateTagUsecase.call(
-        oldTag: newTag,
-        newTag: updatedTag,
-      );
+      final updateResult = await updateTagUsecase.call(tag: updatedTag);
       logger.info('updateTagUsecase call completed');
       expect(updateResult.isRight(), true);
       final updatedTags = updateResult.fold((l) => [], (r) => r);
