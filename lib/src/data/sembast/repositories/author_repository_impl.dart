@@ -142,7 +142,9 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             );
           }
           logger.info('Author saved, registering ID pairs');
-          final registerResult = _idRegistryService.registerAuthorIdPairs(author.idPairs);
+          final registerResult = _idRegistryService.registerAuthorIdPairs(
+            author.idPairs,
+          );
           if (registerResult.isLeft()) {
             throw Exception(
               registerResult.getLeft().getOrElse(
@@ -211,7 +213,9 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             logger.info(
               'Unregistering old ID pairs for existing author ${existing.name}',
             );
-            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(existing.idPairs);
+            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
+              existing.idPairs,
+            );
             if (unregisterResult.isLeft()) {
               throw Exception(
                 unregisterResult.getLeft().getOrElse(
@@ -266,8 +270,12 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               ),
             );
           }
-          logger.info('Registering new ID pairs for updated author ${author.name}');
-          final registerResult = _idRegistryService.registerAuthorIdPairs(author.idPairs);
+          logger.info(
+            'Registering new ID pairs for updated author ${author.name}',
+          );
+          final registerResult = _idRegistryService.registerAuthorIdPairs(
+            author.idPairs,
+          );
           if (registerResult.isLeft()) {
             throw Exception(
               registerResult.getLeft().getOrElse(
@@ -275,7 +283,9 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               ),
             );
           }
-          logger.info('ID pairs registered, adding relationships for updated author ${author.name}');
+          logger.info(
+            'ID pairs registered, adding relationships for updated author ${author.name}',
+          );
           final addResult = await _updateRelationshipsForAuthor(
             authorName: author.name,
             isAdd: true,
@@ -323,7 +333,9 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           final records = queryResult.getRight().getOrElse(() => []);
           if (records.isNotEmpty) {
             logger.info('Unregistering ID pairs for author ${author.name}');
-            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(author.idPairs);
+            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
+              author.idPairs,
+            );
             if (unregisterResult.isLeft()) {
               throw Exception(
                 unregisterResult.getLeft().getOrElse(

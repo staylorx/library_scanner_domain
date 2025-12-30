@@ -33,9 +33,7 @@ class UpdateTagUsecase {
   /// [tag] - The tag entity with updated information to be saved.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all tags on the right.
   Future<Either<Failure, List<Tag>>> call({required Tag tag}) async {
-    logger.info(
-      'UpdateTagUsecase: Entering call with tag: ${tag.name}',
-    );
+    logger.info('UpdateTagUsecase: Entering call with tag: ${tag.name}');
     final updateEither = await tagRepository.updateTag(tag: tag);
     return updateEither.fold((failure) => Future.value(Left(failure)), (
       _,

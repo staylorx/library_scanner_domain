@@ -179,7 +179,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
       await db.transaction((txn) async {
         await _database.booksStore.record(key).put(txn, model.toMap());
         logger.info('Registering book ID pairs');
-        final registerResult = _idRegistryService.registerBookIdPairs(book.idPairs);
+        final registerResult = _idRegistryService.registerBookIdPairs(
+          book.idPairs,
+        );
         if (registerResult.isLeft()) {
           throw registerResult.getLeft().getOrElse(
             () => RegistryFailure('Register ID pairs failed'),
@@ -227,7 +229,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
       await db.transaction((txn) async {
         if (existing != null) {
           logger.info('Unregistering old book ID pairs');
-          final unregisterResult = _idRegistryService.unregisterBookIdPairs(existing.idPairs);
+          final unregisterResult = _idRegistryService.unregisterBookIdPairs(
+            existing.idPairs,
+          );
           if (unregisterResult.isLeft()) {
             throw unregisterResult.getLeft().getOrElse(
               () => RegistryFailure('Unregister ID pairs failed'),
@@ -248,7 +252,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
         final model = BookModel.fromEntity(book: book);
         await _database.booksStore.record(key).put(txn, model.toMap());
         logger.info('Registering new book ID pairs');
-        final registerResult = _idRegistryService.registerBookIdPairs(book.idPairs);
+        final registerResult = _idRegistryService.registerBookIdPairs(
+          book.idPairs,
+        );
         if (registerResult.isLeft()) {
           throw registerResult.getLeft().getOrElse(
             () => RegistryFailure('Register ID pairs failed'),
@@ -291,7 +297,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
       await db.transaction((txn) async {
         final key = book.key;
         logger.info('Unregistering book ID pairs');
-        final unregisterResult = _idRegistryService.unregisterBookIdPairs(book.idPairs);
+        final unregisterResult = _idRegistryService.unregisterBookIdPairs(
+          book.idPairs,
+        );
         if (unregisterResult.isLeft()) {
           throw unregisterResult.getLeft().getOrElse(
             () => RegistryFailure('Unregister ID pairs failed'),

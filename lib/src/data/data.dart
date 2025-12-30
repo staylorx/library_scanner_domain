@@ -1,11 +1,11 @@
 // Datasources
 export 'sembast/datasources/sembast_database.dart';
-export 'datasources/book_api_service.dart';
+export 'book_api/datasources/book_api_service.dart';
 
 // Models
-export 'models/author_model.dart';
-export 'models/book_model.dart';
-export 'models/tag_model.dart';
+export 'core/models/author_model.dart';
+export 'core/models/book_model.dart';
+export 'core/models/tag_model.dart';
 
 // Repositories
 export 'sembast/repositories/author_repository_impl.dart';
@@ -15,4 +15,8 @@ export 'sembast/repositories/library_repository_impl.dart';
 export 'sembast/repositories/tag_repository_impl.dart';
 
 // Services
-export 'sembast/services/abstract_sembast_service.dart';
+export '../domain/services/abstract_sembast_service.dart';
+export 'core/services/author_filtering_service.dart';
+export 'core/services/author_validation_service.dart';
+export 'core/services/book_filtering_service.dart';
+export 'core/services/book_validation_service.dart';

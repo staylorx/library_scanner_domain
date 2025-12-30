@@ -1,4 +1,4 @@
-import '../../domain/entities/tag.dart';
+import '../../../domain/entities/tag.dart';
 
 /// A data model representing a tag with its metadata.
 class TagModel {

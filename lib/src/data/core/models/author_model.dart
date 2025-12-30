@@ -1,7 +1,7 @@
-import '../../domain/entities/author.dart';
-import '../../domain/value_objects/author_id_pair.dart';
-import '../../domain/value_objects/author_id_pairs.dart';
-import '../../domain/value_objects/author_id_type.dart';
+import '../../../domain/entities/author.dart';
+import '../../../domain/value_objects/author_id_pair.dart';
+import '../../../domain/value_objects/author_id_pairs.dart';
+import '../../../domain/value_objects/author_id_type.dart';
 import 'package:uuid/uuid.dart';
 
 /// A data model representing an author with their metadata and identifiers.

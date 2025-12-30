@@ -188,9 +188,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
   /// Updates an existing tag in the database.
   @override
   Future<Either<Failure, Unit>> updateTag({required Tag tag}) async {
-    logger.info(
-      'TagRepositoryImpl: Entering updateTag with tag: ${tag.name}',
-    );
+    logger.info('TagRepositoryImpl: Entering updateTag with tag: ${tag.name}');
     try {
       final model = TagModel.fromEntity(tag);
       logger.info(

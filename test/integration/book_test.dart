@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:library_scanner_domain/src/data/id_registry/services/id_registry_service.dart';
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
 import 'package:logging/logging.dart';
