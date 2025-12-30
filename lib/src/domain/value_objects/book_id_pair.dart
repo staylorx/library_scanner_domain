@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:id_pair_set/id_pair_set.dart';
+import 'package:id_registry/id_registry.dart';
 
 import '../../utils/isbn_utils.dart';
 import 'book_id_type.dart';

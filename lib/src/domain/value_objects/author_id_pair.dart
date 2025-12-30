@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:id_pair_set/id_pair_set.dart';
+import 'package:id_registry/id_registry.dart';
 
 import 'author_id_type.dart';
 

@@ -1,7 +1,7 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
-import 'package:id_pair_set/id_pair_set.dart';
+import 'package:id_registry/id_registry.dart';
 import 'package:logging/logging.dart';
 
 /// Use case for checking if two books are duplicates.

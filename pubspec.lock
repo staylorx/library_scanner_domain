@@ -178,13 +178,21 @@ packages:
     source: hosted
     version: "0.1.7"
   id_pair_set:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: id_pair_set
-      sha256: a6c8d179d0a608d7a391dda6156d3dbd8b12c259c08723a95119732631f7df6b
+      sha256: dc0c78168eee57b2b7eb74bfac89251b18ce13ac064460997a2a376f249fda3d
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.3"
+    version: "1.2.1"
+  id_registry:
+    dependency: "direct main"
+    description:
+      name: id_registry
+      sha256: "7d05ba09d18c20164f11316f506ee107e3fff021e92c59a1ec1b9c42448169c1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   io:
     dependency: transitive
     description:

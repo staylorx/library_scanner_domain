@@ -1,6 +1,6 @@
 name: library_scanner_domain
 description: The domain layer for the library scanner app.
-version: 1.1.2
+version: 1.1.0
 # repository: https://github.com/my_org/my_repo
 publish_to: none
 
@@ -18,7 +18,7 @@ dependencies:
   yaml: ^3.1.2
   yaml_writer: ^2.1.0
   uuid: ^4.5.2
-  id_pair_set: ^1.0.0
+  id_registry: ^1.0.1
   sembast: ^3.8.5+2
   logging: ^1.2.0
 
