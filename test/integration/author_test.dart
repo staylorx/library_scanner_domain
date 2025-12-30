@@ -24,10 +24,15 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
+        final idRegistryService = IdRegistryService();
         final authorRepository = AuthorRepositoryImpl(
           databaseService: database,
+          idRegistryService: idRegistryService,
         );
-        final bookRepository = BookRepositoryImpl(database: database);
+        final bookRepository = BookRepositoryImpl(
+          database: database,
+          idRegistryService: idRegistryService,
+        );
 
         final getAuthorsUsecase = GetAuthorsUsecase(
           authorRepository: authorRepository,

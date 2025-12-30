@@ -56,3 +56,11 @@ class DatabaseConstraintFailure extends Failure {
 class DataParsingFailure extends Failure {
   const DataParsingFailure(super.message);
 }
+
+class DuplicateIdFailure extends Failure {
+  const DuplicateIdFailure(super.message);
+}
+
+class RegistryFailure extends Failure {
+  const RegistryFailure(super.message);
+}

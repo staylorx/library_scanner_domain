@@ -24,7 +24,11 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
-        final bookRepository = BookRepositoryImpl(database: database);
+        final idRegistryService = IdRegistryService();
+        final bookRepository = BookRepositoryImpl(
+          database: database,
+          idRegistryService: idRegistryService,
+        );
 
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
         final getBookByIdPairUsecase = GetBookByIdPairUsecase(
@@ -43,7 +47,10 @@ void main() {
           bookRepository: bookRepository,
         );
         final addAuthorUsecase = AddAuthorUsecase(
-          authorRepository: AuthorRepositoryImpl(databaseService: database),
+          authorRepository: AuthorRepositoryImpl(
+            databaseService: database,
+            idRegistryService: idRegistryService,
+          ),
         );
         final addTagUsecase = AddTagUsecase(
           tagRepository: TagRepositoryImpl(databaseService: database),

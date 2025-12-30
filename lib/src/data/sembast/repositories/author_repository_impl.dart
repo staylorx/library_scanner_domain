@@ -5,10 +5,14 @@ import 'package:logging/logging.dart';
 /// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl implements AbstractAuthorRepository {
   final AbstractSembastService _databaseService;
+  final AbstractIdRegistryService _idRegistryService;
 
   /// Creates an AuthorRepositoryImpl instance.
-  AuthorRepositoryImpl({required AbstractSembastService databaseService})
-    : _databaseService = databaseService;
+  AuthorRepositoryImpl({
+    required AbstractSembastService databaseService,
+    required AbstractIdRegistryService idRegistryService,
+  }) : _databaseService = databaseService,
+       _idRegistryService = idRegistryService;
 
   final logger = Logger('AuthorRepositoryImpl');
 
@@ -137,7 +141,16 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               ),
             );
           }
-          logger.info('Author saved, updating relationships');
+          logger.info('Author saved, registering ID pairs');
+          final registerResult = _idRegistryService.registerAuthorIdPairs(author.idPairs);
+          if (registerResult.isLeft()) {
+            throw Exception(
+              registerResult.getLeft().getOrElse(
+                () => RegistryFailure('Register ID pairs failed'),
+              ),
+            );
+          }
+          logger.info('ID pairs registered, updating relationships');
           final updateResult = await _updateRelationshipsForAuthor(
             authorName: author.name,
             isAdd: true,
@@ -171,16 +184,41 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for updateAuthor');
-          final existingEither = await getAuthorByName(name: author.name);
-          if (existingEither.isLeft()) {
+          // Find existing author by key (since name might have changed)
+          final existingResult = await _databaseService.query(
+            collection: 'authors',
+            filter: {'id': author.key},
+            db: txn,
+          );
+          if (existingResult.isLeft()) {
             throw Exception(
-              existingEither.getLeft().getOrElse(
-                () => DatabaseFailure('Failed to get existing author'),
+              existingResult.getLeft().getOrElse(
+                () => DatabaseFailure('Failed to query existing author'),
               ),
             );
           }
-          final existing = existingEither.getRight().getOrElse(() => null);
+          final records = existingResult.getRight().getOrElse(() => []);
+          Author? existing;
+          if (records.isNotEmpty) {
+            try {
+              final model = AuthorModel.fromMap(map: records.first);
+              existing = model.toEntity();
+            } catch (e) {
+              throw Exception(DataParsingFailure(e.toString()));
+            }
+          }
           if (existing != null) {
+            logger.info(
+              'Unregistering old ID pairs for existing author ${existing.name}',
+            );
+            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(existing.idPairs);
+            if (unregisterResult.isLeft()) {
+              throw Exception(
+                unregisterResult.getLeft().getOrElse(
+                  () => RegistryFailure('Unregister ID pairs failed'),
+                ),
+              );
+            }
             logger.info(
               'Removing relationships for existing author ${existing.name}',
             );
@@ -228,7 +266,16 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               ),
             );
           }
-          logger.info('Adding relationships for updated author ${author.name}');
+          logger.info('Registering new ID pairs for updated author ${author.name}');
+          final registerResult = _idRegistryService.registerAuthorIdPairs(author.idPairs);
+          if (registerResult.isLeft()) {
+            throw Exception(
+              registerResult.getLeft().getOrElse(
+                () => RegistryFailure('Register ID pairs failed'),
+              ),
+            );
+          }
+          logger.info('ID pairs registered, adding relationships for updated author ${author.name}');
           final addResult = await _updateRelationshipsForAuthor(
             authorName: author.name,
             isAdd: true,
@@ -275,6 +322,15 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           }
           final records = queryResult.getRight().getOrElse(() => []);
           if (records.isNotEmpty) {
+            logger.info('Unregistering ID pairs for author ${author.name}');
+            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(author.idPairs);
+            if (unregisterResult.isLeft()) {
+              throw Exception(
+                unregisterResult.getLeft().getOrElse(
+                  () => RegistryFailure('Unregister ID pairs failed'),
+                ),
+              );
+            }
             logger.info('Deleting author record ${author.name}');
             // Assuming the first record's id is the key, but since we don't have keys, we need to delete by name
             // But delete takes id, and name is the key for authors

@@ -8,7 +8,7 @@ class ValidateBookUsecase {
   ValidateBookUsecase({required this.bookValidationService});
 
   /// Validates a book entity
-  Either<Failure, Book> call(Book book) {
+  Future<Either<Failure, Book>> call(Book book) async {
     return bookValidationService.validate(book);
   }
 }

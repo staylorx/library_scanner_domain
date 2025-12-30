@@ -7,10 +7,14 @@ import 'package:logging/logging.dart';
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl implements AbstractBookRepository {
   final SembastDatabase _database;
+  final AbstractIdRegistryService _idRegistryService;
 
   /// Creates a BookRepositoryImpl instance.
-  BookRepositoryImpl({required SembastDatabase database})
-    : _database = database;
+  BookRepositoryImpl({
+    required SembastDatabase database,
+    required AbstractIdRegistryService idRegistryService,
+  }) : _database = database,
+       _idRegistryService = idRegistryService;
 
   final logger = Logger('BookRepositoryImpl');
 
@@ -174,6 +178,13 @@ class BookRepositoryImpl implements AbstractBookRepository {
       final model = BookModel.fromEntity(book: book);
       await db.transaction((txn) async {
         await _database.booksStore.record(key).put(txn, model.toMap());
+        logger.info('Registering book ID pairs');
+        final registerResult = _idRegistryService.registerBookIdPairs(book.idPairs);
+        if (registerResult.isLeft()) {
+          throw registerResult.getLeft().getOrElse(
+            () => RegistryFailure('Register ID pairs failed'),
+          );
+        }
         final result = await _updateRelationshipsForBook(
           key: key,
           book: book,
@@ -215,6 +226,13 @@ class BookRepositoryImpl implements AbstractBookRepository {
       }
       await db.transaction((txn) async {
         if (existing != null) {
+          logger.info('Unregistering old book ID pairs');
+          final unregisterResult = _idRegistryService.unregisterBookIdPairs(existing.idPairs);
+          if (unregisterResult.isLeft()) {
+            throw unregisterResult.getLeft().getOrElse(
+              () => RegistryFailure('Unregister ID pairs failed'),
+            );
+          }
           final result = await _updateRelationshipsForBook(
             key: existing.key,
             book: existing,
@@ -229,6 +247,13 @@ class BookRepositoryImpl implements AbstractBookRepository {
         }
         final model = BookModel.fromEntity(book: book);
         await _database.booksStore.record(key).put(txn, model.toMap());
+        logger.info('Registering new book ID pairs');
+        final registerResult = _idRegistryService.registerBookIdPairs(book.idPairs);
+        if (registerResult.isLeft()) {
+          throw registerResult.getLeft().getOrElse(
+            () => RegistryFailure('Register ID pairs failed'),
+          );
+        }
         final result = await _updateRelationshipsForBook(
           key: key,
           book: book,
@@ -265,6 +290,13 @@ class BookRepositoryImpl implements AbstractBookRepository {
       }
       await db.transaction((txn) async {
         final key = book.key;
+        logger.info('Unregistering book ID pairs');
+        final unregisterResult = _idRegistryService.unregisterBookIdPairs(book.idPairs);
+        if (unregisterResult.isLeft()) {
+          throw unregisterResult.getLeft().getOrElse(
+            () => RegistryFailure('Unregister ID pairs failed'),
+          );
+        }
         await _database.booksStore.record(key).delete(txn);
         final result = await _updateRelationshipsForBook(
           key: key,
