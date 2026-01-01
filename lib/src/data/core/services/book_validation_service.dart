@@ -3,10 +3,11 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of book validation service
 class BookValidationService implements AbstractBookValidationService {
-  final AbstractIdRegistryService _idRegistryService;
+  final AbstractBookIdRegistryService _idRegistryService;
 
-  BookValidationService({required AbstractIdRegistryService idRegistryService})
-    : _idRegistryService = idRegistryService;
+  BookValidationService({
+    required AbstractBookIdRegistryService idRegistryService,
+  }) : _idRegistryService = idRegistryService;
 
   @override
   Future<Either<Failure, Book>> validate(Book book) async {

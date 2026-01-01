@@ -3,10 +3,10 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of author validation service
 class AuthorValidationService implements AbstractAuthorValidationService {
-  final AbstractIdRegistryService _idRegistryService;
+  final AbstractAuthorIdRegistryService _idRegistryService;
 
   AuthorValidationService({
-    required AbstractIdRegistryService idRegistryService,
+    required AbstractAuthorIdRegistryService idRegistryService,
   }) : _idRegistryService = idRegistryService;
 
   @override

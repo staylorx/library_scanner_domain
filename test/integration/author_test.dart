@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:library_scanner_domain/src/data/id_registry/services/id_registry_service.dart';
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
 import 'package:logging/logging.dart';
@@ -25,14 +24,15 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
-        final idRegistryService = IdRegistryService();
+        final authorIdRegistryService = AuthorIdRegistryService();
+        final bookIdRegistryService = BookIdRegistryService();
         final authorRepository = AuthorRepositoryImpl(
           databaseService: database,
-          idRegistryService: idRegistryService,
+          idRegistryService: authorIdRegistryService,
         );
         final bookRepository = BookRepositoryImpl(
           database: database,
-          idRegistryService: idRegistryService,
+          idRegistryService: bookIdRegistryService,
         );
 
         final getAuthorsUsecase = GetAuthorsUsecase(
@@ -43,6 +43,7 @@ void main() {
         );
         final addAuthorUsecase = AddAuthorUsecase(
           authorRepository: authorRepository,
+          idRegistryService: authorIdRegistryService,
         );
         final updateAuthorUsecase = UpdateAuthorUsecase(
           authorRepository: authorRepository,
@@ -64,19 +65,11 @@ void main() {
         // Check for zero records
         var result = await getAuthorsUsecase();
         expect(result.isRight(), true);
-        var authors = result.fold((l) => [], (r) => r);
+        List<Author> authors = result.fold((l) => [], (r) => r);
         expect(authors.isEmpty, true);
 
         // Add one record
-        final newAuthor = Author(
-          idPairs: AuthorIdPairs(
-            pairs: [
-              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Test Author'),
-            ],
-          ),
-          name: 'Test Author',
-        );
-        await addAuthorUsecase.call(author: newAuthor);
+        await addAuthorUsecase.call(name: 'Test Author');
 
         // Verify count
         result = await getAuthorsUsecase();
@@ -84,6 +77,7 @@ void main() {
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
         expect(authors.first.name, 'Test Author');
+        final newAuthor = authors.first;
 
         // Edit the record
         final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
@@ -97,21 +91,16 @@ void main() {
         expect(authors.first.name, 'Updated Test Author');
 
         // Add another record
-        final secondAuthor = Author(
-          idPairs: AuthorIdPairs(
-            pairs: [
-              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Second Author'),
-            ],
-          ),
-          name: 'Second Author',
-        );
-        await addAuthorUsecase.call(author: secondAuthor);
+        await addAuthorUsecase.call(name: 'Second Author');
 
         // Verify count increases
         result = await getAuthorsUsecase();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 2);
+        final secondAuthor = authors.firstWhere(
+          (a) => a.name == 'Second Author',
+        );
 
         // Get author by name
         var authorResult = await getAuthorByNameUsecase(

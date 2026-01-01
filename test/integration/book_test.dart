@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:library_scanner_domain/src/data/id_registry/services/id_registry_service.dart';
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
 import 'package:logging/logging.dart';
@@ -25,10 +24,11 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
-        final idRegistryService = IdRegistryService();
+        final authorIdRegistryService = AuthorIdRegistryService();
+        final bookIdRegistryService = BookIdRegistryService();
         final bookRepository = BookRepositoryImpl(
           database: database,
-          idRegistryService: idRegistryService,
+          idRegistryService: bookIdRegistryService,
         );
 
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
@@ -47,11 +47,16 @@ void main() {
         final deleteBookUsecase = DeleteBookUsecase(
           bookRepository: bookRepository,
         );
+        final authorRepository = AuthorRepositoryImpl(
+          databaseService: database,
+          idRegistryService: authorIdRegistryService,
+        );
         final addAuthorUsecase = AddAuthorUsecase(
-          authorRepository: AuthorRepositoryImpl(
-            databaseService: database,
-            idRegistryService: idRegistryService,
-          ),
+          authorRepository: authorRepository,
+          idRegistryService: authorIdRegistryService,
+        );
+        final getAuthorsUsecase = GetAuthorsUsecase(
+          authorRepository: authorRepository,
         );
         final addTagUsecase = AddTagUsecase(
           tagRepository: TagRepositoryImpl(databaseService: database),
@@ -64,15 +69,11 @@ void main() {
         expect(books.isEmpty, true);
 
         // Add one record
-        final newAuthor = Author(
-          idPairs: AuthorIdPairs(
-            pairs: [
-              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Test Author'),
-            ],
-          ),
-          name: 'Test Author',
-        );
-        await addAuthorUsecase.call(author: newAuthor);
+        await addAuthorUsecase.call(name: 'Test Author');
+        final authorsResult = await getAuthorsUsecase();
+        expect(authorsResult.isRight(), true);
+        final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
+        final newAuthor = authors.first;
         final newTag = Tag(name: 'Test Tag');
         await addTagUsecase.call(tag: newTag);
 
@@ -120,15 +121,13 @@ void main() {
         expect(book!.title, 'Updated Test Book');
 
         // Add another record
-        final secondAuthor = Author(
-          idPairs: AuthorIdPairs(
-            pairs: [
-              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Second Author'),
-            ],
-          ),
-          name: 'Second Author',
+        await addAuthorUsecase.call(name: 'Second Author');
+        final authorsResult2 = await getAuthorsUsecase();
+        expect(authorsResult2.isRight(), true);
+        final List<Author> authors2 = authorsResult2.fold((l) => [], (r) => r);
+        final secondAuthor = authors2.firstWhere(
+          (a) => a.name == 'Second Author',
         );
-        await addAuthorUsecase.call(author: secondAuthor);
         final secondTag = Tag(name: 'Second Tag');
         await addTagUsecase.call(tag: secondTag);
 

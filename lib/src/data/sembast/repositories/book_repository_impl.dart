@@ -7,12 +7,12 @@ import 'package:logging/logging.dart';
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl implements AbstractBookRepository {
   final SembastDatabase _database;
-  final AbstractIdRegistryService _idRegistryService;
+  final AbstractBookIdRegistryService _idRegistryService;
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
     required SembastDatabase database,
-    required AbstractIdRegistryService idRegistryService,
+    required AbstractBookIdRegistryService idRegistryService,
   }) : _database = database,
        _idRegistryService = idRegistryService;
 
