@@ -35,7 +35,7 @@ Future<Map<String, Author>> parseAuthors(dynamic yamlAuthors) async {
         idPairs.add(AuthorIdPair(idType: AuthorIdType.local, idCode: name));
       }
       authors[name] = Author(
-        idPairs: AuthorIdPairs(pairs: idPairs),
+        businessIds: idPairs,
         name: name,
         biography: yamlAuthor['biography'] as String?,
       );
@@ -57,7 +57,11 @@ Future<List<Tag>> parseTags(dynamic yamlTags) async {
       final slug = _computeSlug(name);
       // Skip if already exists (slug-based duplicate)
       if (!tagMap.containsKey(slug)) {
-        tagMap[slug] = Tag(name: name, color: yamlTag['color'] as String);
+        tagMap[slug] = Tag(
+          id: TagHandle.generate(),
+          name: name,
+          color: yamlTag['color'] as String,
+        );
       }
     } catch (e) {
       rethrow;
@@ -154,12 +158,12 @@ Future<BookParseResult> parseBooks(BookParseParams params) async {
           : null;
       books.add(
         Book(
+          businessIds: idPairs,
           title: cleanBookTitle(title: originalTitle),
           originalTitle: originalTitle,
           authors: bookAuthors,
           tags: bookTags,
           publishedDate: publishedDate,
-          idPairs: BookIdPairs(pairs: idPairs),
         ),
       );
     } catch (e) {
@@ -343,7 +347,9 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
 
       // Add missing tags
       for (final tagName in missingTagNames) {
-        tags.add(Tag(name: tagName, color: "#808080"));
+        tags.add(
+          Tag(id: TagHandle.generate(), name: tagName, color: "#808080"),
+        );
       }
 
       // Find missing authors
@@ -355,11 +361,9 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       // Add missing authors
       for (final authorName in missingAuthorNames) {
         final author = Author(
-          idPairs: AuthorIdPairs(
-            pairs: [
-              AuthorIdPair(idType: AuthorIdType.local, idCode: authorName),
-            ],
-          ),
+          businessIds: [
+            AuthorIdPair(idType: AuthorIdType.local, idCode: authorName),
+          ],
           name: authorName,
           biography: null,
         );
@@ -463,7 +467,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       await db.transaction((txn) async {
         // Save authors
         for (final author in authors) {
-          final authorModel = AuthorModel.fromEntity(author);
+          final authorModel = AuthorModel.fromEntity(author, author.name);
           await _database.authorsStore
               .record(author.name)
               .put(txn, authorModel.toMap());
@@ -479,8 +483,8 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
 
         // Save books
         for (final book in books) {
-          final bookKey = book.key;
-          final bookModel = BookModel.fromEntity(book: book);
+          final bookKey = const Uuid().v4();
+          final bookModel = BookModel.fromEntity(book, bookKey);
           await _database.booksStore
               .record(bookKey)
               .put(txn, bookModel.toMap());
@@ -529,7 +533,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       data['authors'] = library.authors.map((author) {
         final Map<String, dynamic> authorMap = {
           'name': author.name,
-          'id_pairs': author.idPairs.idPairs
+          'id_pairs': author.businessIds
               .map((id) => {'id_type': id.idType.name, 'id_code': id.idCode})
               .toList(),
         };
@@ -550,7 +554,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
         if (book.publishedDate != null) {
           bookMap['year'] = book.publishedDate!.year;
         }
-        final isbnIds = book.idPairs.idPairs.where(
+        final isbnIds = book.businessIds.where(
           (id) => id.idType == BookIdType.isbn,
         );
         if (isbnIds.isNotEmpty) {

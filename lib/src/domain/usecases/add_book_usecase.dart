@@ -18,22 +18,23 @@ class AddBookUsecase {
 
   /// Adds a new book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
-    BookIdPairs idPairs = book.idPairs;
-    if (idPairs.isEmpty) {
+    List<BookIdPair> businessIds = book.businessIds;
+    if (businessIds.isEmpty) {
       // Generate a unique local ID
       final localId =
           'local-${DateTime.now().millisecondsSinceEpoch}-${book.title.hashCode}';
-      idPairs = idPairs.add(
-        pair: BookIdPair(idType: BookIdType.local, idCode: localId),
-      );
+      businessIds = [
+        ...businessIds,
+        BookIdPair(idType: BookIdType.local, idCode: localId),
+      ];
     }
     final cleanedBook = book.copyWith(
       title: cleanBookTitle(title: book.title),
       originalTitle: book.title,
-      idPairs: idPairs,
+      businessIds: businessIds,
     );
     logger.info(
-      'AddBookUsecase: Entering call with book: ${cleanedBook.title} (idPairs: ${cleanedBook.idPairs})',
+      'AddBookUsecase: Entering call with book: ${cleanedBook.title} (businessIds: ${cleanedBook.businessIds})',
     );
 
     // Check for duplicates
@@ -69,7 +70,7 @@ class AddBookUsecase {
       logger.info('AddBookUsecase: Success in call');
       return getEither.fold((failure) => Left(failure), (books) {
         logger.info(
-          'AddBookUsecase: Output: ${books.map((b) => '${b.title} (idPairs: ${b.idPairs})').toList()}',
+          'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
         logger.info('AddBookUsecase: Exiting call');
         return Right(books);

@@ -79,7 +79,10 @@ void main() {
 
         // Edit the record
         final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
-        await updateAuthorUsecase.call(author: updatedAuthor);
+        await updateAuthorUsecase.call(
+          handle: AuthorHandle(updatedAuthor.name),
+          author: updatedAuthor,
+        );
 
         // Verify count remains the same
         result = await getAuthorsUsecase();
@@ -120,17 +123,17 @@ void main() {
         expect(authors.first.name, 'Second Author');
 
         // Add a book with the remaining author
-        final tag = Tag(name: 'Test Tag');
+        final tag = Tag(id: TagHandle.generate(), name: 'Test Tag');
         await addTagUsecase.call(tag: tag);
 
         final book = Book(
+          businessIds: [
+            BookIdPair(idType: BookIdType.local, idCode: "test_book"),
+          ],
           title: 'Test Book',
           authors: [secondAuthor],
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
-          idPairs: BookIdPairs(
-            pairs: [BookIdPair(idType: BookIdType.local, idCode: "test_book")],
-          ),
         );
         await addBookUsecase.call(book: book);
 

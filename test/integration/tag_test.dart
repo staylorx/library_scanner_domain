@@ -35,7 +35,11 @@ void main() {
       expect(tags.isEmpty, true);
 
       // Add one record
-      final newTag = Tag(name: 'Test Tag', description: 'A test tag');
+      final newTag = Tag(
+        id: TagHandle.generate(),
+        name: 'Test Tag',
+        description: 'A test tag',
+      );
       await addTagUsecase.call(tag: newTag);
 
       // Verify count
@@ -67,7 +71,11 @@ void main() {
       expect(tags.first.description, 'Updated description');
 
       // Add another record
-      final secondTag = Tag(name: 'Second Tag', color: '#00FF00');
+      final secondTag = Tag(
+        id: TagHandle.generate(),
+        name: 'Second Tag',
+        color: '#00FF00',
+      );
       await addTagUsecase.call(tag: secondTag);
 
       // Verify count increases
@@ -105,12 +113,17 @@ void main() {
       final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 
       // Add first tag
-      final tag = Tag(name: 'Unique Tag', description: 'A unique tag');
+      final tag = Tag(
+        id: TagHandle.generate(),
+        name: 'Unique Tag',
+        description: 'A unique tag',
+      );
       var result = await addTagUsecase.call(tag: tag);
       expect(result.isRight(), true);
 
       // Try to add duplicate tag
       final duplicateTag = Tag(
+        id: TagHandle.generate(),
         name: 'Unique Tag',
         description: 'Another description',
       );

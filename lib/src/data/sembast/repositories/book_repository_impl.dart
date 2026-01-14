@@ -133,6 +133,61 @@ class BookRepositoryImpl implements AbstractBookRepository {
     }
   }
 
+  /// Retrieves a book by its handle.
+  @override
+  Future<Either<Failure, Book?>> getBookByHandle({
+    required BookHandle handle,
+  }) async {
+    logger.info('Entering getBookByHandle with handle: $handle');
+    try {
+      Database db;
+      try {
+        db = await _database.database;
+      } catch (e) {
+        return Either.left(DatabaseConnectionFailure(e.toString()));
+      }
+      final record = await _database.booksStore.findFirst(
+        db,
+        finder: Finder(filter: Filter.equals('id', handle.toString())),
+      );
+      if (record == null) {
+        return Either.right(null);
+      }
+      final model = BookModel.fromMap(map: record.value);
+      // Need to load authors and tags
+      final authorIds = model.authorIds;
+      final tagIds = model.tagIds;
+      final authors = <Author>[];
+      final tags = <Tag>[];
+      for (final authorId in authorIds) {
+        final authorRecord = await _database.authorsStore.findFirst(
+          db,
+          finder: Finder(filter: Filter.equals('id', authorId)),
+        );
+        if (authorRecord != null) {
+          final authorModel = AuthorModel.fromMap(map: authorRecord.value);
+          authors.add(authorModel.toEntity());
+        }
+      }
+      for (final tagId in tagIds) {
+        final tagRecord = await _database.tagsStore.findFirst(
+          db,
+          finder: Finder(filter: Filter.equals('id', tagId)),
+        );
+        if (tagRecord != null) {
+          final tagModel = TagModel.fromMap(map: tagRecord.value);
+          tags.add(tagModel.toEntity());
+        }
+      }
+      final book = model.toEntity(authors: authors, tags: tags);
+      logger.fine('Output: ${book.title}');
+      logger.fine('Exiting getBookByHandle');
+      return Either.right(book);
+    } catch (e) {
+      return Either.left(DatabaseReadFailure(e.toString()));
+    }
+  }
+
   /// Retrieves a book by its ID pair.
   @override
   Future<Either<Failure, Book?>> getBookByIdPair({
@@ -150,7 +205,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
       }
       final books = booksEither.getRight().getOrElse(() => []);
       final book = books
-          .where((b) => b.idPairs.idPairs.any((p) => p == bookIdPair))
+          .where((b) => b.businessIds.any((p) => p == bookIdPair))
           .firstOrNull;
       logger.fine('Output: ${book?.title ?? 'null'}');
       logger.fine('Exiting getBookByIdPair');
@@ -162,7 +217,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
 
   /// Adds a new book to the database.
   @override
-  Future<Either<Failure, Unit>> addBook({required Book book}) async {
+  Future<Either<Failure, BookHandle>> addBook({required Book book}) async {
     logger.info(
       'BookRepositoryImpl: Entering addBook with book: ${book.title}',
     );
@@ -174,13 +229,14 @@ class BookRepositoryImpl implements AbstractBookRepository {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
 
-      final key = book.key;
-      final model = BookModel.fromEntity(book: book);
+      final handle = BookHandle.generate();
+      final key = handle.toString();
+      final model = BookModel.fromEntity(book, key);
       await db.transaction((txn) async {
         await _database.booksStore.record(key).put(txn, model.toMap());
         logger.info('Registering book ID pairs');
         final registerResult = _idRegistryService.registerBookIdPairs(
-          book.idPairs,
+          BookIdPairs(pairs: book.businessIds),
         );
         if (registerResult.isLeft()) {
           throw registerResult.getLeft().getOrElse(
@@ -202,7 +258,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
       });
       logger.info('BookRepositoryImpl: Success added book ${book.title}');
       logger.info('BookRepositoryImpl: Exiting addBook');
-      return Either.right(unit);
+      return Either.right(handle);
     } catch (e) {
       return Either.left(DatabaseWriteFailure(e.toString()));
     }
@@ -214,11 +270,6 @@ class BookRepositoryImpl implements AbstractBookRepository {
     logger.info(
       'BookRepositoryImpl: Entering updateBook with book: ${book.title}',
     );
-    final key = book.key;
-    final eitherExisting = await getBookByIdPair(
-      bookIdPair: book.idPairs.idPairs.first,
-    );
-    final existing = eitherExisting.getOrElse((failure) => null);
     try {
       Database db;
       try {
@@ -226,11 +277,29 @@ class BookRepositoryImpl implements AbstractBookRepository {
       } catch (e) {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
+      // Find the record key by matching businessIds
+      final records = await _database.booksStore.find(db);
+      String? foundKey;
+      for (final record in records) {
+        final model = BookModel.fromMap(map: record.value);
+        if (BookIdPairs(pairs: model.businessIds) ==
+            BookIdPairs(pairs: book.businessIds)) {
+          foundKey = record.key;
+          break;
+        }
+      }
+      if (foundKey == null) {
+        return Either.left(DatabaseReadFailure('Book not found'));
+      }
+      final key = foundKey;
+      // Get existing book
+      final eitherExisting = await getBookByHandle(handle: BookHandle(key));
+      final existing = eitherExisting.getOrElse((failure) => null);
       await db.transaction((txn) async {
         if (existing != null) {
           logger.info('Unregistering old book ID pairs');
           final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-            existing.idPairs,
+            BookIdPairs(pairs: existing.businessIds),
           );
           if (unregisterResult.isLeft()) {
             throw unregisterResult.getLeft().getOrElse(
@@ -238,7 +307,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
             );
           }
           final result = await _updateRelationshipsForBook(
-            key: existing.key,
+            key: key,
             book: existing,
             isAdd: false,
             db: txn,
@@ -249,11 +318,11 @@ class BookRepositoryImpl implements AbstractBookRepository {
             );
           }
         }
-        final model = BookModel.fromEntity(book: book);
+        final model = BookModel.fromEntity(book, key);
         await _database.booksStore.record(key).put(txn, model.toMap());
         logger.info('Registering new book ID pairs');
         final registerResult = _idRegistryService.registerBookIdPairs(
-          book.idPairs,
+          BookIdPairs(pairs: book.businessIds),
         );
         if (registerResult.isLeft()) {
           throw registerResult.getLeft().getOrElse(
@@ -294,11 +363,25 @@ class BookRepositoryImpl implements AbstractBookRepository {
       } catch (e) {
         return Either.left(DatabaseConnectionFailure(e.toString()));
       }
+      // Find the record key by matching businessIds
+      final records = await _database.booksStore.find(db);
+      String? foundKey;
+      for (final record in records) {
+        final model = BookModel.fromMap(map: record.value);
+        if (BookIdPairs(pairs: model.businessIds) ==
+            BookIdPairs(pairs: book.businessIds)) {
+          foundKey = record.key;
+          break;
+        }
+      }
+      if (foundKey == null) {
+        return Either.left(DatabaseReadFailure('Book not found'));
+      }
+      final key = foundKey;
       await db.transaction((txn) async {
-        final key = book.key;
         logger.info('Unregistering book ID pairs');
         final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-          book.idPairs,
+          BookIdPairs(pairs: book.businessIds),
         );
         if (unregisterResult.isLeft()) {
           throw unregisterResult.getLeft().getOrElse(
@@ -337,44 +420,10 @@ class BookRepositoryImpl implements AbstractBookRepository {
       'BookRepositoryImpl: Entering _updateRelationshipsForBook with book: ${book.title}, isAdd: $isAdd',
     );
     try {
-      for (final author in book.authors) {
-        final authorId = author.key;
-        final authorRecord = await _database.authorsStore.findFirst(
-          db,
-          finder: Finder(filter: Filter.equals('id', authorId)),
-        );
-        if (authorRecord != null) {
-          final authorKey = authorRecord.key;
-          AuthorModel authorModel;
-          try {
-            authorModel = AuthorModel.fromMap(map: authorRecord.value);
-          } catch (e) {
-            return Either.left(DataParsingFailure(e.toString()));
-          }
-          final updatedBookIds = List<String>.from(authorModel.bookIdPairs);
-          if (isAdd) {
-            if (!updatedBookIds.contains(key)) {
-              updatedBookIds.add(key);
-            }
-          } else {
-            updatedBookIds.remove(key);
-          }
-          final updatedAuthorModel = AuthorModel(
-            id: authorModel.id,
-            idPairs: authorModel.idPairs,
-            name: authorModel.name,
-            biography: authorModel.biography,
-            bookIdPairs: updatedBookIds,
-          );
-          await _database.authorsStore
-              .record(authorKey)
-              .put(db, updatedAuthorModel.toMap());
-        }
-      }
-      for (final tagId in book.tags.map((t) => t.id)) {
+      for (final tag in book.tags) {
         final tagRecord = await _database.tagsStore.findFirst(
           db,
-          finder: Finder(filter: Filter.equals('id', tagId)),
+          finder: Finder(filter: Filter.equals('id', tag.id.toString())),
         );
         if (tagRecord != null) {
           final tagKey = tagRecord.key;
@@ -475,7 +524,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
         );
       }
       final books = booksEither.getRight().getOrElse(() => []);
-      final book = books.where((b) => b.idPairs == bookId).firstOrNull;
+      final book = books
+          .where((b) => BookIdPairs(pairs: b.businessIds) == bookId)
+          .firstOrNull;
       logger.info('Output: ${book?.title ?? 'null'}');
       logger.info('Exiting getBookById');
       return Either.right(book);

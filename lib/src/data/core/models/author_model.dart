@@ -1,16 +1,14 @@
 import '../../../domain/entities/author.dart';
 import '../../../domain/value_objects/author_id_pair.dart';
-import '../../../domain/value_objects/author_id_pairs.dart';
 import '../../../domain/value_objects/author_id_type.dart';
-import 'package:uuid/uuid.dart';
 
 /// A data model representing an author with their metadata and identifiers.
 class AuthorModel {
-  /// The unique identifier for the author, if assigned.
-  final String? id;
+  /// The unique identifier for the author.
+  final String id;
 
-  /// The list of identifier pairs for the author.
-  final List<AuthorIdPair> idPairs;
+  /// The business identifiers for the author.
+  final List<AuthorIdPair> businessIds;
 
   /// The name of the author.
   final String name;
@@ -18,22 +16,18 @@ class AuthorModel {
   /// The biography of the author.
   final String? biography;
 
-  /// The list of book identifiers associated with the author.
-  final List<String> bookIdPairs;
-
   /// Creates an [AuthorModel] instance.
   const AuthorModel({
-    this.id,
-    required this.idPairs,
+    required this.id,
+    required this.businessIds,
     required this.name,
     this.biography,
-    required this.bookIdPairs,
   });
 
   /// Creates an [AuthorModel] from a map representation.
   factory AuthorModel.fromMap({required Map<String, dynamic> map}) {
-    final idPairsList =
-        (map['idPairs'] as List<dynamic>?)
+    final businessIdsList =
+        (map['businessIds'] as List<dynamic>?)
             ?.map(
               (e) => AuthorIdPair(
                 idType: AuthorIdType.values.byName(
@@ -45,66 +39,52 @@ class AuthorModel {
             .toList() ??
         [];
     return AuthorModel(
-      id: map['id'] as String?,
-      idPairs: idPairsList,
+      id: map['id'] as String,
+      businessIds: businessIdsList,
       name: map['name'] as String,
       biography: map['biography'] as String?,
-      bookIdPairs: (map['bookIdPairs'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
   /// Converts this [AuthorModel] to a map representation.
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id,
-      'idPairs': idPairs
+      'id': id,
+      'businessIds': businessIds
           .map((p) => {'idType': p.idType.name, 'idCode': p.idCode})
           .toList(),
       'name': name,
       'biography': biography,
-      'bookIdPairs': bookIdPairs,
     };
   }
 
   /// Converts this [AuthorModel] to an [Author] domain entity.
   Author toEntity() {
-    return Author(
-      idPairs: AuthorIdPairs(pairs: idPairs),
-      name: name,
-      biography: biography,
-    );
+    return Author(businessIds: businessIds, name: name, biography: biography);
   }
 
-  /// Creates an [AuthorModel] from an [Author] domain entity.
-  factory AuthorModel.fromEntity(Author author) {
-    /// Ensure author always has at least one AuthorIdPair
-    final effectiveIdPairs = author.idPairs.idPairs.isNotEmpty
-        ? author.idPairs.idPairs
-        : [AuthorIdPair(idType: AuthorIdType.local, idCode: const Uuid().v4())];
-
+  /// Creates an [AuthorModel] from an [Author] domain entity and handle.
+  factory AuthorModel.fromEntity(Author author, String handleId) {
     return AuthorModel(
-      id: author.key,
-      idPairs: effectiveIdPairs,
+      id: handleId,
+      businessIds: author.businessIds,
       name: author.name,
       biography: author.biography,
-      bookIdPairs: [],
     );
   }
 
   /// Creates a copy of this [AuthorModel] with optional field updates.
   AuthorModel copyWith({
     String? id,
-    List<AuthorIdPair>? idPairs,
+    List<AuthorIdPair>? businessIds,
     String? name,
     String? biography,
-    List<String>? bookIdPairs,
   }) {
     return AuthorModel(
       id: id ?? this.id,
-      idPairs: idPairs ?? this.idPairs,
+      businessIds: businessIds ?? this.businessIds,
       name: name ?? this.name,
       biography: biography ?? this.biography,
-      bookIdPairs: bookIdPairs ?? this.bookIdPairs,
     );
   }
 }

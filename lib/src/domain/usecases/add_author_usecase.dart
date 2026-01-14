@@ -14,8 +14,8 @@ class AddAuthorUsecase {
 
   final logger = Logger('AddAuthorUsecase');
 
-  /// Adds a new author and returns the updated list of authors.
-  Future<Either<Failure, List<Author>>> call({
+  /// Adds a new author and returns the handle.
+  Future<Either<Failure, AuthorHandle>> call({
     required String name,
     String? biography,
   }) async {
@@ -23,21 +23,17 @@ class AddAuthorUsecase {
     final idEither = await idRegistryService.generateLocalId();
     return idEither.fold((failure) => Left(failure), (idCode) async {
       final idPair = AuthorIdPair(idType: AuthorIdType.local, idCode: idCode);
-      final idPairs = AuthorIdPairs(pairs: [idPair]);
-      final author = Author(idPairs: idPairs, name: name, biography: biography);
+      final author = Author(
+        businessIds: [idPair],
+        name: name,
+        biography: biography,
+      );
       final addEither = await authorRepository.addAuthor(author: author);
-      return addEither.fold((failure) => Future.value(Left(failure)), (
-        _,
-      ) async {
-        final getEither = await authorRepository.getAuthors();
-        logger.info('AddAuthorUsecase: Success in call');
-        return getEither.fold((failure) => Left(failure), (authors) {
-          logger.info(
-            'AddAuthorUsecase: Output: ${authors.map((a) => a.name).toList()}',
-          );
-          logger.info('AddAuthorUsecase: Exiting call');
-          return Right(authors);
-        });
+      logger.info('AddAuthorUsecase: Success in call');
+      return addEither.fold((failure) => Left(failure), (handle) {
+        logger.info('AddAuthorUsecase: Output: $handle');
+        logger.info('AddAuthorUsecase: Exiting call');
+        return Right(handle);
       });
     });
   }

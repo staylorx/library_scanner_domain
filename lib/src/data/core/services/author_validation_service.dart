@@ -16,7 +16,7 @@ class AuthorValidationService implements AbstractAuthorValidationService {
     }
 
     // Check for duplicate ID pairs
-    for (final idPair in author.idPairs.idPairs) {
+    for (final idPair in author.businessIds) {
       final isRegistered = await _idRegistryService.isRegistered(
         idPair.idType.name,
         idPair.idCode,

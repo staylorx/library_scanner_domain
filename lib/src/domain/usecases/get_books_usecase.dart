@@ -18,7 +18,7 @@ class GetBooksUsecase {
     logger.info('GetBooksUsecase: Success in call');
     return result.fold((failure) => Left(failure), (books) {
       logger.info(
-        'GetBooksUsecase: Output: ${books.map((b) => '${b.title} (idPairs: ${b.idPairs})').toList()}',
+        'GetBooksUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
       );
       logger.info('GetBooksUsecase: Exiting call');
       return Right(books);

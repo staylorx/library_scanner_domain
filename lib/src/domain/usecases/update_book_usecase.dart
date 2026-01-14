@@ -13,7 +13,7 @@ class UpdateBookUsecase {
   /// Updates an existing book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
     logger.info(
-      'UpdateBookUsecase: Entering call with book: ${book.title} (idPairs: ${book.idPairs})',
+      'UpdateBookUsecase: Entering call with book: ${book.title} (businessIds: ${book.businessIds})',
     );
     final updateEither = await bookRepository.updateBook(book: book);
     return updateEither.fold((failure) => Future.value(Left(failure)), (
@@ -23,7 +23,7 @@ class UpdateBookUsecase {
       logger.info('UpdateBookUsecase: Success in call');
       return getEither.fold((failure) => Left(failure), (books) {
         logger.info(
-          'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (idPairs: ${b.idPairs})').toList()}',
+          'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
         logger.info('UpdateBookUsecase: Exiting call');
         return Right(books);

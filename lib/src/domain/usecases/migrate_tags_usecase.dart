@@ -45,11 +45,11 @@ class MigrateTagsUsecase {
       final updatedTags = <Tag>[];
 
       for (final tag in tags) {
-        if (tag.id == tag.name) {
+        if (tag.id.toString() == tag.name) {
           // This is a legacy tag using name as ID
           final newId = const Uuid().v4();
           final updatedTag = Tag(
-            id: newId,
+            id: TagHandle(newId),
             name: tag.name,
             description: tag.description,
             color: tag.color,
@@ -64,7 +64,10 @@ class MigrateTagsUsecase {
 
       // Update tags with new IDs
       for (final updatedTag in updatedTags) {
-        final updateEither = await tagRepository.updateTag(tag: updatedTag);
+        final updateEither = await tagRepository.updateTag(
+          handle: updatedTag.id,
+          tag: updatedTag,
+        );
         if (updateEither.isLeft()) {
           return Left(
             updateEither.getLeft().getOrElse(
@@ -88,21 +91,21 @@ class MigrateTagsUsecase {
       // Update books with new tag IDs
       for (final book in books) {
         final updatedTagIds = book.tags.map((tag) {
-          return nameToNewId[tag.name] ?? tag.id;
+          return nameToNewId[tag.name] ?? tag.name;
         }).toList();
 
-        if (updatedTagIds != book.tags.map((t) => t.id).toList()) {
+        if (updatedTagIds != book.tags.map((t) => t.name).toList()) {
           // Need to update this book
           final updatedBook = Book(
-            idPairs: book.idPairs,
+            businessIds: book.businessIds,
             title: book.title,
             originalTitle: book.originalTitle,
             description: book.description,
             authors: book.authors,
             tags: book.tags.map((tag) {
-              final newId = nameToNewId[tag.name] ?? tag.id;
+              final newId = nameToNewId[tag.name] ?? tag.id.toString();
               return Tag(
-                id: newId,
+                id: TagHandle(newId),
                 name: tag.name,
                 description: tag.description,
                 color: tag.color,

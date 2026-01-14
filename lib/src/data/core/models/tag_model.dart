@@ -1,8 +1,9 @@
 import '../../../domain/entities/tag.dart';
+import '../../../domain/value_objects/tag_handle.dart';
 
 /// A data model representing a tag with its metadata.
 class TagModel {
-  /// The unique identifier for the tag.
+  /// The unique identifier for the tag (same as name).
   final String id;
 
   /// The name of the tag.
@@ -47,7 +48,7 @@ class TagModel {
   /// Converts this [TagModel] to a map representation.
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      'id': name,
       'name': name,
       'description': description,
       'color': color,
@@ -58,13 +59,18 @@ class TagModel {
 
   /// Converts this [TagModel] to a [Tag] domain entity.
   Tag toEntity() {
-    return Tag(id: id, name: name, description: description, color: color);
+    return Tag(
+      id: TagHandle(id),
+      name: name,
+      description: description,
+      color: color,
+    );
   }
 
   /// Creates a [TagModel] from a [Tag] domain entity.
   factory TagModel.fromEntity(Tag tag) {
     return TagModel(
-      id: tag.id,
+      id: tag.id.toString(),
       name: tag.name,
       description: tag.description,
       color: tag.color,

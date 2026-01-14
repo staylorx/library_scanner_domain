@@ -120,17 +120,20 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
 
   /// Adds a new author to the database.
   @override
-  Future<Either<Failure, Unit>> addAuthor({required Author author}) async {
+  Future<Either<Failure, AuthorHandle>> addAuthor({
+    required Author author,
+  }) async {
     logger.info('Entering addAuthor with author: ${author.name}');
     try {
+      final handle = AuthorHandle.generate();
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for addAuthor');
-          final model = AuthorModel.fromEntity(author);
-          logger.info('Saving author ${author.name}');
+          final model = AuthorModel.fromEntity(author, handle.toString());
+          logger.info('Saving author ${author.name} with handle $handle');
           final saveResult = await _databaseService.save(
             collection: 'authors',
-            id: author.key,
+            id: handle.toString(),
             data: model.toMap(),
             db: txn,
           );
@@ -143,7 +146,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           }
           logger.info('Author saved, registering ID pairs');
           final registerResult = _idRegistryService.registerAuthorIdPairs(
-            author.idPairs,
+            AuthorIdPairs(pairs: author.businessIds),
           );
           if (registerResult.isLeft()) {
             throw Exception(
@@ -169,9 +172,9 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
         },
       );
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('Success added author ${author.name}');
+        logger.info('Success added author ${author.name} with handle $handle');
         logger.info('Exiting addAuthor');
-        return Either.right(unit);
+        return Either.right(handle);
       });
     } catch (e) {
       return Either.left(DatabaseWriteFailure(e.toString()));
@@ -180,16 +183,21 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
 
   /// Updates an existing author in the database.
   @override
-  Future<Either<Failure, Unit>> updateAuthor({required Author author}) async {
-    logger.info('Entering updateAuthor with author: ${author.name}');
+  Future<Either<Failure, Unit>> updateAuthor({
+    required AuthorHandle handle,
+    required Author author,
+  }) async {
+    logger.info(
+      'Entering updateAuthor with handle: $handle and author: ${author.name}',
+    );
     try {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for updateAuthor');
-          // Find existing author by key (since name might have changed)
+          // Find existing author by handle
           final existingResult = await _databaseService.query(
             collection: 'authors',
-            filter: {'id': author.key},
+            filter: {'id': handle.toString()},
             db: txn,
           );
           if (existingResult.isLeft()) {
@@ -214,7 +222,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               'Unregistering old ID pairs for existing author ${existing.name}',
             );
             final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
-              existing.idPairs,
+              AuthorIdPairs(pairs: existing.businessIds),
             );
             if (unregisterResult.isLeft()) {
               throw Exception(
@@ -238,28 +246,12 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
                 ),
               );
             }
-            // If key changed, delete the old record
-            if (existing.key != author.key) {
-              logger.info('Deleting old author record ${existing.key}');
-              final deleteResult = await _databaseService.delete(
-                collection: 'authors',
-                id: existing.key,
-                db: txn,
-              );
-              if (deleteResult.isLeft()) {
-                throw Exception(
-                  deleteResult.getLeft().getOrElse(
-                    () => DatabaseFailure('Delete failed'),
-                  ),
-                );
-              }
-            }
           }
-          final model = AuthorModel.fromEntity(author);
+          final model = AuthorModel.fromEntity(author, handle.toString());
           logger.info('Saving updated author ${author.name}');
           final saveResult = await _databaseService.save(
             collection: 'authors',
-            id: author.key,
+            id: handle.toString(),
             data: model.toMap(),
             db: txn,
           );
@@ -274,7 +266,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             'Registering new ID pairs for updated author ${author.name}',
           );
           final registerResult = _idRegistryService.registerAuthorIdPairs(
-            author.idPairs,
+            AuthorIdPairs(pairs: author.businessIds),
           );
           if (registerResult.isLeft()) {
             throw Exception(
@@ -312,15 +304,17 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
 
   /// Deletes an author from the database.
   @override
-  Future<Either<Failure, Unit>> deleteAuthor({required Author author}) async {
-    logger.info('Entering deleteAuthor with author: ${author.name}');
+  Future<Either<Failure, Unit>> deleteAuthor({
+    required AuthorHandle handle,
+  }) async {
+    logger.info('Entering deleteAuthor with handle: $handle');
     try {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for deleteAuthor');
           final queryResult = await _databaseService.query(
             collection: 'authors',
-            filter: {'name': author.name},
+            filter: {'id': handle.toString()},
             db: txn,
           );
           if (queryResult.isLeft()) {
@@ -332,58 +326,97 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
           }
           final records = queryResult.getRight().getOrElse(() => []);
           if (records.isNotEmpty) {
-            logger.info('Unregistering ID pairs for author ${author.name}');
-            final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
-              author.idPairs,
-            );
-            if (unregisterResult.isLeft()) {
-              throw Exception(
-                unregisterResult.getLeft().getOrElse(
-                  () => RegistryFailure('Unregister ID pairs failed'),
-                ),
+            try {
+              final model = AuthorModel.fromMap(map: records.first);
+              final author = model.toEntity();
+              logger.info('Unregistering ID pairs for author ${author.name}');
+              final unregisterResult = _idRegistryService
+                  .unregisterAuthorIdPairs(
+                    AuthorIdPairs(pairs: author.businessIds),
+                  );
+              if (unregisterResult.isLeft()) {
+                throw Exception(
+                  unregisterResult.getLeft().getOrElse(
+                    () => RegistryFailure('Unregister ID pairs failed'),
+                  ),
+                );
+              }
+              logger.info('Deleting author record $handle');
+              final deleteResult = await _databaseService.delete(
+                collection: 'authors',
+                id: handle.toString(),
+                db: txn,
               );
-            }
-            logger.info('Deleting author record ${author.name}');
-            // Assuming the first record's id is the key, but since we don't have keys, we need to delete by name
-            // But delete takes id, and name is the key for authors
-            final deleteResult = await _databaseService.delete(
-              collection: 'authors',
-              id: author.key,
-              db: txn,
-            );
-            if (deleteResult.isLeft()) {
-              throw Exception(
-                deleteResult.getLeft().getOrElse(
-                  () => DatabaseFailure('Delete failed'),
-                ),
+              if (deleteResult.isLeft()) {
+                throw Exception(
+                  deleteResult.getLeft().getOrElse(
+                    () => DatabaseFailure('Delete failed'),
+                  ),
+                );
+              }
+              logger.info(
+                'Updating relationships for deleted author ${author.name}',
               );
+              final updateResult = await _updateRelationshipsForAuthor(
+                authorName: author.name,
+                isAdd: false,
+                txn: txn,
+              );
+              if (updateResult.isLeft()) {
+                throw Exception(
+                  updateResult.getLeft().getOrElse(
+                    () => DatabaseFailure('Update relationships failed'),
+                  ),
+                );
+              }
+            } catch (e) {
+              throw Exception(DataParsingFailure(e.toString()));
             }
-          }
-          logger.info(
-            'Updating relationships for deleted author ${author.name}',
-          );
-          final updateResult = await _updateRelationshipsForAuthor(
-            authorName: author.name,
-            isAdd: false,
-            txn: txn,
-          );
-          if (updateResult.isLeft()) {
-            throw Exception(
-              updateResult.getLeft().getOrElse(
-                () => DatabaseFailure('Update relationships failed'),
-              ),
-            );
           }
           logger.info('Transaction operation completed for deleteAuthor');
         },
       );
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('Success deleted author ${author.name}');
+        logger.info('Success deleted author with handle $handle');
         logger.info('Exiting deleteAuthor');
         return Either.right(unit);
       });
     } catch (e) {
       return Either.left(DatabaseWriteFailure(e.toString()));
+    }
+  }
+
+  /// Retrieves an author by handle.
+  @override
+  Future<Either<Failure, Author?>> getAuthorByHandle({
+    required AuthorHandle handle,
+  }) async {
+    logger.info('Entering getAuthorByHandle with handle: $handle');
+    try {
+      final result = await _databaseService.query(
+        collection: 'authors',
+        filter: {'id': handle.toString()},
+      );
+      return result.fold((failure) => Either.left(failure), (records) {
+        if (records.isEmpty) {
+          logger.info('Author with handle $handle not found');
+          logger.info('Output: null');
+          logger.info('Exiting getAuthorByHandle');
+          return Either.right(null);
+        }
+        try {
+          final model = AuthorModel.fromMap(map: records.first);
+          logger.info('Success, fetched author ${model.name}');
+          final author = model.toEntity();
+          logger.info('Output: ${author.name}');
+          logger.info('Exiting getAuthorByHandle');
+          return Either.right(author);
+        } catch (e) {
+          return Either.left(DataParsingFailure(e.toString()));
+        }
+      });
+    } catch (e) {
+      return Either.left(DatabaseReadFailure(e.toString()));
     }
   }
 
@@ -424,7 +457,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             }
             final updatedBookModel = BookModel(
               id: bookModel.id,
-              idPairs: bookModel.idPairs,
+              businessIds: bookModel.businessIds,
               title: bookModel.title,
               description: bookModel.description,
               authorIds: updatedAuthorIds,
@@ -433,7 +466,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
             );
             final saveResult = await _databaseService.save(
               collection: 'books',
-              id: bookModel.id!,
+              id: bookModel.id,
               data: updatedBookModel.toMap(),
               db: txn,
             );

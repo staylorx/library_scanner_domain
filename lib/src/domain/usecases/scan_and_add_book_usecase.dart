@@ -71,18 +71,11 @@ class ScanAndAddBookUsecase {
   /// Creates a Book entity from fetched metadata.
   Book _createBookFromMetadata(BookMetadata metadata, String isbn) {
     return Book(
-      idPairs: BookIdPairs(
-        pairs: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
-      ),
+      businessIds: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
       title: metadata.title ?? 'Unknown Title',
       authors:
           metadata.authors
-              ?.map(
-                (name) => Author(
-                  idPairs: AuthorIdPairs(pairs: []),
-                  name: name,
-                ),
-              )
+              ?.map((name) => Author(businessIds: [], name: name))
               .toList() ??
           [],
       tags: [],

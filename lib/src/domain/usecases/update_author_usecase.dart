@@ -18,37 +18,34 @@ class UpdateAuthorUsecase {
 
   final logger = Logger('UpdateAuthorUsecase');
 
-  /// Updates an existing author in the repository and returns the updated list of authors.
+  /// Updates an existing author in the repository.
   ///
   /// This method performs the following operations:
   /// 1. Logs the entry with the author's name for debugging purposes.
   /// 2. Calls the repository to update the author.
-  /// 3. Retrieves the updated list of all authors.
-  /// 4. Logs success and the resulting author names.
-  /// 5. Returns the complete list of authors after the update.
+  /// 3. Logs success.
   ///
   /// If an error occurs during the process, it logs the error and rethrows
   /// the exception to allow higher layers to handle it appropriately.
   ///
+  /// [handle] - The handle of the author to update.
   /// [author] - The author entity with updated information to be saved.
-  /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all authors on the right.
-  Future<Either<Failure, List<Author>>> call({required Author author}) async {
+  /// Returns a [Future] containing [Either] with [Failure] on the left or Unit on the right.
+  Future<Either<Failure, Unit>> call({
+    required AuthorHandle handle,
+    required Author author,
+  }) async {
     logger.info(
-      'UpdateAuthorUsecase: Entering call with author: ${author.name}',
+      'UpdateAuthorUsecase: Entering call with handle: $handle and author: ${author.name}',
     );
-    final updateEither = await authorRepository.updateAuthor(author: author);
-    return updateEither.fold((failure) => Future.value(Left(failure)), (
-      _,
-    ) async {
-      final getEither = await authorRepository.getAuthors();
-      logger.info('UpdateAuthorUsecase: Success in call');
-      return getEither.fold((failure) => Left(failure), (authors) {
-        logger.info(
-          'UpdateAuthorUsecase: Output: ${authors.map((a) => a.name).toList()}',
-        );
-        logger.info('UpdateAuthorUsecase: Exiting call');
-        return Right(authors);
-      });
+    final updateEither = await authorRepository.updateAuthor(
+      handle: handle,
+      author: author,
+    );
+    logger.info('UpdateAuthorUsecase: Success in call');
+    return updateEither.fold((failure) => Left(failure), (_) {
+      logger.info('UpdateAuthorUsecase: Exiting call');
+      return Right(unit);
     });
   }
 }

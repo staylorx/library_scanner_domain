@@ -72,17 +72,15 @@ void main() {
         expect(authorsResult.isRight(), true);
         final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
         final newAuthor = authors.first;
-        final newTag = Tag(name: 'Test Tag');
+        final newTag = Tag(id: TagHandle.generate(), name: 'Test Tag');
         await addTagUsecase.call(tag: newTag);
 
         final newBook = Book(
+          businessIds: [BookIdPair(idType: BookIdType.local, idCode: "12345")],
           title: 'New Test Book',
           authors: [newAuthor],
           tags: [newTag],
           publishedDate: DateTime(2023, 1, 1),
-          idPairs: BookIdPairs(
-            pairs: [BookIdPair(idType: BookIdType.local, idCode: "12345")],
-          ),
         );
         await addBookUsecase.call(book: newBook);
 
@@ -126,17 +124,15 @@ void main() {
         final secondAuthor = authors2.firstWhere(
           (a) => a.name == 'Second Author',
         );
-        final secondTag = Tag(name: 'Second Tag');
+        final secondTag = Tag(id: TagHandle.generate(), name: 'Second Tag');
         await addTagUsecase.call(tag: secondTag);
 
         final secondBook = Book(
+          businessIds: [BookIdPair(idType: BookIdType.local, idCode: "67890")],
           title: 'Second Test Book',
           authors: [secondAuthor],
           tags: [secondTag],
           publishedDate: DateTime(2023, 2, 1),
-          idPairs: BookIdPairs(
-            pairs: [BookIdPair(idType: BookIdType.local, idCode: "67890")],
-          ),
         );
         await addBookUsecase.call(book: secondBook);
 

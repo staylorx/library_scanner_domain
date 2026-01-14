@@ -17,7 +17,7 @@ class BookFilteringService implements AbstractBookFilteringService {
         if (searchQuery.isNotEmpty) {
           final query = searchQuery.toLowerCase();
           final titleMatch = book.title.toLowerCase().contains(query);
-          final idPairsMatch = book.idPairs.idPairs.any(
+          final idPairsMatch = book.businessIds.any(
             (pair) => pair.idCode.toLowerCase().contains(query),
           );
           final authorMatch = book.authors.any(

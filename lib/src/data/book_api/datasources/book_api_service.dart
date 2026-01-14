@@ -76,7 +76,7 @@ class BookApiService implements AbstractBookApiService {
           return Right(
             BookModel(
               id: isbn,
-              idPairs: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
+              businessIds: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
               title: volumeInfo['title'] as String? ?? 'Unknown Title',
               description: description,
               authorIds: authorIds,

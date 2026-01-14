@@ -41,8 +41,8 @@ class RefetchBookCoversUsecase {
       (books) async {
         int updatedCount = 0;
         for (final book in books) {
-          if (book.idPairs.idPairs.any((p) => p.idType == BookIdType.isbn)) {
-            final isbn = book.idPairs.idPairs
+          if (book.businessIds.any((p) => p.idType == BookIdType.isbn)) {
+            final isbn = book.businessIds
                 .firstWhere((p) => p.idType == BookIdType.isbn)
                 .idCode;
             if (overwrite || book.coverImage == null) {

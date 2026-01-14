@@ -1,13 +1,13 @@
 import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
-import '../value_objects/book_id_pairs.dart';
+import '../value_objects/book_id_pair.dart';
 import 'author.dart';
 import 'tag.dart';
 
 /// A domain entity representing a book.
 class Book with EquatableMixin {
-  /// The set of identifier pairs for the book, representing various identification codes like ISBNs.
-  final BookIdPairs _idPairs;
+  /// The business identifiers for the book.
+  final List<BookIdPair> businessIds;
 
   /// The title of the book.
   final String title;
@@ -35,7 +35,7 @@ class Book with EquatableMixin {
 
   /// Creates a [Book] instance.
   Book({
-    required BookIdPairs idPairs,
+    required this.businessIds,
     required this.title,
     this.originalTitle,
     this.description,
@@ -44,20 +44,11 @@ class Book with EquatableMixin {
     this.publishedDate,
     this.coverImage,
     this.notes,
-  }) : _idPairs = idPairs;
-
-  /// The set of identifier pairs for the book.
-  BookIdPairs get idPairs => _idPairs;
-
-  /// The key for the book, based on idPairs or title.
-  String get key {
-    final id = idPairs.toString();
-    return id.isNotEmpty ? id : title;
-  }
+  });
 
   /// Creates a copy of this [Book] with optional field updates.
   Book copyWith({
-    BookIdPairs? idPairs,
+    List<BookIdPair>? businessIds,
     String? title,
     String? originalTitle,
     String? description,
@@ -68,7 +59,7 @@ class Book with EquatableMixin {
     String? notes,
   }) {
     return Book(
-      idPairs: idPairs ?? this.idPairs,
+      businessIds: businessIds ?? this.businessIds,
       title: title ?? this.title,
       originalTitle: originalTitle ?? this.originalTitle,
       description: description ?? this.description,
@@ -81,5 +72,5 @@ class Book with EquatableMixin {
   }
 
   @override
-  List<Object?> get props => [idPairs, title, originalTitle, description];
+  List<Object?> get props => [businessIds, title, originalTitle, description];
 }

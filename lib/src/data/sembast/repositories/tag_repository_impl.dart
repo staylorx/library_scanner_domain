@@ -92,6 +92,42 @@ class TagRepositoryImpl implements AbstractTagRepository {
     }
   }
 
+  /// Retrieves a tag by handle.
+  @override
+  Future<Either<Failure, Tag?>> getTagByHandle({
+    required TagHandle handle,
+  }) async {
+    logger.info(
+      'TagRepositoryImpl: Entering getTagByHandle with handle: $handle',
+    );
+    try {
+      final result = await _databaseService.query(
+        collection: 'tags',
+        filter: {'id': handle.toString()},
+      );
+      return result.fold((failure) => Either.left(failure), (records) {
+        if (records.isEmpty) {
+          logger.info('TagRepositoryImpl: Tag with handle $handle not found');
+          logger.info('TagRepositoryImpl: Output: null');
+          logger.info('TagRepositoryImpl: Exiting getTagByHandle');
+          return Either.right(null);
+        }
+        try {
+          final model = TagModel.fromMap(map: records.first);
+          logger.info('TagRepositoryImpl: Success, fetched tag ${model.name}');
+          final tag = model.toEntity();
+          logger.info('TagRepositoryImpl: Output: ${tag.name}');
+          logger.info('TagRepositoryImpl: Exiting getTagByHandle');
+          return Either.right(tag);
+        } catch (e) {
+          return Either.left(DataParsingFailure(e.toString()));
+        }
+      });
+    } catch (e) {
+      return Either.left(DatabaseReadFailure(e.toString()));
+    }
+  }
+
   /// Retrieves tags by a list of names.
   @override
   Future<Either<Failure, List<Tag>>> getTagsByNames({
@@ -142,7 +178,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
 
   /// Adds a new tag to the database.
   @override
-  Future<Either<Failure, Unit>> addTag({required Tag tag}) async {
+  Future<Either<Failure, TagHandle>> addTag({required Tag tag}) async {
     logger.info('TagRepositoryImpl: Entering addTag with tag: ${tag.name}');
     try {
       // Check if a tag with the same slug already exists
@@ -178,7 +214,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
       return result.fold((failure) => Either.left(failure), (_) {
         logger.info('TagRepositoryImpl: Success added tag ${tag.name}');
         logger.info('TagRepositoryImpl: Exiting addTag');
-        return Either.right(unit);
+        return Either.right(TagHandle(tag.name));
       });
     } catch (e) {
       return Either.left(DatabaseWriteFailure(e.toString()));
@@ -187,7 +223,10 @@ class TagRepositoryImpl implements AbstractTagRepository {
 
   /// Updates an existing tag in the database.
   @override
-  Future<Either<Failure, Unit>> updateTag({required Tag tag}) async {
+  Future<Either<Failure, Unit>> updateTag({
+    required TagHandle handle,
+    required Tag tag,
+  }) async {
     logger.info('TagRepositoryImpl: Entering updateTag with tag: ${tag.name}');
     try {
       final model = TagModel.fromEntity(tag);
@@ -197,7 +236,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
       logger.info('TagRepositoryImpl: About to call database save');
       final result = await _databaseService.save(
         collection: 'tags',
-        id: model.id,
+        id: handle.toString(),
         data: model.toMap(),
       );
       logger.info('TagRepositoryImpl: Database save completed');
@@ -214,15 +253,15 @@ class TagRepositoryImpl implements AbstractTagRepository {
 
   /// Deletes a tag from the database.
   @override
-  Future<Either<Failure, Unit>> deleteTag({required Tag tag}) async {
-    logger.info('TagRepositoryImpl: Entering deleteTag with tag: ${tag.name}');
+  Future<Either<Failure, Unit>> deleteTag({required TagHandle handle}) async {
+    logger.info('TagRepositoryImpl: Entering deleteTag with handle: $handle');
     try {
       // Query books that contain the tag
       final queryResult = await _databaseService.query(
         collection: 'books',
         filter: {
           'tagIds': {
-            '\$in': [tag.id],
+            '\$in': [handle.toString()],
           },
         },
       );
@@ -240,7 +279,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
         try {
           final bookModel = BookModel.fromMap(map: bookMap);
           final updatedTagIds = List<String>.from(bookModel.tagIds)
-            ..remove(tag.id);
+            ..remove(handle.toString());
           final updatedModel = bookModel.copyWith(tagIds: updatedTagIds);
           final bookId = bookMap['id'] as String;
           final saveResult = await _databaseService.save(
@@ -263,11 +302,11 @@ class TagRepositoryImpl implements AbstractTagRepository {
       // Delete the tag
       final deleteResult = await _databaseService.delete(
         collection: 'tags',
-        id: tag.id,
+        id: handle.toString(),
       );
       return deleteResult.fold((failure) => Either.left(failure), (_) {
         logger.info(
-          'TagRepositoryImpl: Success deleted tag ${tag.name} and updated associated books',
+          'TagRepositoryImpl: Success deleted tag and updated associated books',
         );
         logger.info('TagRepositoryImpl: Exiting deleteTag');
         return Either.right(unit);

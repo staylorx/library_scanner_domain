@@ -2,15 +2,13 @@ import 'dart:typed_data';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-import 'package:uuid/uuid.dart';
-
 /// A data model representing a book with its metadata and identifiers.
 class BookModel {
-  /// The unique identifier for the book, if assigned.
-  final String? id;
+  /// The unique identifier for the book.
+  final String id;
 
-  /// The list of identifier pairs for the book.
-  final List<BookIdPair> idPairs;
+  /// The business identifiers for the book.
+  final List<BookIdPair> businessIds;
 
   /// The title of the book.
   final String title;
@@ -41,8 +39,8 @@ class BookModel {
 
   /// Creates a [BookModel] instance.
   const BookModel({
-    this.id,
-    required this.idPairs,
+    required this.id,
+    required this.businessIds,
     required this.title,
     this.originalTitle,
     this.description,
@@ -56,8 +54,8 @@ class BookModel {
 
   /// Creates a [BookModel] from a map representation, handling legacy formats.
   factory BookModel.fromMap({required Map<String, dynamic> map}) {
-    final idPairs =
-        (map['idPairs'] as List<dynamic>?)?.map((e) {
+    final businessIds =
+        (map['businessIds'] as List<dynamic>?)?.map((e) {
           final idTypeString = e['idType'] as String? ?? 'none';
           BookIdType idType;
           try {
@@ -90,12 +88,9 @@ class BookModel {
           return BookIdPair(idType: idType, idCode: e['idCode'] as String);
         }).toList() ??
         [];
-    if (idPairs.isEmpty) {
-      throw Exception('Book must have at least one BookIdPair');
-    }
     return BookModel(
-      id: map['id'] as String?,
-      idPairs: idPairs,
+      id: map['id'] as String,
+      businessIds: businessIds,
       title: map['title'] as String,
       originalTitle: map['originalTitle'] as String?,
       description: map['description'] as String?,
@@ -115,8 +110,8 @@ class BookModel {
   /// Converts this [BookModel] to a map representation.
   Map<String, dynamic> toMap() {
     return {
-      if (id != null) 'id': id,
-      'idPairs': idPairs
+      'id': id,
+      'businessIds': businessIds
           .map((p) => {'idType': p.idType.name, 'idCode': p.idCode})
           .toList(),
       'title': title,
@@ -134,7 +129,7 @@ class BookModel {
   /// Converts this [BookModel] to a [Book] domain entity.
   Book toEntity({required List<Author> authors, required List<Tag> tags}) {
     return Book(
-      idPairs: BookIdPairs(pairs: idPairs),
+      businessIds: businessIds,
       title: title,
       originalTitle: originalTitle,
       description: description,
@@ -146,21 +141,16 @@ class BookModel {
     );
   }
 
-  /// Creates a [BookModel] from a [Book] domain entity.
-  factory BookModel.fromEntity({required Book book}) {
-    /// Ensure book always has at least one BookIdPair
-    final List<BookIdPair> effectiveIdPairs = book.idPairs.idPairs.isNotEmpty
-        ? book.idPairs.idPairs
-        : [BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4())];
-
+  /// Creates a [BookModel] from a [Book] domain entity and handle.
+  factory BookModel.fromEntity(Book book, String handleId) {
     return BookModel(
-      id: book.key,
-      idPairs: effectiveIdPairs,
+      id: handleId,
+      businessIds: book.businessIds,
       title: book.title,
       originalTitle: book.originalTitle,
       description: book.description,
-      authorIds: book.authors.map((a) => a.key).toList(),
-      tagIds: book.tags.map((t) => t.id).toList(),
+      authorIds: [], // Will be set by repository
+      tagIds: book.tags.map((t) => t.name).toList(),
       publishedDate: book.publishedDate,
       coverImage: book.coverImage,
       coverImageUrl: null, // Entity doesn't have URL
@@ -171,7 +161,7 @@ class BookModel {
   /// Creates a copy of this [BookModel] with optional field updates.
   BookModel copyWith({
     String? id,
-    List<BookIdPair>? idPairs,
+    List<BookIdPair>? businessIds,
     String? title,
     String? originalTitle,
     String? description,
@@ -184,7 +174,7 @@ class BookModel {
   }) {
     return BookModel(
       id: id ?? this.id,
-      idPairs: idPairs ?? this.idPairs,
+      businessIds: businessIds ?? this.businessIds,
       title: title ?? this.title,
       originalTitle: originalTitle ?? this.originalTitle,
       description: description ?? this.description,

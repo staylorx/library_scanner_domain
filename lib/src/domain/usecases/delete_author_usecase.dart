@@ -42,7 +42,9 @@ class DeleteAuthorUsecase {
         return Left(NotFoundFailure('Author not found'));
       }
       logger.info('DeleteAuthorUsecase: Deleting author: ${author.name}');
-      final deleteEither = await authorRepository.deleteAuthor(author: author);
+      final deleteEither = await authorRepository.deleteAuthor(
+        handle: AuthorHandle(author.name),
+      );
       return deleteEither.fold((failure) => Left(failure), (_) {
         final updatedAuthors = authors.where((a) => a.name != name).toList();
         logger.info('DeleteAuthorUsecase: Success in call');

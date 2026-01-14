@@ -39,7 +39,7 @@ class GetBookByIdPairUsecase {
     logger.info('GetBookByIdPairpairUsecase: Success in call');
     return result.fold((failure) => Left(failure), (book) {
       logger.info(
-        'GetBookByIdPairpairUsecase: Output: ${book != null ? '${book.title} (idPairs: ${book.idPairs})' : 'null'}',
+        'GetBookByIdPairpairUsecase: Output: ${book != null ? '${book.title} (businessIds: ${book.businessIds})' : 'null'}',
       );
       logger.info('GetBookByIdPairpairUsecase: Exiting call');
       if (book == null) {

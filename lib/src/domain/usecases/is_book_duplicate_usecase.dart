@@ -32,10 +32,10 @@ class IsBookDuplicateUsecase {
 
     // Check if any non-local BookIdPair matches
     final aNonLocal = IdPairSet(
-      bookA.idPairs.idPairs.where((p) => p.idType != BookIdType.local).toList(),
+      bookA.businessIds.where((p) => p.idType != BookIdType.local).toList(),
     );
     final bNonLocal = IdPairSet(
-      bookB.idPairs.idPairs.where((p) => p.idType != BookIdType.local).toList(),
+      bookB.businessIds.where((p) => p.idType != BookIdType.local).toList(),
     );
 
     // If there's any overlapping BookIdPair, they are duplicates

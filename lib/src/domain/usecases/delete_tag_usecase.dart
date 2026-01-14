@@ -42,7 +42,9 @@ class DeleteTagUsecase {
       if (tag == null) {
         return Left(NotFoundFailure('Tag not found'));
       }
-      final deleteEither = await tagRepository.deleteTag(tag: tag);
+      final deleteEither = await tagRepository.deleteTag(
+        handle: TagHandle(tag.name),
+      );
       return deleteEither.fold((failure) => Left(failure), (_) {
         final updatedTags = tags.where((t) => t.name != name).toList();
         logger.info('DeleteTagUsecase: Success in call');

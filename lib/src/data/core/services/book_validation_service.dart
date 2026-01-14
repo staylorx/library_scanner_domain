@@ -19,7 +19,7 @@ class BookValidationService implements AbstractBookValidationService {
     }
 
     // Check for duplicate ID pairs
-    for (final idPair in book.idPairs.idPairs) {
+    for (final idPair in book.businessIds) {
       final isRegistered = await _idRegistryService.isRegistered(
         idPair.idType.name,
         idPair.idCode,

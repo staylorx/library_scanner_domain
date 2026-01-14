@@ -1,10 +1,10 @@
 import 'package:equatable/equatable.dart';
-import 'package:uuid/uuid.dart';
+import '../value_objects/tag_handle.dart';
 
 /// A domain entity representing a tag.
 class Tag with EquatableMixin {
   /// The unique identifier for the tag.
-  final String id;
+  final TagHandle id;
 
   /// The name of the tag.
   final String name;
@@ -20,16 +20,21 @@ class Tag with EquatableMixin {
 
   /// Creates a [Tag] instance.
   Tag({
-    String? id,
+    required this.id,
     required this.name,
     this.description,
     this.color = '#FF0000',
 
     /// Default red color
-  }) : id = id ?? const Uuid().v4();
+  });
 
   /// Creates a copy of this [Tag] with optional field updates.
-  Tag copyWith({String? id, String? name, String? description, String? color}) {
+  Tag copyWith({
+    TagHandle? id,
+    String? name,
+    String? description,
+    String? color,
+  }) {
     return Tag(
       id: id ?? this.id,
       name: name ?? this.name,
