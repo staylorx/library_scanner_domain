@@ -37,9 +37,7 @@ void main() {
         );
         final addBookUsecase = AddBookUsecase(
           bookRepository: bookRepository,
-          isBookDuplicateUsecase: IsBookDuplicateUsecase(
-            bookRepository: bookRepository,
-          ),
+          isBookDuplicateUsecase: IsBookDuplicateUsecase(),
         );
         final updateBookUsecase = UpdateBookUsecase(
           bookRepository: bookRepository,

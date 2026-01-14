@@ -11,9 +11,9 @@ class BookRepositoryImpl implements AbstractBookRepository {
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
-    required SembastDatabase database,
+    required AbstractSembastService database,
     required AbstractBookIdRegistryService idRegistryService,
-  }) : _database = database,
+  }) : _database = database as SembastDatabase,
        _idRegistryService = idRegistryService;
 
   final logger = Logger('BookRepositoryImpl');
@@ -80,7 +80,7 @@ class BookRepositoryImpl implements AbstractBookRepository {
       final authorMap = <String, AuthorModel>{};
       for (final record in authorRecords) {
         try {
-          authorMap[record.key as String] = AuthorModel.fromMap(
+          authorMap[record.key.toString()] = AuthorModel.fromMap(
             map: record.value as Map<String, dynamic>,
           );
         } catch (e) {

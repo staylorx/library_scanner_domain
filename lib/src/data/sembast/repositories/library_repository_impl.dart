@@ -253,9 +253,9 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
   LibraryRepositoryImpl({
-    required SembastDatabase database,
+    required AbstractSembastService database,
     required IsBookDuplicateUsecase isBookDuplicateUsecase,
-  }) : _database = database,
+  }) : _database = database as SembastDatabase,
        _isBookDuplicateUsecase = isBookDuplicateUsecase; // Initialize database
 
   /// Imports a library from a YAML file.

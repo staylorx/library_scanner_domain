@@ -7,3 +7,4 @@ export 'src/utils/title_utils.dart';
 
 export 'src/domain/domain.dart';
 export 'src/data/data.dart';
+export 'factories.dart';

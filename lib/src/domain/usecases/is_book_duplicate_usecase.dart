@@ -7,9 +7,7 @@ import 'package:logging/logging.dart';
 /// Use case for checking if two books are duplicates.
 
 class IsBookDuplicateUsecase {
-  final AbstractBookRepository bookRepository;
-
-  IsBookDuplicateUsecase({required this.bookRepository});
+  IsBookDuplicateUsecase();
 
   final logger = Logger('IsBookDuplicateUsecase');
 

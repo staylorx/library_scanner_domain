@@ -54,9 +54,7 @@ void main() {
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
         final addBookUsecase = AddBookUsecase(
           bookRepository: bookRepository,
-          isBookDuplicateUsecase: IsBookDuplicateUsecase(
-            bookRepository: bookRepository,
-          ),
+          isBookDuplicateUsecase: IsBookDuplicateUsecase(),
         );
         final addTagUsecase = AddTagUsecase(
           tagRepository: TagRepositoryImpl(databaseService: database),
