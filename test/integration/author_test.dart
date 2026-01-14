@@ -80,7 +80,7 @@ void main() {
         // Edit the record
         final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
         await updateAuthorUsecase.call(
-          handle: AuthorHandle(updatedAuthor.name),
+          handle: AuthorHandle.fromName(newAuthor.name),
           author: updatedAuthor,
         );
 
@@ -123,7 +123,7 @@ void main() {
         expect(authors.first.name, 'Second Author');
 
         // Add a book with the remaining author
-        final tag = Tag(id: TagHandle.generate(), name: 'Test Tag');
+        final tag = Tag(id: TagHandle.fromName('Test Tag'), name: 'Test Tag');
         await addTagUsecase.call(tag: tag);
 
         final book = Book(

@@ -52,14 +52,14 @@ void main() {
     setUp(() {
       // Create test tags
       testTags = [
-        Tag(id: TagHandle.generate(), name: 'fiction', color: '#FF0000'),
+        Tag(id: TagHandle.fromName('fiction'), name: 'fiction', color: '#FF0000'),
         Tag(
-          id: TagHandle.generate(),
+          id: TagHandle.fromName('science fiction'),
           name: 'science fiction',
           color: '#00FF00',
         ),
-        Tag(id: TagHandle.generate(), name: 'mystery', color: '#0000FF'),
-        Tag(id: TagHandle.generate(), name: 'romance', color: '#FFFF00'),
+        Tag(id: TagHandle.fromName('mystery'), name: 'mystery', color: '#0000FF'),
+        Tag(id: TagHandle.fromName('romance'), name: 'romance', color: '#FFFF00'),
       ];
 
       // Create test books

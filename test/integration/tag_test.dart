@@ -36,7 +36,7 @@ void main() {
 
       // Add one record
       final newTag = Tag(
-        id: TagHandle.generate(),
+        id: TagHandle.fromName('Test Tag'),
         name: 'Test Tag',
         description: 'A test tag',
       );
@@ -72,7 +72,7 @@ void main() {
 
       // Add another record
       final secondTag = Tag(
-        id: TagHandle.generate(),
+        id: TagHandle.fromName('Second Tag'),
         name: 'Second Tag',
         color: '#00FF00',
       );
@@ -114,7 +114,7 @@ void main() {
 
       // Add first tag
       final tag = Tag(
-        id: TagHandle.generate(),
+        id: TagHandle.fromName('Unique Tag'),
         name: 'Unique Tag',
         description: 'A unique tag',
       );
@@ -123,7 +123,7 @@ void main() {
 
       // Try to add duplicate tag
       final duplicateTag = Tag(
-        id: TagHandle.generate(),
+        id: TagHandle.fromName('Unique Tag'),
         name: 'Unique Tag',
         description: 'Another description',
       );

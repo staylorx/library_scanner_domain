@@ -58,7 +58,7 @@ Future<List<Tag>> parseTags(dynamic yamlTags) async {
       // Skip if already exists (slug-based duplicate)
       if (!tagMap.containsKey(slug)) {
         tagMap[slug] = Tag(
-          id: TagHandle.generate(),
+          id: TagHandle.fromName(name),
           name: name,
           color: yamlTag['color'] as String,
         );
@@ -348,7 +348,7 @@ class LibraryRepositoryImpl implements AbstractLibraryRepository {
       // Add missing tags
       for (final tagName in missingTagNames) {
         tags.add(
-          Tag(id: TagHandle.generate(), name: tagName, color: "#808080"),
+          Tag(id: TagHandle.fromName(tagName), name: tagName, color: "#808080"),
         );
       }
 

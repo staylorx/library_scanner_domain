@@ -66,7 +66,7 @@ class AuthorModel {
   /// Creates an [AuthorModel] from an [Author] domain entity and handle.
   factory AuthorModel.fromEntity(Author author, String handleId) {
     return AuthorModel(
-      id: handleId,
+      id: author.name,
       businessIds: author.businessIds,
       name: author.name,
       biography: author.biography,

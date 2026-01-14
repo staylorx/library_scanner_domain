@@ -72,7 +72,7 @@ void main() {
         expect(authorsResult.isRight(), true);
         final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
         final newAuthor = authors.first;
-        final newTag = Tag(id: TagHandle.generate(), name: 'Test Tag');
+        final newTag = Tag(id: TagHandle.fromName('Test Tag'), name: 'Test Tag');
         await addTagUsecase.call(tag: newTag);
 
         final newBook = Book(
@@ -124,7 +124,7 @@ void main() {
         final secondAuthor = authors2.firstWhere(
           (a) => a.name == 'Second Author',
         );
-        final secondTag = Tag(id: TagHandle.generate(), name: 'Second Tag');
+        final secondTag = Tag(id: TagHandle.fromName('Second Tag'), name: 'Second Tag');
         await addTagUsecase.call(tag: secondTag);
 
         final secondBook = Book(

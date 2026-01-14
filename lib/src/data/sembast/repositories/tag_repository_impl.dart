@@ -229,6 +229,21 @@ class TagRepositoryImpl implements AbstractTagRepository {
   }) async {
     logger.info('TagRepositoryImpl: Entering updateTag with tag: ${tag.name}');
     try {
+      final newId = tag.name;
+      if (handle.toString() != newId) {
+        logger.info('TagRepositoryImpl: Name changed, deleting old record');
+        final deleteResult = await _databaseService.delete(
+          collection: 'tags',
+          id: handle.toString(),
+        );
+        if (deleteResult.isLeft()) {
+          return Either.left(
+            deleteResult.getLeft().getOrElse(
+              () => DatabaseFailure('Delete old record failed'),
+            ),
+          );
+        }
+      }
       final model = TagModel.fromEntity(tag);
       logger.info(
         'TagRepositoryImpl: Created model for tag ${tag.name}, id: ${model.id}',
@@ -236,7 +251,7 @@ class TagRepositoryImpl implements AbstractTagRepository {
       logger.info('TagRepositoryImpl: About to call database save');
       final result = await _databaseService.save(
         collection: 'tags',
-        id: handle.toString(),
+        id: newId,
         data: model.toMap(),
       );
       logger.info('TagRepositoryImpl: Database save completed');

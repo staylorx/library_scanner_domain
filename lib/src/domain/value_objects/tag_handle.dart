@@ -1,13 +1,11 @@
-import 'package:uuid/uuid.dart';
-
 /// Domain-opaque handle for Tag entities
 class TagHandle {
   final String _value;
 
   const TagHandle(this._value);
 
-  /// Factory for use cases to generate handles
-  factory TagHandle.generate() => TagHandle(const Uuid().v4());
+  /// Factory for use cases to create handles from name
+  factory TagHandle.fromName(String name) => TagHandle(name);
 
   /// Parse from string
   factory TagHandle.fromString(String value) => TagHandle(value);

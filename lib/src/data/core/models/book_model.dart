@@ -149,7 +149,7 @@ class BookModel {
       title: book.title,
       originalTitle: book.originalTitle,
       description: book.description,
-      authorIds: [], // Will be set by repository
+      authorIds: book.authors.map((a) => a.name).toList(),
       tagIds: book.tags.map((t) => t.name).toList(),
       publishedDate: book.publishedDate,
       coverImage: book.coverImage,

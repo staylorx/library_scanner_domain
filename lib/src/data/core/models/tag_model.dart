@@ -70,7 +70,7 @@ class TagModel {
   /// Creates a [TagModel] from a [Tag] domain entity.
   factory TagModel.fromEntity(Tag tag) {
     return TagModel(
-      id: tag.id.toString(),
+      id: tag.name,
       name: tag.name,
       description: tag.description,
       color: tag.color,

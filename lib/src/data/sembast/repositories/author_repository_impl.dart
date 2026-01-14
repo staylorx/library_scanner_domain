@@ -125,7 +125,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
   }) async {
     logger.info('Entering addAuthor with author: ${author.name}');
     try {
-      final handle = AuthorHandle.generate();
+      final handle = AuthorHandle.fromName(author.name);
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for addAuthor');
@@ -194,6 +194,7 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
           logger.info('Transaction started for updateAuthor');
+          final newId = author.name;
           // Find existing author by handle
           final existingResult = await _databaseService.query(
             collection: 'authors',
@@ -247,11 +248,26 @@ class AuthorRepositoryImpl implements AbstractAuthorRepository {
               );
             }
           }
+          if (handle.toString() != newId) {
+            logger.info('Name changed, deleting old record');
+            final deleteResult = await _databaseService.delete(
+              collection: 'authors',
+              id: handle.toString(),
+              db: txn,
+            );
+            if (deleteResult.isLeft()) {
+              throw Exception(
+                deleteResult.getLeft().getOrElse(
+                  () => DatabaseFailure('Delete old record failed'),
+                ),
+              );
+            }
+          }
           final model = AuthorModel.fromEntity(author, handle.toString());
           logger.info('Saving updated author ${author.name}');
           final saveResult = await _databaseService.save(
             collection: 'authors',
-            id: handle.toString(),
+            id: newId,
             data: model.toMap(),
             db: txn,
           );
