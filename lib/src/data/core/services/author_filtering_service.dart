@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of author filtering service
-class AuthorFilteringService implements AbstractAuthorFilteringService {
+class AuthorFilteringServiceImpl implements AuthorFilteringService {
   @override
   Either<Failure, List<Author>> filterAuthors({
     required List<Author> authors,

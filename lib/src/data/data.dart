@@ -15,7 +15,6 @@ export 'sembast/repositories/library_repository_impl.dart';
 export 'sembast/repositories/tag_repository_impl.dart';
 
 // Services
-export '../domain/services/abstract_sembast_service.dart';
 export 'core/services/author_filtering_service.dart';
 export 'core/services/author_validation_service.dart';
 export 'core/services/book_filtering_service.dart';

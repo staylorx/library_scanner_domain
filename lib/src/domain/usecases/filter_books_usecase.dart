@@ -3,7 +3,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Usecase for filtering books based on search query and tag filters
 class FilterBooksUsecase {
-  final AbstractBookFilteringService _bookFilteringService;
+  final BookFilteringService _bookFilteringService;
 
   /// Creates a new instance of [FilterBooksUsecase]
   FilterBooksUsecase(this._bookFilteringService);

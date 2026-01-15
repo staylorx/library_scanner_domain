@@ -25,8 +25,8 @@ void main() {
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
-        final authorIdRegistryService = AuthorIdRegistryService();
-        final bookIdRegistryService = BookIdRegistryService();
+        final authorIdRegistryService = AuthorIdRegistryServiceImpl();
+        final bookIdRegistryService = BookIdRegistryServiceImpl();
         final authorRepository = AuthorRepositoryImpl(
           databaseService: database,
           idRegistryService: authorIdRegistryService,

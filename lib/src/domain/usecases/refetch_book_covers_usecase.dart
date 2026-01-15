@@ -13,7 +13,7 @@ import 'package:logging/logging.dart';
 class RefetchBookCoversUsecase {
   final BookRepository bookRepository;
   final FetchBookMetadataByIsbnUsecase fetchBookMetadataByIsbnUsecase;
-  final AbstractImageService imageService;
+  final ImageService imageService;
 
   RefetchBookCoversUsecase({
     required this.bookRepository,

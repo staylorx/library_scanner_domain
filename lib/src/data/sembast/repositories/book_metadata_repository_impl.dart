@@ -4,8 +4,8 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Implementation of book metadata repository.
 class BookMetadataRepositoryImpl implements BookMetadataRepository {
-  final AbstractBookApiService apiService;
-  final AbstractImageService imageService;
+  final BookApiService apiService;
+  final ImageService imageService;
 
   /// Creates a BookMetadataRepositoryImpl instance.
   BookMetadataRepositoryImpl({

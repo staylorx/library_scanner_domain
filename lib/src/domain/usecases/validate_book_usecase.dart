@@ -3,7 +3,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Usecase for validating book data
 class ValidateBookUsecase {
-  final AbstractBookValidationService bookValidationService;
+  final BookValidationService bookValidationService;
 
   ValidateBookUsecase({required this.bookValidationService});
 

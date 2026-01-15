@@ -3,7 +3,7 @@ import '../../utils/failure.dart';
 import '../value_objects/book_id_pairs.dart';
 
 /// Abstract service for managing book ID uniqueness
-abstract class AbstractBookIdRegistryService {
+abstract class BookIdRegistryService {
   /// Registers a book's ID pairs with the registry
   Either<Failure, Unit> registerBookIdPairs(BookIdPairs idPairs);
 

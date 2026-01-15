@@ -3,7 +3,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Usecase for filtering authors based on search query
 class FilterAuthorsUsecase {
-  final AbstractAuthorFilteringService _authorFilteringService;
+  final AuthorFilteringService _authorFilteringService;
 
   /// Creates a new instance of [FilterAuthorsUsecase]
   FilterAuthorsUsecase(this._authorFilteringService);

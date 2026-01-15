@@ -5,7 +5,7 @@ import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
 /// Database service using Sembast for local storage.
-class SembastDatabase implements AbstractSembastService {
+class SembastDatabase implements DatabaseService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
   static const String _tagsStoreName = 'tags';

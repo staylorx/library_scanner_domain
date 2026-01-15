@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of book filtering service
-class BookFilteringService implements AbstractBookFilteringService {
+class BookFilteringServiceImpl implements BookFilteringService {
   @override
   Either<Failure, List<Book>> filterBooks({
     required List<Book> books,

@@ -5,13 +5,13 @@ import 'package:logging/logging.dart';
 
 /// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl implements AuthorRepository {
-  final AbstractSembastService _databaseService;
-  final AbstractAuthorIdRegistryService _idRegistryService;
+  final DatabaseService _databaseService;
+  final AuthorIdRegistryService _idRegistryService;
 
   /// Creates an AuthorRepositoryImpl instance.
   AuthorRepositoryImpl({
-    required AbstractSembastService databaseService,
-    required AbstractAuthorIdRegistryService idRegistryService,
+    required DatabaseService databaseService,
+    required AuthorIdRegistryService idRegistryService,
   }) : _databaseService = databaseService,
        _idRegistryService = idRegistryService;
 

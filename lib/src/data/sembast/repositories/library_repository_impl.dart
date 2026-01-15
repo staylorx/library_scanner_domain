@@ -257,7 +257,7 @@ class LibraryRepositoryImpl implements LibraryRepository {
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
 
   LibraryRepositoryImpl({
-    required AbstractSembastService database,
+    required DatabaseService database,
     required IsBookDuplicateUsecase isBookDuplicateUsecase,
   }) : _database = database as SembastDatabase,
        _isBookDuplicateUsecase = isBookDuplicateUsecase; // Initialize database

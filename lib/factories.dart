@@ -14,12 +14,12 @@ import 'src/domain/domain.dart';
 /// Factory for creating domain layer instances with data implementations.
 class LibraryFactory {
   final String? dbPath;
-  final AbstractBookApiService apiService;
-  final AbstractImageService imageService;
+  final BookApiService apiService;
+  final ImageService imageService;
 
   late final SembastDatabase _database;
-  late final AuthorIdRegistryService _authorIdRegistry;
-  late final BookIdRegistryService _bookIdRegistry;
+  late final AuthorIdRegistryServiceImpl _authorIdRegistry;
+  late final BookIdRegistryServiceImpl _bookIdRegistry;
 
   /// Creates a LibraryFactory with the specified database path.
   /// If dbPath is null, uses in-memory database.
@@ -29,8 +29,8 @@ class LibraryFactory {
     required this.imageService,
   }) {
     _database = SembastDatabase(testDbPath: dbPath);
-    _authorIdRegistry = AuthorIdRegistryService();
-    _bookIdRegistry = BookIdRegistryService();
+    _authorIdRegistry = AuthorIdRegistryServiceImpl();
+    _bookIdRegistry = BookIdRegistryServiceImpl();
   }
 
   /// Creates an AuthorRepository instance.
@@ -79,7 +79,7 @@ class LibraryFactory {
 /// Factory for creating BookApiService.
 class BookApiServiceFactory {
   /// Creates a BookApiService instance with the provided Dio client.
-  AbstractBookApiService createBookApiService(Dio dio) {
-    return BookApiService(dio: dio);
+  BookApiService createBookApiService(Dio dio) {
+    return BookApiServiceImpl(dio: dio);
   }
 }

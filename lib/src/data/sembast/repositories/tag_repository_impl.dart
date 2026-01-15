@@ -5,10 +5,10 @@ import 'package:logging/logging.dart';
 
 /// Implementation of tag repository using Sembast.
 class TagRepositoryImpl implements TagRepository {
-  final AbstractSembastService _databaseService;
+  final DatabaseService _databaseService;
 
   /// Creates a TagRepositoryImpl instance.
-  TagRepositoryImpl({required AbstractSembastService databaseService})
+  TagRepositoryImpl({required DatabaseService databaseService})
     : _databaseService = databaseService;
 
   final logger = Logger('TagRepositoryImpl');

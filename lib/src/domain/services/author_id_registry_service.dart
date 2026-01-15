@@ -3,7 +3,7 @@ import '../../utils/failure.dart';
 import '../value_objects/author_id_pairs.dart';
 
 /// Abstract service for managing author ID uniqueness
-abstract class AbstractAuthorIdRegistryService {
+abstract class AuthorIdRegistryService {
   /// Registers an author's ID pairs with the registry
   Either<Failure, Unit> registerAuthorIdPairs(AuthorIdPairs idPairs);
 

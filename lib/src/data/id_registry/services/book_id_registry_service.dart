@@ -4,11 +4,11 @@ import 'package:id_registry/id_registry.dart';
 import 'package:logging/logging.dart';
 
 /// Concrete implementation of book ID registry service using id_registry package
-class BookIdRegistryService implements AbstractBookIdRegistryService {
+class BookIdRegistryServiceImpl implements BookIdRegistryService {
   final IdRegistry _registry;
   final Logger _logger = Logger('BookIdRegistryService');
 
-  BookIdRegistryService()
+  BookIdRegistryServiceImpl()
     : _registry = IdRegistry(storage: InMemoryIdStorage()) {
     _registry.registerIdTypeGenerator('local', IdGeneratorType.uuid);
     _logger.info('BookIdRegistryService initialized with in-memory storage');

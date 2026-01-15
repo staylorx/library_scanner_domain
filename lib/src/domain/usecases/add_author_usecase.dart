@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 /// Use case for adding a new author to the repository.
 class AddAuthorUsecase {
   final AuthorRepository authorRepository;
-  final AbstractAuthorIdRegistryService idRegistryService;
+  final AuthorIdRegistryService idRegistryService;
 
   AddAuthorUsecase({
     required this.authorRepository,
