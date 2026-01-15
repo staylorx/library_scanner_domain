@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for clearing the entire library.
 class ClearLibraryUsecase {
-  final AbstractLibraryRepository libraryRepository;
+  final LibraryRepository libraryRepository;
 
   ClearLibraryUsecase({required this.libraryRepository});
 

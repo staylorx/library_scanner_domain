@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase {
-  final AbstractLibraryRepository libraryRepository;
+  final LibraryRepository libraryRepository;
 
   ImportLibraryUsecase({required this.libraryRepository});
 

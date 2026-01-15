@@ -4,7 +4,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
 /// Implementation of author repository using Sembast.
-class AuthorRepositoryImpl implements AbstractAuthorRepository {
+class AuthorRepositoryImpl implements AuthorRepository {
   final AbstractSembastService _databaseService;
   final AbstractAuthorIdRegistryService _idRegistryService;
 

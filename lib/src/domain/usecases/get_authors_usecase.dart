@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for retrieving all authors.
 class GetAuthorsUsecase {
-  final AbstractAuthorRepository authorRepository;
+  final AuthorRepository authorRepository;
 
   GetAuthorsUsecase({required this.authorRepository});
 

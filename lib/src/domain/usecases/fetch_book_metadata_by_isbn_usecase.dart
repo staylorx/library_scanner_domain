@@ -6,7 +6,7 @@ import 'package:logging/logging.dart';
 /// Use case for fetching book metadata by ISBN, including cover art download if enabled.
 
 class FetchBookMetadataByIsbnUsecase {
-  final AbstractBookMetadataRepository bookMetadataRepository;
+  final BookMetadataRepository bookMetadataRepository;
 
   FetchBookMetadataByIsbnUsecase({required this.bookMetadataRepository});
 

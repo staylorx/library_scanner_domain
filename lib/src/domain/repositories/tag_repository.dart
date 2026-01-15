@@ -9,7 +9,7 @@ class TagProjection {
   const TagProjection({required this.handle, required this.tag});
 }
 
-abstract class AbstractTagRepository {
+abstract class TagRepository {
   Future<Either<Failure, List<Tag>>> getTags();
   Future<Either<Failure, Tag?>> getTagByName({required String name});
   Future<Either<Failure, List<Tag>>> getTagsByNames({

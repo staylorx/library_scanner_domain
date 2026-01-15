@@ -6,8 +6,8 @@ import 'package:uuid/uuid.dart';
 
 /// Use case for migrating tags from name-based IDs to UUID-based IDs.
 class MigrateTagsUsecase {
-  final AbstractTagRepository tagRepository;
-  final AbstractBookRepository bookRepository;
+  final TagRepository tagRepository;
+  final BookRepository bookRepository;
 
   MigrateTagsUsecase({
     required this.tagRepository,

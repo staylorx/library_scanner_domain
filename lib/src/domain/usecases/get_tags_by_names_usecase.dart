@@ -11,7 +11,7 @@ import 'package:logging/logging.dart';
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
 class GetTagsByNamesUsecase {
-  final AbstractTagRepository tagRepository;
+  final TagRepository tagRepository;
 
   GetTagsByNamesUsecase({required this.tagRepository});
 

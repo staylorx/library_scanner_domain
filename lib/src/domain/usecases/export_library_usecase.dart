@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 /// Use case for exporting a library to a file.
 class ExportLibraryUsecase {
-  final AbstractLibraryRepository libraryRepository;
+  final LibraryRepository libraryRepository;
 
   ExportLibraryUsecase({required this.libraryRepository});
 

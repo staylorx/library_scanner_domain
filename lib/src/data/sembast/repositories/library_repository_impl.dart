@@ -251,7 +251,7 @@ Future<RelationshipUpdateParams> updateRelationships(
 }
 
 /// Implementation of library repository.
-class LibraryRepositoryImpl implements AbstractLibraryRepository {
+class LibraryRepositoryImpl implements LibraryRepository {
   final logger = Logger('LibraryRepositoryImpl');
   final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;

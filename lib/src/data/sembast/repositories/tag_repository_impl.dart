@@ -4,7 +4,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
 /// Implementation of tag repository using Sembast.
-class TagRepositoryImpl implements AbstractTagRepository {
+class TagRepositoryImpl implements TagRepository {
   final AbstractSembastService _databaseService;
 
   /// Creates a TagRepositoryImpl instance.

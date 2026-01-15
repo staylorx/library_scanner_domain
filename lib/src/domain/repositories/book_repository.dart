@@ -15,7 +15,7 @@ class BookProjection {
   const BookProjection({required this.handle, required this.book});
 }
 
-abstract class AbstractBookRepository {
+abstract class BookRepository {
   Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});
   Future<Either<Failure, Book?>> getBookByIdPair({
     required BookIdPair bookIdPair,

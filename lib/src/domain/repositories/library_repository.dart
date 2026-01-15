@@ -7,7 +7,7 @@ import '../../utils/failure.dart';
 // Authors and tags are "global" to all libraries
 // This repository defines the contract for accessing library data
 // It includes methods to retrieve a demo library, import a library from a file, export a library to a file, and clear the library
-abstract class AbstractLibraryRepository {
+abstract class LibraryRepository {
   Future<Either<Failure, ImportResult>> importLibrary(
     String filePath, {
     bool overwrite = false,

@@ -34,7 +34,7 @@ class LibraryFactory {
   }
 
   /// Creates an AuthorRepository instance.
-  Future<AbstractAuthorRepository> createAuthorRepository() async {
+  Future<AuthorRepository> createAuthorRepository() async {
     return AuthorRepositoryImpl(
       databaseService: _database,
       idRegistryService: _authorIdRegistry,
@@ -42,7 +42,7 @@ class LibraryFactory {
   }
 
   /// Creates a BookRepository instance.
-  Future<AbstractBookRepository> createBookRepository() async {
+  Future<BookRepository> createBookRepository() async {
     return BookRepositoryImpl(
       database: _database,
       idRegistryService: _bookIdRegistry,
@@ -50,7 +50,7 @@ class LibraryFactory {
   }
 
   /// Creates a BookMetadataRepository instance.
-  Future<AbstractBookMetadataRepository> createBookMetadataRepository() async {
+  Future<BookMetadataRepository> createBookMetadataRepository() async {
     return BookMetadataRepositoryImpl(
       apiService: apiService,
       imageService: imageService,
@@ -58,7 +58,7 @@ class LibraryFactory {
   }
 
   /// Creates a LibraryRepository instance.
-  Future<AbstractLibraryRepository> createLibraryRepository() async {
+  Future<LibraryRepository> createLibraryRepository() async {
     return LibraryRepositoryImpl(
       database: _database,
       isBookDuplicateUsecase: IsBookDuplicateUsecase(),
@@ -66,7 +66,7 @@ class LibraryFactory {
   }
 
   /// Creates a TagRepository instance.
-  Future<AbstractTagRepository> createTagRepository() async {
+  Future<TagRepository> createTagRepository() async {
     return TagRepositoryImpl(databaseService: _database);
   }
 

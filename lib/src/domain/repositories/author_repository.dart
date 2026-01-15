@@ -11,7 +11,7 @@ class AuthorProjection {
   const AuthorProjection({required this.handle, required this.author});
 }
 
-abstract class AbstractAuthorRepository {
+abstract class AuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthors();
   Future<Either<Failure, Author?>> getAuthorByName({required String name});
   Future<Either<Failure, List<Author>>> getAuthorsByNames({
