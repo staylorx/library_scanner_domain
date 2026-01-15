@@ -1,23 +1,16 @@
-import 'dart:io';
-
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
-import 'package:logging/logging.dart';
-import 'package:library_scanner_domain/src/data/data.dart';
 
+import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 void main() {
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    stdout.writeln('${record.level.name}: ${record.time}: ${record.message}');
-  });
-
   group('Book Integration Tests', () {
     test(
       'Comprehensive Book Integration Test',
       () async {
-        final logger = Logger('BookTest');
+        final logger = SimpleLoggerImpl(name: 'BookTest');
         logger.info('Starting comprehensive test');
 
         final database = SembastDatabase(testDbPath: null);
@@ -33,7 +26,7 @@ void main() {
         );
 
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
-        final getBookByIdPairUsecase = GetBookByIdPairUsecase(
+        final getByIdPairUsecase = GetBookByIdPairUsecase(
           bookRepository: bookRepository,
         );
         final addBookUsecase = AddBookUsecase(
@@ -109,7 +102,7 @@ void main() {
         expect(books.first.title, 'Updated Test Book');
 
         // Get book by id pair
-        var bookResult = await getBookByIdPairUsecase(
+        var bookResult = await getByIdPairUsecase(
           bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "12345"),
         );
         expect(bookResult.isRight(), true);
@@ -168,7 +161,7 @@ void main() {
         await updateBookUsecase.call(book: finalUpdatedBook);
 
         // Verify update
-        bookResult = await getBookByIdPairUsecase(
+        bookResult = await getByIdPairUsecase(
           bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "67890"),
         );
         expect(bookResult.isRight(), true);

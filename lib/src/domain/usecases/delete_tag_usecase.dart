@@ -1,7 +1,6 @@
 import 'package:fpdart/fpdart.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for deleting a tag from the repository.
 ///
@@ -12,12 +11,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class DeleteTagUsecase {
+class DeleteTagUsecase with Loggable {
   final TagRepository tagRepository;
 
-  DeleteTagUsecase({required this.tagRepository});
-
-  final logger = Logger('DeleteTagUsecase');
+  DeleteTagUsecase({Logger? logger, required this.tagRepository});
 
   /// Deletes a tag by ID and returns the updated list of tags.
   ///
@@ -35,7 +32,7 @@ class DeleteTagUsecase {
   /// [name] - The name of the tag to be deleted.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all tags on the right.
   Future<Either<Failure, List<Tag>>> call({required String name}) async {
-    logger.info('DeleteTagUsecase: Entering call with name: $name');
+    logger?.info('DeleteTagUsecase: Entering call with name: $name');
     final getTagsEither = await tagRepository.getTags();
     return getTagsEither.fold((failure) => Left(failure), (tags) async {
       final tag = tags.where((t) => t.name == name).firstOrNull;
@@ -47,11 +44,11 @@ class DeleteTagUsecase {
       );
       return deleteEither.fold((failure) => Left(failure), (_) {
         final updatedTags = tags.where((t) => t.name != name).toList();
-        logger.info('DeleteTagUsecase: Success in call');
-        logger.info(
+        logger?.info('DeleteTagUsecase: Success in call');
+        logger?.info(
           'DeleteTagUsecase: Output: ${updatedTags.map((t) => t.name).toList()}',
         );
-        logger.info('DeleteTagUsecase: Exiting call');
+        logger?.info('DeleteTagUsecase: Exiting call');
         return Right(updatedTags);
       });
     });

@@ -1,6 +1,6 @@
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for updating an existing author in the repository.
 ///
@@ -11,12 +11,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class UpdateAuthorUsecase {
+class UpdateAuthorUsecase with Loggable {
   final AuthorRepository authorRepository;
 
-  UpdateAuthorUsecase({required this.authorRepository});
-
-  final logger = Logger('UpdateAuthorUsecase');
+  UpdateAuthorUsecase({Logger? logger, required this.authorRepository});
 
   /// Updates an existing author in the repository.
   ///
@@ -35,16 +33,16 @@ class UpdateAuthorUsecase {
     required AuthorHandle handle,
     required Author author,
   }) async {
-    logger.info(
+    logger?.info(
       'UpdateAuthorUsecase: Entering call with handle: $handle and author: ${author.name}',
     );
     final updateEither = await authorRepository.updateAuthor(
       handle: handle,
       author: author,
     );
-    logger.info('UpdateAuthorUsecase: Success in call');
+    logger?.info('UpdateAuthorUsecase: Success in call');
     return updateEither.fold((failure) => Left(failure), (_) {
-      logger.info('UpdateAuthorUsecase: Exiting call');
+      logger?.info('UpdateAuthorUsecase: Exiting call');
       return Right(unit);
     });
   }

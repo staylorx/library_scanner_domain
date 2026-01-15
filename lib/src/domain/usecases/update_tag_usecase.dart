@@ -1,6 +1,6 @@
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for updating an existing tag in the repository.
 ///
@@ -11,12 +11,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class UpdateTagUsecase {
+class UpdateTagUsecase with Loggable {
   final TagRepository tagRepository;
 
-  UpdateTagUsecase({required this.tagRepository});
-
-  final logger = Logger('UpdateTagUsecase');
+  UpdateTagUsecase({Logger? logger, required this.tagRepository});
 
   /// Updates an existing tag in the repository and returns the updated list of tags.
   ///
@@ -33,7 +31,7 @@ class UpdateTagUsecase {
   /// [tag] - The tag entity with updated information to be saved.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the updated list of all tags on the right.
   Future<Either<Failure, List<Tag>>> call({required Tag tag}) async {
-    logger.info('UpdateTagUsecase: Entering call with tag: ${tag.name}');
+    logger?.info('UpdateTagUsecase: Entering call with tag: ${tag.name}');
     final updateEither = await tagRepository.updateTag(
       handle: tag.id,
       tag: tag,
@@ -42,12 +40,12 @@ class UpdateTagUsecase {
       _,
     ) async {
       final getEither = await tagRepository.getTags();
-      logger.info('UpdateTagUsecase: Success in call');
+      logger?.info('UpdateTagUsecase: Success in call');
       return getEither.fold((failure) => Left(failure), (tags) {
-        logger.info(
+        logger?.info(
           'UpdateTagUsecase: Output: ${tags.map((t) => t.name).toList()}',
         );
-        logger.info('UpdateTagUsecase: Exiting call');
+        logger?.info('UpdateTagUsecase: Exiting call');
         return Right(tags);
       });
     });

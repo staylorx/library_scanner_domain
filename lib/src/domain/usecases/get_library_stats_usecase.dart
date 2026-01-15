@@ -1,13 +1,15 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:id_logging/id_logging.dart';
 
 /// Usecase for getting library statistics
-class GetLibraryStatsUsecase {
+class GetLibraryStatsUsecase with Loggable {
   final GetBooksUsecase _getBooksUsecase;
   final GetAuthorsUsecase _getAuthorsUsecase;
   final GetTagsUsecase _getTagsUsecase;
 
   GetLibraryStatsUsecase({
+    Logger? logger,
     required GetBooksUsecase getBooksUsecase,
     required GetAuthorsUsecase getAuthorsUsecase,
     required GetTagsUsecase getTagsUsecase,

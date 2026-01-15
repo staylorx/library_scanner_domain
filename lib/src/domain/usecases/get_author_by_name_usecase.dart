@@ -1,6 +1,6 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
+import 'package:id_logging/id_logging.dart';
 
 /// Use case responsible for retrieving a single author by their name.
 ///
@@ -10,12 +10,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class GetAuthorByNameUsecase {
+class GetAuthorByNameUsecase with Loggable {
   final AuthorRepository authorRepository;
 
-  GetAuthorByNameUsecase({required this.authorRepository});
-
-  final logger = Logger('GetAuthorByNameUsecase');
+  GetAuthorByNameUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves an author by their name.
   ///
@@ -31,16 +29,18 @@ class GetAuthorByNameUsecase {
   /// [name] - The name of the author to retrieve.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the [Author] entity on the right.
   Future<Either<Failure, Author>> call({required String name}) async {
-    logger.info('GetAuthorByNameUsecase: Entering call with name: $name');
-    final result = await authorRepository.getAuthorByName(name: name);
-    logger.info('GetAuthorByNameUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (author) {
-      logger.info('GetAuthorByNameUsecase: Output: ${author?.name ?? 'null'}');
-      logger.info('GetAuthorByNameUsecase: Exiting call');
-      if (author == null) {
-        return Left(NotFoundFailure('Author not found'));
-      }
-      return Right(author);
-    });
+    logger?.info('getByNameUsecase: Entering call with name: $name');
+    final result = await authorRepository.getByName(name: name);
+    logger?.info('getByNameUsecase: Success in call');
+    return result.match(
+      (failure) {
+        logger?.info('getByNameUsecase: Failure: $failure');
+        return Left(failure);
+      },
+      (author) {
+        logger?.info('getByNameUsecase: Output: ${author.name}');
+        return Right(author);
+      },
+    );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:id_logging/id_logging.dart';
 
 /// Usecase for filtering books based on search query and tag filters
-class FilterBooksUsecase {
+class FilterBooksUsecase with Loggable {
   final BookFilteringService _bookFilteringService;
 
   /// Creates a new instance of [FilterBooksUsecase]

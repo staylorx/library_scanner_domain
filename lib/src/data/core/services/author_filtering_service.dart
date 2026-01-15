@@ -1,26 +1,31 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of author filtering service
-class AuthorFilteringServiceImpl implements AuthorFilteringService {
+class AuthorFilteringServiceImpl
+    with Loggable
+    implements AuthorFilteringService {
   @override
   Either<Failure, List<Author>> filterAuthors({
     required List<Author> authors,
     required String searchQuery,
+    Logger? logger,
   }) {
-    try {
-      if (searchQuery.isEmpty) {
-        return Right(authors);
-      }
+    return Either.tryCatch(
+      () {
+        if (searchQuery.isEmpty) {
+          return authors;
+        }
 
-      final query = searchQuery.toLowerCase();
-      final filteredAuthors = authors.where((author) {
-        return author.name.toLowerCase().contains(query);
-      }).toList();
+        final query = searchQuery.toLowerCase();
+        final filteredAuthors = authors.where((author) {
+          return author.name.toLowerCase().contains(query);
+        }).toList();
 
-      return Right(filteredAuthors);
-    } catch (e) {
-      return Left(ServiceFailure('Failed to filter authors: $e'));
-    }
+        return filteredAuthors;
+      },
+      (error, stackTrace) => ServiceFailure('Failed to filter authors: $error'),
+    );
   }
 }

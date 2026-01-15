@@ -17,14 +17,12 @@ class BookProjection {
 
 abstract class BookRepository {
   Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});
-  Future<Either<Failure, Book?>> getBookByIdPair({
-    required BookIdPair bookIdPair,
-  });
-  Future<Either<Failure, Book?>> getBookById({required BookIdPairs bookId});
+  Future<Either<Failure, Book>> getByIdPair({required BookIdPair bookIdPair});
+  Future<Either<Failure, Book>> getBookById({required BookIdPairs bookId});
   Future<Either<Failure, BookHandle>> addBook({required Book book});
   Future<Either<Failure, Unit>> updateBook({required Book book});
   Future<Either<Failure, Unit>> deleteBook({required Book book});
-  Future<Either<Failure, Book?>> getBookByHandle({required BookHandle handle});
+  Future<Either<Failure, Book>> getByHandle({required BookHandle handle});
   Future<Either<Failure, List<Book>>> getBooksByAuthor({
     required Author author,
   });

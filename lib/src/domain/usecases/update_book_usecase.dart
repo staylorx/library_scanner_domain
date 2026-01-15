@@ -1,18 +1,16 @@
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case for updating an existing book in the repository.
-class UpdateBookUsecase {
+class UpdateBookUsecase with Loggable {
   final BookRepository bookRepository;
 
-  UpdateBookUsecase({required this.bookRepository});
-
-  final logger = Logger('UpdateBookUsecase');
+  UpdateBookUsecase({Logger? logger, required this.bookRepository});
 
   /// Updates an existing book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
-    logger.info(
+    logger?.info(
       'UpdateBookUsecase: Entering call with book: ${book.title} (businessIds: ${book.businessIds})',
     );
     final updateEither = await bookRepository.updateBook(book: book);
@@ -20,12 +18,12 @@ class UpdateBookUsecase {
       _,
     ) async {
       final getEither = await bookRepository.getBooks();
-      logger.info('UpdateBookUsecase: Success in call');
+      logger?.info('UpdateBookUsecase: Success in call');
       return getEither.fold((failure) => Left(failure), (books) {
-        logger.info(
+        logger?.info(
           'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
-        logger.info('UpdateBookUsecase: Exiting call');
+        logger?.info('UpdateBookUsecase: Exiting call');
         return Right(books);
       });
     });

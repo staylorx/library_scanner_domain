@@ -1,7 +1,8 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
+
+import 'package:id_logging/id_logging.dart';
 
 /// Use case responsible for retrieving a single book by its BookIdPair.
 ///
@@ -11,12 +12,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class GetBookByIdPairUsecase {
+class GetBookByIdPairUsecase with Loggable {
   final BookRepository bookRepository;
 
-  GetBookByIdPairUsecase({required this.bookRepository});
-
-  final logger = Logger('GetBookByIdPairpairUsecase');
+  GetBookByIdPairUsecase({Logger? logger, required this.bookRepository});
 
   /// Retrieves a book by its unique BookIdPair.
   ///
@@ -32,20 +31,24 @@ class GetBookByIdPairUsecase {
   /// [bookIdPair] - The BookIdPair identifier of the book to retrieve.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the [Book] entity on the right.
   Future<Either<Failure, Book>> call({required BookIdPair bookIdPair}) async {
-    logger.info(
-      'GetBookByIdPairpairUsecase: Entering call with bookIdPair: $bookIdPair',
+    logger?.info(
+      'getByIdPairpairUsecase: Entering call with bookIdPair: $bookIdPair',
     );
-    final result = await bookRepository.getBookByIdPair(bookIdPair: bookIdPair);
-    logger.info('GetBookByIdPairpairUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (book) {
-      logger.info(
-        'GetBookByIdPairpairUsecase: Output: ${book != null ? '${book.title} (businessIds: ${book.businessIds})' : 'null'}',
-      );
-      logger.info('GetBookByIdPairpairUsecase: Exiting call');
-      if (book == null) {
-        return Left(NotFoundFailure('Book not found'));
-      }
-      return Right(book);
-    });
+    final result = await bookRepository.getByIdPair(bookIdPair: bookIdPair);
+    logger?.info('getByIdPairpairUsecase: Success in call');
+    return result.match(
+      (failure) {
+        logger?.info('getByIdPairpairUsecase: Failure: $failure');
+        logger?.info('getByIdPairpairUsecase: Exiting call');
+        return Left(failure);
+      },
+      (book) {
+        logger?.info(
+          'getByIdPairpairUsecase: Output: ${book.title} (businessIds: ${book.businessIds})',
+        );
+        logger?.info('getByIdPairpairUsecase: Exiting call');
+        return Right(book);
+      },
+    );
   }
 }

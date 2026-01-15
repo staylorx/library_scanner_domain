@@ -11,7 +11,7 @@ class TagProjection {
 
 abstract class TagRepository {
   Future<Either<Failure, List<Tag>>> getTags();
-  Future<Either<Failure, Tag?>> getTagByName({required String name});
+  Future<Either<Failure, Tag>> getByName({required String name});
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
   });
@@ -21,5 +21,5 @@ abstract class TagRepository {
     required Tag tag,
   });
   Future<Either<Failure, Unit>> deleteTag({required TagHandle handle});
-  Future<Either<Failure, Tag?>> getTagByHandle({required TagHandle handle});
+  Future<Either<Failure, Tag>> getByHandle({required TagHandle handle});
 }

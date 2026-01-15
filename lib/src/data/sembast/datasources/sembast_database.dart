@@ -1,22 +1,22 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:logging/logging.dart';
+
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
 /// Database service using Sembast for local storage.
-class SembastDatabase implements DatabaseService {
+class SembastDatabase with Loggable implements DatabaseService {
   static const String _booksStoreName = 'books';
   static const String _authorsStoreName = 'authors';
   static const String _tagsStoreName = 'tags';
 
-  final Logger logger = Logger('SembastDatabase');
-
   final String? testDbPath;
 
   /// Creates a SembastDatabase instance.
-  SembastDatabase({this.testDbPath});
-
+  SembastDatabase({this.testDbPath, Logger? logger}) {
+    this.logger = logger;
+  }
   Database? _database;
 
   final StoreRef<String, Map<String, dynamic>> booksStore =
@@ -62,22 +62,25 @@ class SembastDatabase implements DatabaseService {
     required Map<String, dynamic> data,
     dynamic db,
   }) async {
-    try {
-      logger.fine(
-        'SembastDatabase: Entering save, collection: $collection, id: $id',
-      );
-      final client = db as DatabaseClient? ?? await database;
-      logger.fine('SembastDatabase: Got database client');
-      final store = _getStore(collection);
-      logger.fine('SembastDatabase: Got store for collection $collection');
-      logger.fine('SembastDatabase: About to put record');
-      await store.record(id).put(client, data);
-      logger.fine('SembastDatabase: Put completed successfully');
-      return right(null);
-    } catch (e) {
-      logger.severe('Save failed: $e');
-      return left(DatabaseFailure('Failed to save: $e'));
-    }
+    return TaskEither.tryCatch(
+      () async {
+        logger?.debug(
+          'SembastDatabase: Entering save, collection: $collection, id: $id',
+        );
+        final client = db as DatabaseClient? ?? await database;
+        logger?.debug('SembastDatabase: Got database client');
+        final store = _getStore(collection);
+        logger?.debug('SembastDatabase: Got store for collection $collection');
+        logger?.debug('SembastDatabase: About to put record');
+        await store.record(id).put(client, data);
+        logger?.debug('SembastDatabase: Put completed successfully');
+        return null;
+      },
+      (error, stackTrace) {
+        logger?.error('Save failed: $error');
+        return DatabaseFailure('Failed to save: $error');
+      },
+    ).run();
   }
 
   /// Retrieves data from the specified collection by id.
@@ -152,7 +155,7 @@ class SembastDatabase implements DatabaseService {
       }
       final finder = Finder(filter: queryFilter, limit: limit, offset: offset);
       final records = await store.find(dbToUse, finder: finder);
-      logger.info(
+      logger?.info(
         'Query collection: $collection, filter: $filter, found ${records.length} records',
       );
       return right(records.map((r) => r.value).toList());

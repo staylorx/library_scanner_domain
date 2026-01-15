@@ -1,19 +1,21 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Usecase for scanning and adding a book by ISBN
-class ScanAndAddBookUsecase {
+class ScanAndAddBookUsecase with Loggable {
   final FetchBookMetadataByIsbnUsecase _fetchMetadataUsecase;
   final AddBookUsecase _addBookUsecase;
-  final GetBookByIdPairUsecase _getBookByIdPairUsecase;
+  final GetBookByIdPairUsecase _getByIdPairUsecase;
 
   ScanAndAddBookUsecase({
+    Logger? logger,
     required FetchBookMetadataByIsbnUsecase fetchMetadataUsecase,
     required AddBookUsecase addBookUsecase,
-    required GetBookByIdPairUsecase getBookByIdPairUsecase,
+    required GetBookByIdPairUsecase getByIdPairUsecase,
   }) : _fetchMetadataUsecase = fetchMetadataUsecase,
        _addBookUsecase = addBookUsecase,
-       _getBookByIdPairUsecase = getBookByIdPairUsecase;
+       _getByIdPairUsecase = getByIdPairUsecase;
 
   /// Scans a book by ISBN and creates it in the library.
   Future<Either<Failure, Book>> call(String isbn) async {
@@ -59,7 +61,7 @@ class ScanAndAddBookUsecase {
 
   /// Checks if a book with the given ISBN already exists.
   Future<Either<Failure, bool>> _checkForDuplicate(String isbn) async {
-    final result = await _getBookByIdPairUsecase(
+    final result = await _getByIdPairUsecase(
       bookIdPair: BookIdPair(idType: BookIdType.isbn, idCode: isbn),
     );
     return result.fold(

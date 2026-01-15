@@ -1,7 +1,7 @@
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving all tags from the repository.
 ///
@@ -11,12 +11,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class GetTagsUsecase {
+class GetTagsUsecase with Loggable {
   final TagRepository tagRepository;
 
-  GetTagsUsecase({required this.tagRepository});
-
-  final logger = Logger('GetTagsUsecase');
+  GetTagsUsecase({Logger? logger, required this.tagRepository});
 
   /// Retrieves all tags from the repository.
   ///
@@ -31,14 +29,14 @@ class GetTagsUsecase {
   ///
   /// Returns a [Future] containing [Either] with [Failure] on the left or the list of all [Tag] entities on the right.
   Future<Either<Failure, List<Tag>>> call() async {
-    logger.info('GetTagsUsecase: Entering call');
+    logger?.info('GetTagsUsecase: Entering call');
     final result = await tagRepository.getTags();
-    logger.info('GetTagsUsecase: Success in call');
+    logger?.info('GetTagsUsecase: Success in call');
     return result.fold((failure) => Left(failure), (tags) {
-      logger.info(
+      logger?.info(
         'GetTagsUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );
-      logger.info('GetTagsUsecase: Exiting call');
+      logger?.info('GetTagsUsecase: Exiting call');
       return Right(tags);
     });
   }

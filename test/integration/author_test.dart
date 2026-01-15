@@ -1,23 +1,17 @@
-import 'dart:io';
-
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
-import 'package:logging/logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 void main() {
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    stdout.writeln('${record.level.name}: ${record.time}: ${record.message}');
-  });
-
   group('Author Integration Tests', () {
     test(
       'Comprehensive Author Integration Test',
       () async {
-        final logger = Logger('AuthorTest');
+        final logger = SimpleLoggerImpl(name: 'AuthorTest');
+        logger.logLevel = null;
+
         logger.info('Starting comprehensive test');
 
         final database = SembastDatabase(testDbPath: null);
@@ -40,6 +34,7 @@ void main() {
           authorRepository: authorRepository,
         );
         final getAuthorByNameUsecase = GetAuthorByNameUsecase(
+          logger: logger,
           authorRepository: authorRepository,
         );
         final addAuthorUsecase = AddAuthorUsecase(

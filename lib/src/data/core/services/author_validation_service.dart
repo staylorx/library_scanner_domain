@@ -1,12 +1,16 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of author validation service
-class AuthorValidationServiceImpl implements AuthorValidationService {
+class AuthorValidationServiceImpl
+    with Loggable
+    implements AuthorValidationService {
   final AuthorIdRegistryService _idRegistryService;
 
   AuthorValidationServiceImpl({
     required AuthorIdRegistryService idRegistryService,
+    Logger? logger,
   }) : _idRegistryService = idRegistryService;
 
   @override

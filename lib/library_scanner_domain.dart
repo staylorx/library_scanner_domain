@@ -6,4 +6,3 @@ export 'src/utils/isbn_utils.dart';
 export 'src/utils/title_utils.dart';
 
 export 'src/domain/domain.dart';
-export 'factories.dart';

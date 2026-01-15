@@ -1,15 +1,15 @@
 import 'package:dio/dio.dart';
 
-import 'src/data/book_api/datasources/book_api_service.dart';
-import 'src/data/id_registry/services/author_id_registry_service.dart';
-import 'src/data/id_registry/services/book_id_registry_service.dart';
-import 'src/data/sembast/datasources/sembast_database.dart';
-import 'src/data/sembast/repositories/author_repository_impl.dart';
-import 'src/data/sembast/repositories/book_metadata_repository_impl.dart';
-import 'src/data/sembast/repositories/book_repository_impl.dart';
-import 'src/data/sembast/repositories/library_repository_impl.dart';
-import 'src/data/sembast/repositories/tag_repository_impl.dart';
-import 'src/domain/domain.dart';
+import '../data/book_api/datasources/book_api_service.dart';
+import '../data/id_registry/services/author_id_registry_service.dart';
+import '../data/id_registry/services/book_id_registry_service.dart';
+import '../data/sembast/datasources/sembast_database.dart';
+import '../data/sembast/repositories/author_repository_impl.dart';
+import '../data/sembast/repositories/book_metadata_repository_impl.dart';
+import '../data/sembast/repositories/book_repository_impl.dart';
+import '../data/sembast/repositories/library_repository_impl.dart';
+import '../data/sembast/repositories/tag_repository_impl.dart';
+import 'domain.dart';
 
 /// Factory for creating domain layer instances with data implementations.
 class LibraryFactory {

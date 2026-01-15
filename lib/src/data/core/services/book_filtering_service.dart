@@ -1,8 +1,9 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Concrete implementation of book filtering service
-class BookFilteringServiceImpl implements BookFilteringService {
+class BookFilteringServiceImpl with Loggable implements BookFilteringService {
   @override
   Either<Failure, List<Book>> filterBooks({
     required List<Book> books,
@@ -10,8 +11,9 @@ class BookFilteringServiceImpl implements BookFilteringService {
     required String searchQuery,
     required List<String> selectedTagIds,
     required bool isInclusiveFilter,
+    Logger? logger,
   }) {
-    try {
+    return Either.tryCatch(() {
       final filteredBooks = books.where((book) {
         // Search filter
         if (searchQuery.isNotEmpty) {
@@ -48,9 +50,7 @@ class BookFilteringServiceImpl implements BookFilteringService {
         return true;
       }).toList();
 
-      return Right(filteredBooks);
-    } catch (e) {
-      return Left(ServiceFailure('Failed to filter books: $e'));
-    }
+      return filteredBooks;
+    }, (error, stackTrace) => ServiceFailure('Failed to filter books: $error'));
   }
 }

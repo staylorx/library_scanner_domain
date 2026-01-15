@@ -13,7 +13,7 @@ class AuthorProjection {
 
 abstract class AuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthors();
-  Future<Either<Failure, Author?>> getAuthorByName({required String name});
+  Future<Either<Failure, Author>> getByName({required String name});
   Future<Either<Failure, List<Author>>> getAuthorsByNames({
     required List<String> names,
   });
@@ -23,7 +23,5 @@ abstract class AuthorRepository {
     required Author author,
   });
   Future<Either<Failure, Unit>> deleteAuthor({required AuthorHandle handle});
-  Future<Either<Failure, Author?>> getAuthorByHandle({
-    required AuthorHandle handle,
-  });
+  Future<Either<Failure, Author>> getByHandle({required AuthorHandle handle});
 }

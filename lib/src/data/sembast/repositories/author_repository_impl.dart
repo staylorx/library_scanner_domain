@@ -1,10 +1,10 @@
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:logging/logging.dart';
 
 /// Implementation of author repository using Sembast.
-class AuthorRepositoryImpl implements AuthorRepository {
+class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   final DatabaseService _databaseService;
   final AuthorIdRegistryService _idRegistryService;
 
@@ -12,66 +12,68 @@ class AuthorRepositoryImpl implements AuthorRepository {
   AuthorRepositoryImpl({
     required DatabaseService databaseService,
     required AuthorIdRegistryService idRegistryService,
+    Logger? logger,
   }) : _databaseService = databaseService,
        _idRegistryService = idRegistryService;
-
-  final logger = Logger('AuthorRepositoryImpl');
 
   /// Retrieves all authors from the database.
   @override
   Future<Either<Failure, List<Author>>> getAuthors() async {
-    logger.info('Entering getAuthors');
-    try {
-      final result = await _databaseService.getAll(collection: 'authors');
-      return result.fold((failure) => Either.left(failure), (records) {
-        final authors = <Author>[];
-        for (final record in records) {
-          try {
+    logger?.info('Entering getAuthors');
+    return TaskEither.tryCatch(
+      () async {
+        final result = await _databaseService.getAll(collection: 'authors');
+        return result.fold((failure) => throw failure, (records) {
+          final authors = <Author>[];
+          for (final record in records) {
             final model = AuthorModel.fromMap(map: record);
             authors.add(model.toEntity());
-          } catch (e) {
-            return Either.left(DataParsingFailure(e.toString()));
           }
-        }
-        logger.info('Success in getAuthors, fetched ${authors.length} authors');
-        logger.info('Output: ${authors.map((a) => a.name).toList()}');
-        logger.info('Exiting getAuthors');
-        return Either.right(authors);
-      });
-    } catch (e) {
-      return Either.left(DatabaseReadFailure(e.toString()));
-    }
+          logger?.info(
+            'Success in getAuthors, fetched ${authors.length} authors',
+          );
+          logger?.info('Output: ${authors.map((a) => a.name).toList()}');
+          logger?.info('Exiting getAuthors');
+          return authors;
+        });
+      },
+      (error, stackTrace) =>
+          error is Failure ? error : DatabaseReadFailure(error.toString()),
+    ).run();
   }
 
   /// Retrieves an author by name.
   @override
-  Future<Either<Failure, Author?>> getAuthorByName({
-    required String name,
-  }) async {
-    logger.info('Entering getAuthorByName with name: $name');
+  Future<Either<Failure, Author>> getByName({required String name}) async {
+    logger?.info('Entering getByName with name: $name');
     try {
       final result = await _databaseService.query(
         collection: 'authors',
         filter: {'name': name},
       );
-      return result.fold((failure) => Either.left(failure), (records) {
-        if (records.isEmpty) {
-          logger.info('Author with name $name not found');
-          logger.info('Output: null');
-          logger.info('Exiting getAuthorByName');
-          return Either.right(null);
-        }
-        try {
-          final model = AuthorModel.fromMap(map: records.first);
-          logger.info('Success, fetched author ${model.name}');
-          final author = model.toEntity();
-          logger.info('Output: ${author.name}');
-          logger.info('Exiting getAuthorByName');
-          return Either.right(author);
-        } catch (e) {
-          return Either.left(DataParsingFailure(e.toString()));
-        }
-      });
+      return result.match(
+        (failure) {
+          logger?.warning('Failed to query author: $failure');
+          return Either.left(failure);
+        },
+        (records) {
+          if (records.isEmpty) {
+            logger?.info('Author with name $name not found');
+            logger?.info('Exiting getByName');
+            return Either.left(NotFoundFailure('Author not found'));
+          }
+          try {
+            final model = AuthorModel.fromMap(map: records.first);
+            logger?.info('Success, fetched author ${model.name}');
+            final author = model.toEntity();
+            logger?.info('Output: ${author.name}');
+            logger?.info('Exiting getByName');
+            return Either.right(author);
+          } catch (e) {
+            return Either.left(DataParsingFailure(e.toString()));
+          }
+        },
+      );
     } catch (e) {
       return Either.left(DatabaseReadFailure(e.toString()));
     }
@@ -82,12 +84,12 @@ class AuthorRepositoryImpl implements AuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthorsByNames({
     required List<String> names,
   }) async {
-    logger.info('Entering getAuthorsByNames with names: $names');
+    logger?.info('Entering getAuthorsByNames with names: $names');
     try {
       if (names.isEmpty) {
-        logger.info('names is empty, returning empty list');
-        logger.info('Output: []');
-        logger.info('Exiting getAuthorsByNames');
+        logger?.info('names is empty, returning empty list');
+        logger?.info('Output: []');
+        logger?.info('Exiting getAuthorsByNames');
         return Either.right([]);
       }
 
@@ -107,11 +109,11 @@ class AuthorRepositoryImpl implements AuthorRepository {
             return Either.left(DataParsingFailure(e.toString()));
           }
         }
-        logger.info(
+        logger?.info(
           'Success in getAuthorsByNames, fetched ${authors.length} authors',
         );
-        logger.info('Output: ${authors.map((a) => a.name).toList()}');
-        logger.info('Exiting getAuthorsByNames');
+        logger?.info('Output: ${authors.map((a) => a.name).toList()}');
+        logger?.info('Exiting getAuthorsByNames');
         return Either.right(authors);
       });
     } catch (e) {
@@ -124,14 +126,14 @@ class AuthorRepositoryImpl implements AuthorRepository {
   Future<Either<Failure, AuthorHandle>> addAuthor({
     required Author author,
   }) async {
-    logger.info('Entering addAuthor with author: ${author.name}');
+    logger?.info('Entering addAuthor with author: ${author.name}');
     try {
       final handle = AuthorHandle.fromName(author.name);
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
-          logger.info('Transaction started for addAuthor');
+          logger?.info('Transaction started for addAuthor');
           final model = AuthorModel.fromEntity(author, handle.toString());
-          logger.info('Saving author ${author.name} with handle $handle');
+          logger?.info('Saving author ${author.name} with handle $handle');
           final saveResult = await _databaseService.save(
             collection: 'authors',
             id: handle.toString(),
@@ -145,7 +147,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info('Author saved, registering ID pairs');
+          logger?.info('Author saved, registering ID pairs');
           final registerResult = _idRegistryService.registerAuthorIdPairs(
             AuthorIdPairs(pairs: author.businessIds),
           );
@@ -156,7 +158,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info('ID pairs registered, updating relationships');
+          logger?.info('ID pairs registered, updating relationships');
           final updateResult = await _updateRelationshipsForAuthor(
             authorName: author.name,
             isAdd: true,
@@ -169,12 +171,12 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info('Transaction operation completed for addAuthor');
+          logger?.info('Transaction operation completed for addAuthor');
         },
       );
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('Success added author ${author.name} with handle $handle');
-        logger.info('Exiting addAuthor');
+        logger?.info('Success added author ${author.name} with handle $handle');
+        logger?.info('Exiting addAuthor');
         return Either.right(handle);
       });
     } catch (e) {
@@ -188,13 +190,13 @@ class AuthorRepositoryImpl implements AuthorRepository {
     required AuthorHandle handle,
     required Author author,
   }) async {
-    logger.info(
+    logger?.info(
       'Entering updateAuthor with handle: $handle and author: ${author.name}',
     );
     try {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
-          logger.info('Transaction started for updateAuthor');
+          logger?.info('Transaction started for updateAuthor');
           final newId = author.name;
           // Find existing author by handle
           final existingResult = await _databaseService.query(
@@ -220,7 +222,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
             }
           }
           if (existing != null) {
-            logger.info(
+            logger?.info(
               'Unregistering old ID pairs for existing author ${existing.name}',
             );
             final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
@@ -233,7 +235,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
                 ),
               );
             }
-            logger.info(
+            logger?.info(
               'Removing relationships for existing author ${existing.name}',
             );
             final removeResult = await _updateRelationshipsForAuthor(
@@ -250,7 +252,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
             }
           }
           if (handle.toString() != newId) {
-            logger.info('Name changed, deleting old record');
+            logger?.info('Name changed, deleting old record');
             final deleteResult = await _databaseService.delete(
               collection: 'authors',
               id: handle.toString(),
@@ -265,7 +267,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
             }
           }
           final model = AuthorModel.fromEntity(author, handle.toString());
-          logger.info('Saving updated author ${author.name}');
+          logger?.info('Saving updated author ${author.name}');
           final saveResult = await _databaseService.save(
             collection: 'authors',
             id: newId,
@@ -279,7 +281,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info(
+          logger?.info(
             'Registering new ID pairs for updated author ${author.name}',
           );
           final registerResult = _idRegistryService.registerAuthorIdPairs(
@@ -292,12 +294,13 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info(
+          logger?.info(
             'ID pairs registered, adding relationships for updated author ${author.name}',
           );
           final addResult = await _updateRelationshipsForAuthor(
             authorName: author.name,
             isAdd: true,
+            txn: txn,
           );
           if (addResult.isLeft()) {
             throw Exception(
@@ -306,12 +309,12 @@ class AuthorRepositoryImpl implements AuthorRepository {
               ),
             );
           }
-          logger.info('Transaction operation completed for updateAuthor');
+          logger?.info('Transaction operation completed for updateAuthor');
         },
       );
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('Success updated author ${author.name}');
-        logger.info('Exiting updateAuthor');
+        logger?.info('Success updated author ${author.name}');
+        logger?.info('Exiting updateAuthor');
         return Either.right(unit);
       });
     } catch (e) {
@@ -324,11 +327,11 @@ class AuthorRepositoryImpl implements AuthorRepository {
   Future<Either<Failure, Unit>> deleteAuthor({
     required AuthorHandle handle,
   }) async {
-    logger.info('Entering deleteAuthor with handle: $handle');
+    logger?.info('Entering deleteAuthor with handle: $handle');
     try {
       final result = await _databaseService.transaction(
         operation: (dynamic txn) async {
-          logger.info('Transaction started for deleteAuthor');
+          logger?.info('Transaction started for deleteAuthor');
           final queryResult = await _databaseService.query(
             collection: 'authors',
             filter: {'id': handle.toString()},
@@ -346,7 +349,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
             try {
               final model = AuthorModel.fromMap(map: records.first);
               final author = model.toEntity();
-              logger.info('Unregistering ID pairs for author ${author.name}');
+              logger?.info('Unregistering ID pairs for author ${author.name}');
               final unregisterResult = _idRegistryService
                   .unregisterAuthorIdPairs(
                     AuthorIdPairs(pairs: author.businessIds),
@@ -358,7 +361,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
                   ),
                 );
               }
-              logger.info('Deleting author record $handle');
+              logger?.info('Deleting author record $handle');
               final deleteResult = await _databaseService.delete(
                 collection: 'authors',
                 id: handle.toString(),
@@ -371,7 +374,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
                   ),
                 );
               }
-              logger.info(
+              logger?.info(
                 'Updating relationships for deleted author ${author.name}',
               );
               final updateResult = await _updateRelationshipsForAuthor(
@@ -390,12 +393,12 @@ class AuthorRepositoryImpl implements AuthorRepository {
               throw Exception(DataParsingFailure(e.toString()));
             }
           }
-          logger.info('Transaction operation completed for deleteAuthor');
+          logger?.info('Transaction operation completed for deleteAuthor');
         },
       );
       return result.fold((failure) => Either.left(failure), (_) {
-        logger.info('Success deleted author with handle $handle');
-        logger.info('Exiting deleteAuthor');
+        logger?.info('Success deleted author with handle $handle');
+        logger?.info('Exiting deleteAuthor');
         return Either.right(unit);
       });
     } catch (e) {
@@ -405,33 +408,41 @@ class AuthorRepositoryImpl implements AuthorRepository {
 
   /// Retrieves an author by handle.
   @override
-  Future<Either<Failure, Author?>> getAuthorByHandle({
+  Future<Either<Failure, Author>> getByHandle({
     required AuthorHandle handle,
   }) async {
-    logger.info('Entering getAuthorByHandle with handle: $handle');
+    logger?.info('Entering getByHandle with handle: $handle');
     try {
       final result = await _databaseService.query(
         collection: 'authors',
         filter: {'id': handle.toString()},
       );
-      return result.fold((failure) => Either.left(failure), (records) {
-        if (records.isEmpty) {
-          logger.info('Author with handle $handle not found');
-          logger.info('Output: null');
-          logger.info('Exiting getAuthorByHandle');
-          return Either.right(null);
-        }
-        try {
-          final model = AuthorModel.fromMap(map: records.first);
-          logger.info('Success, fetched author ${model.name}');
-          final author = model.toEntity();
-          logger.info('Output: ${author.name}');
-          logger.info('Exiting getAuthorByHandle');
-          return Either.right(author);
-        } catch (e) {
-          return Either.left(DataParsingFailure(e.toString()));
-        }
-      });
+      return result.match(
+        (failure) {
+          logger?.warning(
+            'Failed to get Author by handle: $handle, Error: ${failure.message}',
+          );
+          return Either.left(failure);
+        },
+        (records) {
+          logger?.info('Successfully retrieved Author by handle: $handle');
+          if (records.isEmpty) {
+            logger?.info('Author with handle $handle not found');
+            logger?.info('Exiting getByHandle');
+            return Either.left(NotFoundFailure('Author not found'));
+          }
+          try {
+            final model = AuthorModel.fromMap(map: records.first);
+            logger?.info('Success, fetched author ${model.name}');
+            final author = model.toEntity();
+            logger?.info('Output: ${author.name}');
+            logger?.info('Exiting getByHandle');
+            return Either.right(author);
+          } catch (e) {
+            return Either.left(DataParsingFailure(e.toString()));
+          }
+        },
+      );
     } catch (e) {
       return Either.left(DatabaseReadFailure(e.toString()));
     }
@@ -442,7 +453,7 @@ class AuthorRepositoryImpl implements AuthorRepository {
     required bool isAdd,
     dynamic txn,
   }) async {
-    logger.info(
+    logger?.info(
       'Entering _updateRelationshipsForAuthor with authorName: $authorName, isAdd: $isAdd',
     );
     try {
@@ -458,12 +469,14 @@ class AuthorRepositoryImpl implements AuthorRepository {
         );
       }
       final bookMaps = booksResult.getRight().getOrElse(() => []);
-      logger.info('Found ${bookMaps.length} books to check for relationships');
+      logger?.info('Found ${bookMaps.length} books to check for relationships');
       for (final bookMap in bookMaps) {
         try {
           final bookModel = BookModel.fromMap(map: bookMap);
           if (bookModel.authorIds.contains(authorName)) {
-            logger.info('Updating book ${bookModel.id} for author $authorName');
+            logger?.info(
+              'Updating book ${bookModel.id} for author $authorName',
+            );
             final updatedAuthorIds = List<String>.from(bookModel.authorIds);
             if (isAdd) {
               if (!updatedAuthorIds.contains(authorName)) {
@@ -494,14 +507,14 @@ class AuthorRepositoryImpl implements AuthorRepository {
                 ),
               );
             }
-            logger.info('Updated book ${bookModel.id}');
+            logger?.info('Updated book ${bookModel.id}');
           }
         } catch (e) {
           return Either.left(DataParsingFailure(e.toString()));
         }
       }
-      logger.info('Success in _updateRelationshipsForAuthor');
-      logger.info('Exiting _updateRelationshipsForAuthor');
+      logger?.info('Success in _updateRelationshipsForAuthor');
+      logger?.info('Exiting _updateRelationshipsForAuthor');
       return Either.right(unit);
     } catch (e) {
       return Either.left(DatabaseConstraintFailure(e.toString()));

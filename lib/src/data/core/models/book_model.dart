@@ -60,7 +60,7 @@ class BookModel {
           BookIdType idType;
           try {
             idType = BookIdType.values.byName(idTypeString);
-          } catch (_) {
+          } on ArgumentError {
             /// Handle legacy format where idType was stored as displayName.toLowerCase()
             switch (idTypeString) {
               case 'isbn-13':

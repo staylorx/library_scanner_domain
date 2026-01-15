@@ -1,31 +1,29 @@
 import 'package:fpdart/fpdart.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:logging/logging.dart';
 
 /// Use case for exporting a library to a file.
-class ExportLibraryUsecase {
+class ExportLibraryUsecase with Loggable {
   final LibraryRepository libraryRepository;
 
-  ExportLibraryUsecase({required this.libraryRepository});
-
-  final logger = Logger('ExportLibraryUsecase');
+  ExportLibraryUsecase({Logger? logger, required this.libraryRepository});
 
   /// Exports the library to the specified file path.
   Future<Either<Failure, Unit>> call({
     required String filePath,
     required Library library,
   }) async {
-    logger.info('ExportLibraryUsecase: Exporting library to $filePath');
+    logger?.info('ExportLibraryUsecase: Exporting library to $filePath');
     final result = await libraryRepository.exportLibrary(
       filePath: filePath,
       library: library,
     );
     result.fold(
-      (failure) => logger.severe(
+      (failure) => logger?.error(
         'ExportLibraryUsecase: Failed to export library: ${failure.message}',
       ),
-      (_) => logger.info('ExportLibraryUsecase: Successfully exported library'),
+      (_) =>
+          logger?.info('ExportLibraryUsecase: Successfully exported library'),
     );
     return result;
   }

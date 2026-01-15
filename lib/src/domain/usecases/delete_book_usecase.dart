@@ -1,7 +1,7 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:id_logging/id_logging.dart';
 
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for deleting a book from the repository.
 ///
@@ -12,12 +12,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class DeleteBookUsecase {
+class DeleteBookUsecase with Loggable {
   final BookRepository bookRepository;
 
-  DeleteBookUsecase({required this.bookRepository});
-
-  final logger = Logger('DeleteBookUsecase');
+  DeleteBookUsecase({Logger? logger, required this.bookRepository});
 
   /// Deletes a book by BookIdPair and returns the updated list of books.
   ///
@@ -37,7 +35,7 @@ class DeleteBookUsecase {
   Future<Either<Failure, List<Book>>> call({
     required BookIdPair bookIdPair,
   }) async {
-    logger.info(
+    logger?.info(
       'DeleteBookUsecase: Entering call with bookIdPair: $bookIdPair',
     );
     final getBooksEither = await bookRepository.getBooks();
@@ -48,7 +46,7 @@ class DeleteBookUsecase {
       if (book == null) {
         return Left(NotFoundFailure('Book not found'));
       }
-      logger.info(
+      logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
       );
       final deleteEither = await bookRepository.deleteBook(book: book);
@@ -56,11 +54,11 @@ class DeleteBookUsecase {
         final updatedBooks = books
             .where((b) => !b.businessIds.any((p) => p == bookIdPair))
             .toList();
-        logger.info('DeleteBookUsecase: Success in call');
-        logger.info(
+        logger?.info('DeleteBookUsecase: Success in call');
+        logger?.info(
           'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
-        logger.info('DeleteBookUsecase: Exiting call');
+        logger?.info('DeleteBookUsecase: Exiting call');
         return Right(updatedBooks);
       });
     });

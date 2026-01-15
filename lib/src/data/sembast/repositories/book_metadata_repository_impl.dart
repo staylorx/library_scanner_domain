@@ -1,9 +1,12 @@
 import 'dart:typed_data';
 import 'package:fpdart/fpdart.dart';
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Implementation of book metadata repository.
-class BookMetadataRepositoryImpl implements BookMetadataRepository {
+class BookMetadataRepositoryImpl
+    with Loggable
+    implements BookMetadataRepository {
   final BookApiService apiService;
   final ImageService imageService;
 
@@ -11,11 +14,12 @@ class BookMetadataRepositoryImpl implements BookMetadataRepository {
   BookMetadataRepositoryImpl({
     required this.apiService,
     required this.imageService,
+    Logger? logger,
   });
 
   /// Fetches book metadata by ISBN, optionally including cover art.
   @override
-  Future<Either<Failure, BookMetadata?>> fetchBookByIsbn({
+  Future<Either<Failure, BookMetadata>> fetchBookByIsbn({
     required String isbn,
     bool fetchCoverArt = true,
   }) async {
@@ -27,7 +31,10 @@ class BookMetadataRepositoryImpl implements BookMetadataRepository {
     }
 
     final bookMetadata = fetchEither.getRight().getOrElse(() => null);
-    if (bookMetadata == null || bookMetadata.coverImageUrl == null) {
+    if (bookMetadata == null) {
+      return Left(NotFoundFailure('Book not found for ISBN: $isbn'));
+    }
+    if (bookMetadata.coverImageUrl == null) {
       return Right(bookMetadata);
     }
 

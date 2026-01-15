@@ -2,8 +2,10 @@ import '../entities/book.dart';
 import '../entities/book_sort_settings.dart';
 import '../entities/sort_direction.dart';
 
+import 'package:id_logging/id_logging.dart';
+
 /// Use case for sorting a list of books based on provided settings.
-class GetSortedBooksUsecase {
+class GetSortedBooksUsecase with Loggable {
   /// Sorts the given list of books according to the sort settings.
   List<Book> call(List<Book> books, BookSortSettings settings) {
     final sortedBooks = books

@@ -1,6 +1,6 @@
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case responsible for retrieving multiple tags by their IDs.
 ///
@@ -10,12 +10,10 @@ import 'package:logging/logging.dart';
 ///
 /// The use case follows the Clean Architecture pattern, acting as an
 /// intermediary between the presentation layer and the data layer.
-class GetTagsByNamesUsecase {
+class GetTagsByNamesUsecase with Loggable {
   final TagRepository tagRepository;
 
-  GetTagsByNamesUsecase({required this.tagRepository});
-
-  final logger = Logger('GetTagsByNamesUsecase');
+  GetTagsByNamesUsecase({Logger? logger, required this.tagRepository});
 
   /// Retrieves multiple tags by their unique IDs.
   ///
@@ -31,14 +29,14 @@ class GetTagsByNamesUsecase {
   /// [names] - The list of unique identifiers of the tags to retrieve.
   /// Returns a [Future] containing [Either] with [Failure] on the left or the list of [Tag] entities found on the right.
   Future<Either<Failure, List<Tag>>> call({required List<String> names}) async {
-    logger.info('getTagsByNamesUsecase: Entering call with ids: $names');
+    logger?.info('getTagsByNamesUsecase: Entering call with ids: $names');
     final result = await tagRepository.getTagsByNames(names: names);
-    logger.info('getTagsByNamesUsecase: Success in call');
+    logger?.info('getTagsByNamesUsecase: Success in call');
     return result.fold((failure) => Left(failure), (tags) {
-      logger.info(
+      logger?.info(
         'getTagsByNamesUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );
-      logger.info('getTagsByNamesUsecase: Exiting call');
+      logger?.info('getTagsByNamesUsecase: Exiting call');
       return Right(tags);
     });
   }

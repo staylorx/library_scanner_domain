@@ -1,20 +1,17 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:fpdart/fpdart.dart';
 
-import 'package:logging/logging.dart';
-
 /// Use case for adding a new book to the repository.
-class AddBookUsecase {
+class AddBookUsecase with Loggable {
   final BookRepository bookRepository;
   final IsBookDuplicateUsecase isBookDuplicateUsecase;
 
   AddBookUsecase({
+    Logger? logger,
     required this.bookRepository,
     required this.isBookDuplicateUsecase,
   });
-
-  final logger = Logger('AddBookUsecase');
 
   /// Adds a new book and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required Book book}) async {
@@ -33,7 +30,7 @@ class AddBookUsecase {
       originalTitle: book.title,
       businessIds: businessIds,
     );
-    logger.info(
+    logger?.info(
       'AddBookUsecase: Entering call with book: ${cleanedBook.title} (businessIds: ${cleanedBook.businessIds})',
     );
 
@@ -54,7 +51,7 @@ class AddBookUsecase {
           .getOrElse(() => false),
     );
     if (isDuplicate) {
-      logger.warning(
+      logger?.warning(
         'AddBookUsecase: Duplicate book detected: ${cleanedBook.title}',
       );
       return Left(
@@ -67,12 +64,12 @@ class AddBookUsecase {
     final addEither = await bookRepository.addBook(book: cleanedBook);
     return addEither.fold((failure) => Future.value(Left(failure)), (_) async {
       final getEither = await bookRepository.getBooks();
-      logger.info('AddBookUsecase: Success in call');
+      logger?.info('AddBookUsecase: Success in call');
       return getEither.fold((failure) => Left(failure), (books) {
-        logger.info(
+        logger?.info(
           'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
-        logger.info('AddBookUsecase: Exiting call');
+        logger?.info('AddBookUsecase: Exiting call');
         return Right(books);
       });
     });

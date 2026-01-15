@@ -1,25 +1,22 @@
 import 'package:fpdart/fpdart.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:logging/logging.dart';
 
 /// Use case for clearing the entire library.
-class ClearLibraryUsecase {
+class ClearLibraryUsecase with Loggable {
   final LibraryRepository libraryRepository;
 
-  ClearLibraryUsecase({required this.libraryRepository});
-
-  final logger = Logger('ClearLibraryUsecase');
+  ClearLibraryUsecase({Logger? logger, required this.libraryRepository});
 
   /// Clears all data from the library (books, authors, tags).
   Future<Either<Failure, Unit>> call() async {
-    logger.info('ClearLibraryUsecase: Clearing library');
+    logger?.info('ClearLibraryUsecase: Clearing library');
     final result = await libraryRepository.clearLibrary();
     result.fold(
-      (failure) => logger.severe(
+      (failure) => logger?.error(
         'ClearLibraryUsecase: Failed to clear library: ${failure.message}',
       ),
-      (_) => logger.info('ClearLibraryUsecase: Successfully cleared library'),
+      (_) => logger?.info('ClearLibraryUsecase: Successfully cleared library'),
     );
     return result;
   }

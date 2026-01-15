@@ -70,3 +70,5 @@ export 'services/book_id_registry_service.dart';
 export 'services/book_validation_service.dart';
 export 'services/database_service.dart';
 export 'services/image_service.dart';
+
+export 'factories.dart';

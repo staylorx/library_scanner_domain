@@ -14,13 +14,15 @@ dependencies:
   equatable: ^2.0.7
   fpdart: ^1.2.0
   http: ^1.2.1
+  logging: ^1.2.0
 
   yaml: ^3.1.2
   yaml_writer: ^2.1.0
   uuid: ^4.5.2
   id_registry: ^1.0.1
   sembast: ^3.8.5+2
-  logging: ^1.2.0
+  id_logging:
+    git: https://github.com/staylorx/id_logging.git
 
 dev_dependencies:
   lints: ^6.0.0

@@ -1,8 +1,9 @@
 import 'package:fpdart/fpdart.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:id_logging/id_logging.dart';
 
-class GetBooksByTagUseCase {
+class GetBooksByTagUseCase with Loggable {
   final BookRepository _bookRepository;
 
   GetBooksByTagUseCase({required BookRepository bookRepository})

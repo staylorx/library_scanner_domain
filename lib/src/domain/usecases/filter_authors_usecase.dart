@@ -1,8 +1,9 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:id_logging/id_logging.dart';
 
 /// Usecase for filtering authors based on search query
-class FilterAuthorsUsecase {
+class FilterAuthorsUsecase with Loggable {
   final AuthorFilteringService _authorFilteringService;
 
   /// Creates a new instance of [FilterAuthorsUsecase]

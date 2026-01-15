@@ -1,21 +1,21 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-
+import 'package:id_logging/id_logging.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:logging/logging.dart';
 
 /// Use case for fetching book metadata by ISBN, including cover art download if enabled.
 
-class FetchBookMetadataByIsbnUsecase {
+class FetchBookMetadataByIsbnUsecase with Loggable {
   final BookMetadataRepository bookMetadataRepository;
 
-  FetchBookMetadataByIsbnUsecase({required this.bookMetadataRepository});
-
-  final logger = Logger('FetchBookMetadataByIsbnUsecase');
+  FetchBookMetadataByIsbnUsecase({
+    Logger? logger,
+    required this.bookMetadataRepository,
+  });
 
   /// Fetches book metadata by ISBN.
   /// If fetch cover art is enabled, downloads the cover image locally.
   Future<Either<Failure, BookMetadata?>> call({required String isbn}) async {
-    logger.info(
+    logger?.info(
       'FetchBookMetadataByIsbnUsecase: Fetching metadata for ISBN $isbn',
     );
 
