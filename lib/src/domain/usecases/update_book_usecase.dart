@@ -19,7 +19,8 @@ class UpdateBookUsecase with Loggable {
     ) async {
       final getEither = await bookRepository.getBooks();
       logger?.info('UpdateBookUsecase: Success in call');
-      return getEither.fold((failure) => Left(failure), (books) {
+      return getEither.fold((failure) => Left(failure), (projections) {
+        final books = projections.map((p) => p.book).toList();
         logger?.info(
           'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );

@@ -1,20 +1,31 @@
-import 'package:test/test.dart' show test, expect, group, Timeout;
+import 'package:test/test.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
+  late DatabaseService database;
+  late TagDatasource tagDatasource;
+
+  setUpAll(() async {
+    database = SembastDatabase(testDbPath: p.join('build', 'tag_test'));
+    tagDatasource = TagDatasource(dbService: database);
+  });
+
   group('Tag Integration Tests', () {
     test('Comprehensive Tag Integration Test', () async {
       final logger = SimpleLoggerImpl(name: 'TagTest');
       logger.info('Starting comprehensive tag test');
 
-      final database = SembastDatabase(testDbPath: null);
       logger.info('Database instance created');
       (await database.clearAll()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
-      final tagRepository = TagRepositoryImpl(databaseService: database);
+      final tagRepository = TagRepositoryImpl(
+        tagDatasource: tagDatasource,
+        databaseService: database,
+      );
 
       final getTagsUsecase = GetTagsUsecase(tagRepository: tagRepository);
       final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
@@ -24,34 +35,33 @@ void main() {
       // Check for zero records
       var result = await getTagsUsecase();
       expect(result.isRight(), true);
-      var tags = result.fold((l) => [], (r) => r);
+      List<Tag> tags = result.fold((l) => <Tag>[], (r) => r);
       expect(tags.isEmpty, true);
 
       // Add one record
-      final newTag = Tag(
-        id: TagHandle.fromName('Test Tag'),
-        name: 'Test Tag',
-        description: 'A test tag',
-      );
+      final newTag = Tag(name: 'Test Tag', description: 'A test tag');
       await addTagUsecase.call(tag: newTag);
 
       // Verify count
       result = await getTagsUsecase();
       expect(result.isRight(), true);
-      tags = result.fold((l) => [], (r) => r);
+      tags = result.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
       expect(tags.first.name, 'Test Tag');
 
       // Update the record
-      final updatedTag = newTag.copyWith(
+      final updatedTag = tags.first.copyWith(
         name: 'Updated Test Tag',
         description: 'Updated description',
       );
       logger.info('About to call updateTagUsecase');
-      final updateResult = await updateTagUsecase.call(tag: updatedTag);
+      final updateResult = await updateTagUsecase.call(
+        handle: TagHandle.fromName(tags.first.name),
+        tag: updatedTag,
+      );
       logger.info('updateTagUsecase call completed');
       expect(updateResult.isRight(), true);
-      final updatedTags = updateResult.fold((l) => [], (r) => r);
+      final updatedTags = updateResult.fold((l) => <Tag>[], (r) => r);
       expect(updatedTags.length, 1);
       expect(updatedTags.first.name, 'Updated Test Tag');
       expect(updatedTags.first.description, 'Updated description');
@@ -59,22 +69,18 @@ void main() {
       // Verify count remains the same
       result = await getTagsUsecase();
       expect(result.isRight(), true);
-      tags = result.fold((l) => [], (r) => r);
+      tags = result.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
       expect(tags.first.description, 'Updated description');
 
       // Add another record
-      final secondTag = Tag(
-        id: TagHandle.fromName('Second Tag'),
-        name: 'Second Tag',
-        color: '#00FF00',
-      );
+      final secondTag = Tag(name: 'Second Tag', color: '#00FF00');
       await addTagUsecase.call(tag: secondTag);
 
       // Verify count increases
       result = await getTagsUsecase();
       expect(result.isRight(), true);
-      tags = result.fold((l) => [], (r) => r);
+      tags = result.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 2);
 
       // Delete one record
@@ -83,7 +89,7 @@ void main() {
       // Verify count decreases
       result = await getTagsUsecase();
       expect(result.isRight(), true);
-      tags = result.fold((l) => [], (r) => r);
+      tags = result.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
       expect(tags.first.name, 'Second Tag');
 
@@ -97,26 +103,27 @@ void main() {
       final logger = SimpleLoggerImpl(name: 'DuplicateTagTest');
       logger.info('Starting duplicate tag test');
 
-      final database = SembastDatabase(testDbPath: null);
+      final database = SembastDatabase(
+        testDbPath: p.join('build', 'tag_test_duplicate'),
+      );
+      final tagDatasource = TagDatasource(dbService: database);
       logger.info('Database instance created');
       (await database.clearAll()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
-      final tagRepository = TagRepositoryImpl(databaseService: database);
+      final tagRepository = TagRepositoryImpl(
+        tagDatasource: tagDatasource,
+        databaseService: database,
+      );
       final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 
       // Add first tag
-      final tag = Tag(
-        id: TagHandle.fromName('Unique Tag'),
-        name: 'Unique Tag',
-        description: 'A unique tag',
-      );
+      final tag = Tag(name: 'Unique Tag', description: 'A unique tag');
       var result = await addTagUsecase.call(tag: tag);
       expect(result.isRight(), true);
 
       // Try to add duplicate tag
       final duplicateTag = Tag(
-        id: TagHandle.fromName('Unique Tag'),
         name: 'Unique Tag',
         description: 'Another description',
       );

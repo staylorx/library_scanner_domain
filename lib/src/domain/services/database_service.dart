@@ -1,8 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// Abstract interface for a generic database service.
-/// Provides basic CRUD operations and transaction support.
+/// Abstract interface for a generic database service providing basic CRUD operations and transaction support.
 abstract class DatabaseService {
   /// Saves data to the specified collection with the given id.
   Future<Either<Failure, void>> save({

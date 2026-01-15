@@ -43,7 +43,10 @@ class AddBookUsecase with Loggable {
         ),
       );
     }
-    final existingBooks = existingBooksEither.getRight().getOrElse(() => []);
+    final existingProjections = existingBooksEither.getRight().getOrElse(
+      () => [],
+    );
+    final existingBooks = existingProjections.map((p) => p.book).toList();
     final isDuplicate = existingBooks.any(
       (existing) => isBookDuplicateUsecase
           .call(bookA: cleanedBook, bookB: existing)
@@ -65,7 +68,8 @@ class AddBookUsecase with Loggable {
     return addEither.fold((failure) => Future.value(Left(failure)), (_) async {
       final getEither = await bookRepository.getBooks();
       logger?.info('AddBookUsecase: Success in call');
-      return getEither.fold((failure) => Left(failure), (books) {
+      return getEither.fold((failure) => Left(failure), (projections) {
+        final books = projections.map((p) => p.book).toList();
         logger?.info(
           'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );

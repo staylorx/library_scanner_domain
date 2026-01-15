@@ -3,24 +3,24 @@ import 'author.dart';
 import 'book.dart';
 import 'tag.dart';
 
-/// A domain entity representing a library collection.
+/// Library collection.
 class Library with EquatableMixin {
-  /// The name of the library.
+  /// Library name.
   final String name;
 
-  /// The description of the library.
+  /// Library description.
   final String? description;
 
-  /// The list of books in the library.
+  /// Books in library.
   final List<Book> books;
 
-  /// The list of authors in the library.
+  /// Authors in library.
   final List<Author> authors;
 
-  /// The list of tags in the library.
+  /// Tags in library.
   final List<Tag> tags;
 
-  /// Creates a Library instance.
+  /// Creates Library.
   const Library({
     required this.name,
     this.description,
@@ -29,7 +29,7 @@ class Library with EquatableMixin {
     required this.tags,
   });
 
-  /// Creates a copy of this Library with optional field updates.
+  /// Creates a copy with optional updates.
   Library copyWith({
     String? name,
     String? description,

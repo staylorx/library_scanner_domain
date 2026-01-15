@@ -15,7 +15,8 @@ class GetBooksUsecase with Loggable {
     logger?.info('GetBooksUsecase: Entering call');
     final result = await bookRepository.getBooks();
     logger?.info('GetBooksUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (books) {
+    return result.fold((failure) => Left(failure), (projections) {
+      final books = projections.map((p) => p.book).toList();
       logger?.info(
         'GetBooksUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
       );

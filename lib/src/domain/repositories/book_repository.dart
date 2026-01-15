@@ -16,10 +16,13 @@ class BookProjection {
 }
 
 abstract class BookRepository {
-  Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});
+  Future<Either<Failure, List<BookProjection>>> getBooks({
+    int? limit,
+    int? offset,
+  });
   Future<Either<Failure, Book>> getByIdPair({required BookIdPair bookIdPair});
   Future<Either<Failure, Book>> getBookById({required BookIdPairs bookId});
-  Future<Either<Failure, BookHandle>> addBook({required Book book});
+  Future<Either<Failure, BookProjection>> addBook({required Book book});
   Future<Either<Failure, Unit>> updateBook({required Book book});
   Future<Either<Failure, Unit>> deleteBook({required Book book});
   Future<Either<Failure, Book>> getByHandle({required BookHandle handle});

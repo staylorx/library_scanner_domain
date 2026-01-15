@@ -1,20 +1,20 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// A data model representing an author with their metadata and identifiers.
+/// Data model for an author.
 class AuthorModel {
-  /// The unique identifier for the author.
+  /// Unique identifier.
   final String id;
 
-  /// The business identifiers for the author.
+  /// Business identifiers.
   final List<AuthorIdPair> businessIds;
 
-  /// The name of the author.
+  /// Author name.
   final String name;
 
-  /// The biography of the author.
+  /// Author biography.
   final String? biography;
 
-  /// Creates an [AuthorModel] instance.
+  /// Creates an AuthorModel.
   const AuthorModel({
     required this.id,
     required this.businessIds,
@@ -22,7 +22,7 @@ class AuthorModel {
     this.biography,
   });
 
-  /// Creates an [AuthorModel] from a map representation.
+  /// Creates from map.
   factory AuthorModel.fromMap({required Map<String, dynamic> map}) {
     final businessIdsList =
         (map['businessIds'] as List<dynamic>?)
@@ -44,7 +44,7 @@ class AuthorModel {
     );
   }
 
-  /// Converts this [AuthorModel] to a map representation.
+  /// Converts to map.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -56,22 +56,22 @@ class AuthorModel {
     };
   }
 
-  /// Converts this [AuthorModel] to an [Author] domain entity.
+  /// Converts to entity.
   Author toEntity() {
     return Author(businessIds: businessIds, name: name, biography: biography);
   }
 
-  /// Creates an [AuthorModel] from an [Author] domain entity and handle.
+  /// Creates from entity.
   factory AuthorModel.fromEntity(Author author, String handleId) {
     return AuthorModel(
-      id: author.name,
+      id: handleId,
       businessIds: author.businessIds,
       name: author.name,
       biography: author.biography,
     );
   }
 
-  /// Creates a copy of this [AuthorModel] with optional field updates.
+  /// Creates a copy.
   AuthorModel copyWith({
     String? id,
     List<AuthorIdPair>? businessIds,

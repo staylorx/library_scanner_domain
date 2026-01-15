@@ -1,38 +1,36 @@
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// A data model representing a tag with its metadata.
+/// Data model for a tag.
 class TagModel {
-  /// The unique identifier for the tag (same as name).
+  /// Unique identifier.
   final String id;
 
-  /// The name of the tag.
+  /// Tag name.
   final String name;
 
-  /// The description of the tag.
+  /// Tag description.
   final String? description;
 
-  /// The color associated with the tag.
+  /// Tag color.
   final String color;
 
-  /// The slug version of the name for uniqueness.
+  /// Slug version.
   final String slug;
 
-  /// The list of book identifiers associated with the tag.
+  /// Associated book identifiers.
   final List<String> bookIdPairs;
 
-  /// Creates a [TagModel] instance.
+  /// Creates a TagModel.
   const TagModel({
     required this.id,
     required this.name,
     this.description,
     this.color = '#FF0000',
-
-    /// Default red color
     required this.slug,
     required this.bookIdPairs,
   });
 
-  /// Creates a [TagModel] from a map representation.
+  /// Creates from map.
   factory TagModel.fromMap({required Map<String, dynamic> map}) {
     return TagModel(
       id: map['id'] as String? ?? map['name'] as String,
@@ -44,7 +42,7 @@ class TagModel {
     );
   }
 
-  /// Converts this [TagModel] to a map representation.
+  /// Converts to map.
   Map<String, dynamic> toMap() {
     return {
       'id': name,
@@ -56,17 +54,12 @@ class TagModel {
     };
   }
 
-  /// Converts this [TagModel] to a [Tag] domain entity.
+  /// Converts to entity.
   Tag toEntity() {
-    return Tag(
-      id: TagHandle(id),
-      name: name,
-      description: description,
-      color: color,
-    );
+    return Tag(name: name, description: description, color: color);
   }
 
-  /// Creates a [TagModel] from a [Tag] domain entity.
+  /// Creates from entity.
   factory TagModel.fromEntity(Tag tag) {
     return TagModel(
       id: tag.name,
@@ -75,8 +68,6 @@ class TagModel {
       color: tag.color,
       slug: tag.slug,
       bookIdPairs: [],
-
-      /// New tags start with no books
     );
   }
 }

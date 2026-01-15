@@ -13,8 +13,8 @@ class AddAuthorUsecase with Loggable {
     required this.idRegistryService,
   });
 
-  /// Adds a new author and returns the handle.
-  Future<Either<Failure, AuthorHandle>> call({
+  /// Adds a new author and returns the projection.
+  Future<Either<Failure, AuthorProjection>> call({
     required String name,
     String? biography,
   }) async {

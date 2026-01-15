@@ -2,42 +2,68 @@ import 'dart:typed_data';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// A data model representing a book with its metadata and identifiers.
+/// Parses BookIdType from string.
+BookIdType _parseBookIdType(String idTypeString) {
+  // Try modern format first
+  try {
+    return BookIdType.values.byName(idTypeString);
+  } catch (_) {
+    // Handle legacy format where idType was stored as displayName.toLowerCase()
+    switch (idTypeString) {
+      case 'isbn-13':
+        return BookIdType.isbn13;
+      case 'isbn':
+        return BookIdType.isbn;
+      case 'asin':
+        return BookIdType.asin;
+      case 'doi':
+        return BookIdType.doi;
+      case 'ean':
+        return BookIdType.ean;
+      case 'local':
+        return BookIdType.local;
+      default:
+        throw Exception('Unknown BookIdType: $idTypeString');
+    }
+  }
+}
+
+/// Data model for a book.
 class BookModel {
-  /// The unique identifier for the book.
+  /// Unique identifier.
   final String id;
 
-  /// The business identifiers for the book.
+  /// Business identifiers.
   final List<BookIdPair> businessIds;
 
-  /// The title of the book.
+  /// Book title.
   final String title;
 
-  /// The original title of the book before cleaning.
+  /// Original title.
   final String? originalTitle;
 
-  /// The description of the book.
+  /// Book description.
   final String? description;
 
-  /// The list of author identifiers associated with the book.
+  /// Author identifiers.
   final List<String> authorIds;
 
-  /// The list of tag identifiers associated with the book.
+  /// Tag identifiers.
   final List<String> tagIds;
 
-  /// The published date of the book.
+  /// Published date.
   final DateTime? publishedDate;
 
-  /// The cover image data of the book.
+  /// Cover image data.
   final Uint8List? coverImage;
 
-  /// The URL of the cover image.
+  /// Cover image URL.
   final String? coverImageUrl;
 
-  /// Additional notes for the book.
+  /// Additional notes.
   final String? notes;
 
-  /// Creates a [BookModel] instance.
+  /// Creates a BookModel.
   const BookModel({
     required this.id,
     required this.businessIds,
@@ -52,39 +78,12 @@ class BookModel {
     this.notes,
   });
 
-  /// Creates a [BookModel] from a map representation, handling legacy formats.
+  /// Creates from map.
   factory BookModel.fromMap({required Map<String, dynamic> map}) {
     final businessIds =
         (map['businessIds'] as List<dynamic>?)?.map((e) {
           final idTypeString = e['idType'] as String? ?? 'none';
-          BookIdType idType;
-          try {
-            idType = BookIdType.values.byName(idTypeString);
-          } on ArgumentError {
-            /// Handle legacy format where idType was stored as displayName.toLowerCase()
-            switch (idTypeString) {
-              case 'isbn-13':
-                idType = BookIdType.isbn13;
-                break;
-              case 'isbn':
-                idType = BookIdType.isbn;
-                break;
-              case 'asin':
-                idType = BookIdType.asin;
-                break;
-              case 'doi':
-                idType = BookIdType.doi;
-                break;
-              case 'ean':
-                idType = BookIdType.ean;
-                break;
-              case 'local':
-                idType = BookIdType.local;
-                break;
-              default:
-                throw Exception('Unknown BookIdType: $idTypeString');
-            }
-          }
+          final idType = _parseBookIdType(idTypeString);
           return BookIdPair(idType: idType, idCode: e['idCode'] as String);
         }).toList() ??
         [];
@@ -107,7 +106,7 @@ class BookModel {
     );
   }
 
-  /// Converts this [BookModel] to a map representation.
+  /// Converts to map.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -126,7 +125,7 @@ class BookModel {
     };
   }
 
-  /// Converts this [BookModel] to a [Book] domain entity.
+  /// Converts to entity.
   Book toEntity({required List<Author> authors, required List<Tag> tags}) {
     return Book(
       businessIds: businessIds,
@@ -141,7 +140,7 @@ class BookModel {
     );
   }
 
-  /// Creates a [BookModel] from a [Book] domain entity and handle.
+  /// Creates from entity.
   factory BookModel.fromEntity(Book book, String handleId) {
     return BookModel(
       id: handleId,
@@ -158,7 +157,7 @@ class BookModel {
     );
   }
 
-  /// Creates a copy of this [BookModel] with optional field updates.
+  /// Creates a copy.
   BookModel copyWith({
     String? id,
     List<BookIdPair>? businessIds,
@@ -187,7 +186,7 @@ class BookModel {
     );
   }
 
-  /// Converts this [BookModel] to [BookMetadata].
+  /// Converts to BookMetadata.
   BookMetadata toBookMetadata() {
     return BookMetadata(
       title: title,

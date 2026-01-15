@@ -4,36 +4,36 @@ import '../value_objects/book_id_pair.dart';
 import 'author.dart';
 import 'tag.dart';
 
-/// A domain entity representing a book.
+/// Represents a book.
 class Book with EquatableMixin {
-  /// The business identifiers for the book.
+  /// Business identifiers.
   final List<BookIdPair> businessIds;
 
-  /// The title of the book.
+  /// Book title.
   final String title;
 
-  /// The original title of the book before cleaning.
+  /// Original title.
   final String? originalTitle;
 
-  /// The description of the book.
+  /// Book description.
   final String? description;
 
-  /// The list of authors of the book.
+  /// Book authors.
   final List<Author> authors;
 
-  /// The list of tags associated with the book.
+  /// Book tags.
   final List<Tag> tags;
 
-  /// The published date of the book.
+  /// Published date.
   final DateTime? publishedDate;
 
-  /// The cover image data of the book.
+  /// Cover image data.
   final Uint8List? coverImage;
 
-  /// Additional notes for the book.
+  /// Notes.
   final String? notes;
 
-  /// Creates a [Book] instance.
+  /// Creates Book.
   Book({
     required this.businessIds,
     required this.title,
@@ -46,7 +46,7 @@ class Book with EquatableMixin {
     this.notes,
   });
 
-  /// Creates a copy of this [Book] with optional field updates.
+  /// Creates a copy with optional updates.
   Book copyWith({
     List<BookIdPair>? businessIds,
     String? title,

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
 import '../data/book_api/datasources/book_api_service.dart';
-import '../data/id_registry/services/author_id_registry_service.dart';
 import '../data/id_registry/services/book_id_registry_service.dart';
 import '../data/sembast/datasources/sembast_database.dart';
 import '../data/sembast/repositories/author_repository_impl.dart';
@@ -9,6 +8,10 @@ import '../data/sembast/repositories/book_metadata_repository_impl.dart';
 import '../data/sembast/repositories/book_repository_impl.dart';
 import '../data/sembast/repositories/library_repository_impl.dart';
 import '../data/sembast/repositories/tag_repository_impl.dart';
+import '../data/storage/author_datasource.dart';
+import '../data/storage/book_datasource.dart';
+import '../data/storage/library_datasource.dart';
+import '../data/storage/tag_datasource.dart';
 import 'domain.dart';
 
 /// Factory for creating domain layer instances with data implementations.
@@ -18,8 +21,10 @@ class LibraryFactory {
   final ImageService imageService;
 
   late final SembastDatabase _database;
-  late final AuthorIdRegistryServiceImpl _authorIdRegistry;
   late final BookIdRegistryServiceImpl _bookIdRegistry;
+  late final BookDatasource bookDatasource;
+  late final AuthorDatasource authorDatasource;
+  late final TagDatasource tagDatasource;
 
   /// Creates a LibraryFactory with the specified database path.
   /// If dbPath is null, uses in-memory database.
@@ -29,22 +34,39 @@ class LibraryFactory {
     required this.imageService,
   }) {
     _database = SembastDatabase(testDbPath: dbPath);
-    _authorIdRegistry = AuthorIdRegistryServiceImpl();
     _bookIdRegistry = BookIdRegistryServiceImpl();
+  }
+
+  Future<AuthorDatasource> getAuthorDatasource() async {
+    authorDatasource = AuthorDatasource(dbService: _database);
+    return authorDatasource;
+  }
+
+  Future<BookDatasource> getBookDatasource() async {
+    bookDatasource = BookDatasource(dbService: _database);
+    return bookDatasource;
+  }
+
+  Future<TagDatasource> getTagDatasource() async {
+    tagDatasource = TagDatasource(dbService: _database);
+    return tagDatasource;
   }
 
   /// Creates an AuthorRepository instance.
   Future<AuthorRepository> createAuthorRepository() async {
-    return AuthorRepositoryImpl(
-      databaseService: _database,
-      idRegistryService: _authorIdRegistry,
-    );
+    final authorDatasource = AuthorDatasource(dbService: _database);
+    return AuthorRepositoryImpl(authorDatasource: authorDatasource);
   }
 
   /// Creates a BookRepository instance.
   Future<BookRepository> createBookRepository() async {
+    final bookDatasource = BookDatasource(dbService: _database);
+    final authorDatasource = AuthorDatasource(dbService: _database);
+    final tagDatasource = TagDatasource(dbService: _database);
     return BookRepositoryImpl(
-      database: _database,
+      bookDatasource: bookDatasource,
+      authorDatasource: authorDatasource,
+      tagDatasource: tagDatasource,
       idRegistryService: _bookIdRegistry,
     );
   }
@@ -59,15 +81,31 @@ class LibraryFactory {
 
   /// Creates a LibraryRepository instance.
   Future<LibraryRepository> createLibraryRepository() async {
+    final bookDatasource = BookDatasource(dbService: _database);
+    final authorDatasource = AuthorDatasource(dbService: _database);
+    final tagDatasource = TagDatasource(dbService: _database);
+    final libraryDatasource = LibraryDatasource(
+      dbService: _database,
+      authorDatasource: authorDatasource,
+      bookDatasource: bookDatasource,
+      tagDatasource: tagDatasource,
+    );
     return LibraryRepositoryImpl(
-      database: _database,
       isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+      authorDatasource: authorDatasource,
+      bookDatasource: bookDatasource,
+      tagDatasource: tagDatasource,
+      libraryDatasource: libraryDatasource,
     );
   }
 
   /// Creates a TagRepository instance.
   Future<TagRepository> createTagRepository() async {
-    return TagRepositoryImpl(databaseService: _database);
+    final tagDatasource = TagDatasource(dbService: _database);
+    return TagRepositoryImpl(
+      tagDatasource: tagDatasource,
+      databaseService: _database,
+    );
   }
 
   /// Closes the database connection.

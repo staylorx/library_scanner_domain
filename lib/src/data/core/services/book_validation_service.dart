@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// Concrete implementation of book validation service
+/// Implementation of book validation service
 class BookValidationServiceImpl with Loggable implements BookValidationService {
   final BookIdRegistryService _idRegistryService;
 

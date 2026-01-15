@@ -1,0 +1,5 @@
+{"version":1,"sembast":1}
+{"key":"Second Author","store":"authors","value":{"id":"Second Author","businessIds":[{"idType":"local","idCode":"dae36869-b767-4baa-a5a7-256359b982fb"}],"name":"Second Author","biography":null}}
+{"key":"4a812ba3-d86f-45a2-a82c-f4a63a826532","store":"books","value":{"id":"4a812ba3-d86f-45a2-a82c-f4a63a826532","businessIds":[{"idType":"local","idCode":"test_book"}],"title":"Test Book","originalTitle":"Test Book","description":null,"authorIds":["Second Author"],"tagIds":["Test Tag"],"publishedDate":"2023-01-01T00:00:00.000","coverImage":null,"coverImageUrl":null,"notes":null}}
+{"key":"Test Tag","store":"tags","value":{"id":"Test Tag","name":"Test Tag","description":null,"color":"#FF0000","slug":"test-tag","bookIdPairs":["4a812ba3-d86f-45a2-a82c-f4a63a826532"]}}
+{"key":"Second Author","deleted":true,"store":"authors"}

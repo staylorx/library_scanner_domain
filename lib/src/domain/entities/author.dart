@@ -2,21 +2,21 @@ import 'package:equatable/equatable.dart';
 
 import '../value_objects/author_id_pair.dart';
 
-/// A domain entity representing an author.
+/// Represents an author.
 class Author with EquatableMixin {
-  /// The business identifiers for the author.
+  /// Business identifiers.
   final List<AuthorIdPair> businessIds;
 
-  /// The name of the author.
+  /// Author name.
   final String name;
 
-  /// The biography of the author.
+  /// Author biography.
   final String? biography;
 
-  /// Creates an [Author] instance.
+  /// Creates Author.
   Author({required this.businessIds, required this.name, this.biography});
 
-  /// Creates a copy of this [Author] with optional field updates.
+  /// Creates a copy with optional updates.
   Author copyWith({
     List<AuthorIdPair>? businessIds,
     String? name,

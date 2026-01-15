@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// Concrete implementation of author filtering service
+/// Implementation of author filtering service
 class AuthorFilteringServiceImpl
     with Loggable
     implements AuthorFilteringService {

@@ -1,24 +1,24 @@
 import 'package:equatable/equatable.dart';
 import 'sort_direction.dart';
 
-/// Enum for author sort order options
+/// Author sort order options.
 enum AuthorSortOrder { name, date }
 
-/// Model representing author sort settings
+/// Author sort settings.
 class AuthorSortSettings with EquatableMixin {
-  /// The sort order for authors.
+  /// Sort order.
   final AuthorSortOrder order;
 
-  /// The sort direction.
+  /// Sort direction.
   final SortDirection direction;
 
-  /// Creates an AuthorSortSettings instance.
+  /// Creates AuthorSortSettings.
   const AuthorSortSettings({
     this.order = AuthorSortOrder.name,
     this.direction = SortDirection.ascending,
   });
 
-  /// Creates a copy of this AuthorSortSettings with optional field updates.
+  /// Creates a copy with optional updates.
   AuthorSortSettings copyWith({
     AuthorSortOrder? order,
     SortDirection? direction,

@@ -14,7 +14,6 @@ class AuthorIdPair with EquatableMixin implements IdPair {
   final String idCode;
 
   /// Creates an AuthorIdPair instance.
-  /// Creates an AuthorIdPair instance.
   const AuthorIdPair({required this.idType, required this.idCode});
 
   /// Checks if the identifier is valid.

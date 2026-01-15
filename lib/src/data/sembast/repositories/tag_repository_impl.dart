@@ -5,129 +5,47 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Implementation of tag repository using Sembast.
 class TagRepositoryImpl with Loggable implements TagRepository {
+  final TagDatasource _tagDatasource;
   final DatabaseService _databaseService;
 
   /// Creates a TagRepositoryImpl instance.
-  TagRepositoryImpl({required DatabaseService databaseService, Logger? logger})
-    : _databaseService = databaseService;
-
-  /// Computes a slug from a string.
-  String _computeSlug(String input) {
-    var slug = input
-        .toLowerCase()
-        .replaceAll(
-          RegExp(r'[^a-z0-9\s-]'),
-          '',
-        ) // Remove special chars except spaces and hyphens
-        .replaceAll(RegExp(r'\s+'), '-') // Replace spaces with hyphens
-        .replaceAll(RegExp(r'-+'), '-') // Replace multiple hyphens with single
-        .trim();
-    if (slug.startsWith('-')) slug = slug.substring(1);
-    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
-    return slug;
-  }
+  TagRepositoryImpl({
+    required TagDatasource tagDatasource,
+    required DatabaseService databaseService,
+    Logger? logger,
+  }) : _tagDatasource = tagDatasource,
+       _databaseService = databaseService;
 
   /// Retrieves all tags from the database.
   @override
   Future<Either<Failure, List<Tag>>> getTags() async {
-    logger?.info('TagRepositoryImpl: Entering getTags');
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _databaseService.getAll(collection: 'tags');
-        return result.fold((failure) => throw failure, (records) {
-          final tags = <Tag>[];
-          for (final record in records) {
-            final model = TagModel.fromMap(map: record);
-            tags.add(model.toEntity());
-          }
-          logger?.info(
-            'TagRepositoryImpl: Success in getTags, fetched ${tags.length} tags',
-          );
-          logger?.info(
-            'TagRepositoryImpl: Output: ${tags.map((t) => t.name).toList()}',
-          );
-          return tags;
-        });
+    logger?.info('Entering getTags');
+    final result = await _tagDatasource.getAllTags();
+    return result.fold(
+      (failure) {
+        logger?.warning('Failed to get tags: ${failure.message}');
+        return Either.left(failure);
       },
-      (error, stackTrace) =>
-          error is Failure ? error : DatabaseReadFailure(error.toString()),
-    ).run();
+      (models) {
+        logger?.info('Successfully retrieved ${models.length} tags');
+        final tags = models.map((model) => model.toEntity()).toList();
+        return Either.right(tags);
+      },
+    );
   }
 
   /// Retrieves a tag by name.
   @override
   Future<Either<Failure, Tag>> getByName({required String name}) async {
-    logger?.info('TagRepositoryImpl: Entering getByName with name: $name');
-    return TaskEither.tryCatch(
-      () async {
-        // Compute slug from the input name for lookup
-        final slug = _computeSlug(name);
-        final result = await _databaseService.query(
-          collection: 'tags',
-          filter: {'slug': slug},
-        );
-        return result.match(
-          (failure) {
-            logger?.warning('TagRepositoryImpl: Failed to query tag: $failure');
-            throw failure;
-          },
-          (records) {
-            if (records.isEmpty) {
-              logger?.info('TagRepositoryImpl: Tag with name $name not found');
-              throw NotFoundFailure('Tag not found');
-            }
-            final model = TagModel.fromMap(map: records.first);
-            logger?.info(
-              'TagRepositoryImpl: Success, fetched tag ${model.name}',
-            );
-            final tag = model.toEntity();
-            logger?.info('TagRepositoryImpl: Output: ${tag.name}');
-            return tag;
-          },
-        );
-      },
-      (error, stackTrace) =>
-          error is Failure ? error : DatabaseReadFailure(error.toString()),
-    ).run();
-  }
-
-  /// Retrieves a tag by handle.
-  @override
-  Future<Either<Failure, Tag>> getByHandle({required TagHandle handle}) async {
-    logger?.info(
-      'TagRepositoryImpl: Entering getByHandle with handle: $handle',
-    );
-    return TaskEither.tryCatch(
-      () async {
-        final result = await _databaseService.query(
-          collection: 'tags',
-          filter: {'id': handle.toString()},
-        );
-        return result.match(
-          (failure) {
-            logger?.warning('TagRepositoryImpl: Failed to query tag: $failure');
-            throw failure;
-          },
-          (records) {
-            if (records.isEmpty) {
-              logger?.info(
-                'TagRepositoryImpl: Tag with handle $handle not found',
-              );
-              throw NotFoundFailure('Tag not found');
-            }
-            final model = TagModel.fromMap(map: records.first);
-            logger?.info(
-              'TagRepositoryImpl: Success, fetched tag ${model.name}',
-            );
-            final tag = model.toEntity();
-            logger?.info('TagRepositoryImpl: Output: ${tag.name}');
-            return tag;
-          },
-        );
-      },
-      (error, stackTrace) =>
-          error is Failure ? error : DatabaseReadFailure(error.toString()),
-    ).run();
+    logger?.info('Entering getByName with name: $name');
+    final result = await _tagDatasource.getTagByName(name);
+    return result.fold((failure) => Either.left(failure), (model) {
+      if (model == null) {
+        return Either.left(NotFoundFailure('Tag not found'));
+      }
+      logger?.info('Success, fetched tag ${model.name}');
+      return Either.right(model.toEntity());
+    });
   }
 
   /// Retrieves tags by a list of names.
@@ -135,78 +53,50 @@ class TagRepositoryImpl with Loggable implements TagRepository {
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
   }) async {
-    logger?.info(
-      'TagRepositoryImpl: Entering getTagsByNames with names: $names',
-    );
-    final queryEither = await TaskEither.tryCatch(
-      () async {
-        if (names.isEmpty) return <Map<String, dynamic>>[];
-        final slugs = names.map(_computeSlug).toList();
-        final result = await _databaseService.query(
-          collection: 'tags',
-          filter: {
-            'slug': {'\$in': slugs},
-          },
-        );
-        return result.match((failure) => throw failure, (records) => records);
-      },
-      (error, stackTrace) =>
-          error is Failure ? error : DatabaseReadFailure(error.toString()),
-    ).run();
-    return queryEither.match((failure) => Either.left(failure), (records) {
-      final tags = <Tag>[];
-      for (final record in records) {
-        final model = TagModel.fromMap(map: record);
-        tags.add(model.toEntity());
-      }
-      logger?.info(
-        'TagRepositoryImpl: Success in getTagsByNames, fetched ${tags.length} tags',
-      );
-      logger?.info(
-        'TagRepositoryImpl: Output: ${tags.map((t) => t.name).toList()}',
-      );
+    logger?.info('Entering getTagsByNames with names: $names');
+    if (names.isEmpty) {
+      logger?.info('names is empty, returning empty list');
+      return Either.right([]);
+    }
+    final result = await _tagDatasource.getTagsByNames(names);
+    return result.fold((failure) => Either.left(failure), (models) {
+      final tags = models.map((model) => model.toEntity()).toList();
+      logger?.info('Success in getTagsByNames, fetched ${tags.length} tags');
       return Either.right(tags);
     });
   }
 
   /// Adds a new tag to the database.
   @override
-  Future<Either<Failure, TagHandle>> addTag({required Tag tag}) async {
-    logger?.info('TagRepositoryImpl: Entering addTag with tag: ${tag.name}');
-    try {
-      // Check if a tag with the same slug already exists
-      final queryResult = await _databaseService.query(
-        collection: 'tags',
-        filter: {'slug': tag.slug},
+  Future<Either<Failure, TagProjection>> addTag({required Tag tag}) async {
+    logger?.info('Entering addTag with tag: ${tag.name}');
+    // Check for duplicate
+    final existingResult = await getByName(name: tag.name);
+    if (existingResult.isRight()) {
+      return Either.left(
+        ValidationFailure('A tag with the slug "${tag.slug}" already exists.'),
       );
-      return queryResult.match((failure) => Either.left(failure), (
-        records,
-      ) async {
-        if (records.isNotEmpty) {
-          logger?.info(
-            'TagRepositoryImpl: Tag with slug ${tag.slug} already exists',
-          );
-          return Either.left(
-            ValidationFailure(
-              'A tag with the slug "${tag.slug}" already exists.',
-            ),
+    }
+    final handle = TagHandle.fromName(tag.name);
+    final model = TagModel.fromEntity(tag);
+    TagProjection? projection;
+    final transactionResult = await _databaseService.transaction(
+      operation: (txn) async {
+        logger?.info('Transaction started for addTag');
+        final saveResult = await _tagDatasource.saveTag(model, db: txn);
+        if (saveResult.isLeft()) {
+          throw saveResult.getLeft().getOrElse(
+            () => DatabaseFailure('Save failed'),
           );
         }
-
-        final model = TagModel.fromEntity(tag);
-        final saveResult = await _databaseService.save(
-          collection: 'tags',
-          id: model.id,
-          data: model.toMap(),
-        );
-        return saveResult.match((failure) => Either.left(failure), (_) {
-          logger?.info('TagRepositoryImpl: Success added tag ${tag.name}');
-          return Either.right(TagHandle(tag.name));
-        });
-      });
-    } catch (e) {
-      return Either.left(DatabaseWriteFailure(e.toString()));
-    }
+        logger?.info('Transaction operation completed for addTag');
+        projection = TagProjection(handle: handle, tag: tag);
+      },
+    );
+    return transactionResult.fold(
+      (failure) => Either.left(failure),
+      (_) => Either.right(projection!),
+    );
   }
 
   /// Updates an existing tag in the database.
@@ -215,113 +105,89 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     required TagHandle handle,
     required Tag tag,
   }) async {
-    logger?.info('TagRepositoryImpl: Entering updateTag with tag: ${tag.name}');
-    try {
-      final newId = tag.name;
-      if (handle.toString() != newId) {
-        logger?.info('TagRepositoryImpl: Name changed, deleting old record');
-        final deleteResult = await _databaseService.delete(
-          collection: 'tags',
-          id: handle.toString(),
-        );
-        return deleteResult.match((failure) => Either.left(failure), (_) async {
-          final model = TagModel.fromEntity(tag);
-          logger?.info(
-            'TagRepositoryImpl: Created model for tag ${tag.name}, id: ${model.id}',
+    logger?.info(
+      'Entering updateTag with handle: $handle and tag: ${tag.name}',
+    );
+    final transactionResult = await _databaseService.transaction(
+      operation: (txn) async {
+        logger?.info('Transaction started for updateTag');
+        final newId = tag.name;
+        if (handle.toString() != newId) {
+          logger?.info('Name changed, deleting old record');
+          final deleteResult = await _tagDatasource.deleteTag(
+            handle.toString(),
+            db: txn,
           );
-          logger?.info('TagRepositoryImpl: About to call database save');
-          final saveResult = await _databaseService.save(
-            collection: 'tags',
-            id: newId,
-            data: model.toMap(),
-          );
-          logger?.info('TagRepositoryImpl: Database save completed');
-          return saveResult.match((failure) => Either.left(failure), (_) {
-            logger?.info('TagRepositoryImpl: Success updated tag ${tag.name}');
-            return Either.right(unit);
-          });
-        });
-      } else {
+          if (deleteResult.isLeft()) {
+            throw deleteResult.getLeft().getOrElse(
+              () => DatabaseFailure('Delete old record failed'),
+            );
+          }
+        }
         final model = TagModel.fromEntity(tag);
-        logger?.info(
-          'TagRepositoryImpl: Created model for tag ${tag.name}, id: ${model.id}',
-        );
-        logger?.info('TagRepositoryImpl: About to call database save');
-        final saveResult = await _databaseService.save(
-          collection: 'tags',
-          id: newId,
-          data: model.toMap(),
-        );
-        logger?.info('TagRepositoryImpl: Database save completed');
-        return saveResult.match((failure) => Either.left(failure), (_) {
-          logger?.info('TagRepositoryImpl: Success updated tag ${tag.name}');
-          return Either.right(unit);
-        });
-      }
-    } catch (e) {
-      logger?.error('TagRepositoryImpl: Exception in updateTag: $e');
-      return Either.left(DatabaseWriteFailure(e.toString()));
-    }
+        logger?.info('Saving updated tag ${tag.name}');
+        final saveResult = await _tagDatasource.saveTag(model, db: txn);
+        if (saveResult.isLeft()) {
+          throw saveResult.getLeft().getOrElse(
+            () => DatabaseFailure('Save failed'),
+          );
+        }
+        logger?.info('Transaction operation completed for updateTag');
+      },
+    );
+    return transactionResult.fold(
+      (failure) => Either.left(failure),
+      (_) => Either.right(unit),
+    );
   }
 
   /// Deletes a tag from the database.
   @override
   Future<Either<Failure, Unit>> deleteTag({required TagHandle handle}) async {
-    logger?.info('TagRepositoryImpl: Entering deleteTag with handle: $handle');
-    try {
-      // Query books that contain the tag
-      final queryResult = await _databaseService.query(
-        collection: 'books',
-        filter: {
-          'tagIds': {
-            '\$in': [handle.toString()],
-          },
-        },
-      );
-      return queryResult.match((failure) => Either.left(failure), (
-        bookMaps,
-      ) async {
-        // Update each book by removing the tag
-        for (final bookMap in bookMaps) {
-          try {
-            final bookModel = BookModel.fromMap(map: bookMap);
-            final updatedTagIds = List<String>.from(bookModel.tagIds)
-              ..remove(handle.toString());
-            final updatedModel = bookModel.copyWith(tagIds: updatedTagIds);
-            final bookId = bookMap['id'] as String;
-            final saveResult = await _databaseService.save(
-              collection: 'books',
-              id: bookId,
-              data: updatedModel.toMap(),
-            );
-            if (saveResult.isLeft()) {
-              return Either.left(
-                saveResult.getLeft().getOrElse(
-                  () => DatabaseFailure('Save failed'),
-                ),
-              );
-            }
-          } catch (e) {
-            return Either.left(
-              DatabaseWriteFailure('Failed to update book: $e'),
-            );
-          }
-        }
-
-        // Delete the tag
-        final deleteResult = await _databaseService.delete(
-          collection: 'tags',
-          id: handle.toString(),
+    logger?.info('Entering deleteTag with handle: $handle');
+    final transactionResult = await _databaseService.transaction(
+      operation: (txn) async {
+        logger?.info('Transaction started for deleteTag');
+        final deleteResult = await _tagDatasource.deleteTag(
+          handle.toString(),
+          db: txn,
         );
-        return deleteResult.match((failure) => Either.left(failure), (_) {
-          logger?.info(
-            'TagRepositoryImpl: Success deleted tag and updated associated books',
+        if (deleteResult.isLeft()) {
+          throw deleteResult.getLeft().getOrElse(
+            () => DatabaseFailure('Delete failed'),
           );
-          return Either.right(unit);
-        });
-      });
-    } catch (e) {
-      return Either.left(DatabaseWriteFailure(e.toString()));
-    }
+        }
+        logger?.info('Transaction operation completed for deleteTag');
+      },
+    );
+    return transactionResult.fold(
+      (failure) => Either.left(failure),
+      (_) => Either.right(unit),
+    );
+  }
+
+  /// Retrieves a tag by handle.
+  @override
+  Future<Either<Failure, Tag>> getByHandle({required TagHandle handle}) async {
+    logger?.info('Entering getByHandle with handle: $handle');
+    final result = await _tagDatasource.getTagById(handle.toString());
+    return result.fold(
+      (failure) {
+        logger?.warning(
+          'Failed to get tag by handle: $handle, Error: ${failure.message}',
+        );
+        return Either.left(failure);
+      },
+      (model) {
+        logger?.info('Successfully retrieved tag by handle: $handle');
+        if (model == null) {
+          logger?.info('Tag with handle $handle not found');
+          return Either.left(NotFoundFailure('Tag not found'));
+        }
+        final tag = model.toEntity();
+        logger?.info('Output: ${tag.name}');
+        return Either.right(tag);
+      },
+    );
   }
 }

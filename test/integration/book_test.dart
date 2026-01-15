@@ -1,11 +1,22 @@
-import 'package:test/test.dart' show test, expect, group, Timeout;
-import 'package:matcher/matcher.dart';
-
+import 'package:test/test.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
+  late DatabaseService database;
+  late TagDatasource tagDatasource;
+  late BookDatasource bookDatasource;
+  late AuthorDatasource authorDatasource;
+
+  setUpAll(() async {
+    database = SembastDatabase(testDbPath: p.join('build', 'book_test'));
+    tagDatasource = TagDatasource(dbService: database);
+    bookDatasource = BookDatasource(dbService: database);
+    authorDatasource = AuthorDatasource(dbService: database);
+  });
+
   group('Book Integration Tests', () {
     test(
       'Comprehensive Book Integration Test',
@@ -13,7 +24,6 @@ void main() {
         final logger = SimpleLoggerImpl(name: 'BookTest');
         logger.info('Starting comprehensive test');
 
-        final database = SembastDatabase(testDbPath: null);
         logger.info('Database instance created');
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
@@ -21,7 +31,9 @@ void main() {
         final authorIdRegistryService = AuthorIdRegistryServiceImpl();
         final bookIdRegistryService = BookIdRegistryServiceImpl();
         final bookRepository = BookRepositoryImpl(
-          database: database,
+          authorDatasource: authorDatasource,
+          tagDatasource: tagDatasource,
+          bookDatasource: bookDatasource,
           idRegistryService: bookIdRegistryService,
         );
 
@@ -40,8 +52,7 @@ void main() {
           bookRepository: bookRepository,
         );
         final authorRepository = AuthorRepositoryImpl(
-          databaseService: database,
-          idRegistryService: authorIdRegistryService,
+          authorDatasource: authorDatasource,
         );
         final addAuthorUsecase = AddAuthorUsecase(
           authorRepository: authorRepository,
@@ -50,9 +61,12 @@ void main() {
         final getAuthorsUsecase = GetAuthorsUsecase(
           authorRepository: authorRepository,
         );
-        final addTagUsecase = AddTagUsecase(
-          tagRepository: TagRepositoryImpl(databaseService: database),
+        final TagRepository tagRepository;
+        tagRepository = TagRepositoryImpl(
+          tagDatasource: tagDatasource,
+          databaseService: database,
         );
+        final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 
         // Check for zero records
         var result = await getBooksUsecase();
@@ -64,12 +78,15 @@ void main() {
         await addAuthorUsecase.call(name: 'Test Author');
         final authorsResult = await getAuthorsUsecase();
         expect(authorsResult.isRight(), true);
-        final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
-        final newAuthor = authors.first;
-        final newTag = Tag(
-          id: TagHandle.fromName('Test Tag'),
-          name: 'Test Tag',
+        final List<AuthorProjection> authorProjections = authorsResult.fold(
+          (l) => [],
+          (r) => r,
         );
+        final List<Author> authors = authorProjections
+            .map((p) => p.author)
+            .toList();
+        final newAuthor = authors.first;
+        final newTag = Tag(name: 'Test Tag');
         await addTagUsecase.call(tag: newTag);
 
         final newBook = Book(
@@ -84,7 +101,7 @@ void main() {
         // Verify count
         result = await getBooksUsecase();
         expect(result.isRight(), true);
-        books = result.getRight().fold(() => [], (value) => value);
+        books = result.fold((l) => [], (r) => r);
         expect(books.length, 1);
         expect(books.first.title, 'New Test Book');
         expect(books.first.authors.first.name, 'Test Author');
@@ -97,7 +114,7 @@ void main() {
         // Verify count remains the same
         result = await getBooksUsecase();
         expect(result.isRight(), true);
-        books = result.getRight().fold(() => [], (value) => value);
+        books = result.fold((l) => [], (r) => r);
         expect(books.length, 1);
         expect(books.first.title, 'Updated Test Book');
 
@@ -106,10 +123,7 @@ void main() {
           bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "12345"),
         );
         expect(bookResult.isRight(), true);
-        var book = bookResult.getRight().fold<Book?>(
-          () => null,
-          (value) => value,
-        );
+        var book = bookResult.fold<Book?>((l) => null, (r) => r);
         expect(book, isNotNull);
         expect(book!.title, 'Updated Test Book');
 
@@ -117,14 +131,17 @@ void main() {
         await addAuthorUsecase.call(name: 'Second Author');
         final authorsResult2 = await getAuthorsUsecase();
         expect(authorsResult2.isRight(), true);
-        final List<Author> authors2 = authorsResult2.fold((l) => [], (r) => r);
+        final List<AuthorProjection> authorProjections2 = authorsResult2.fold(
+          (l) => [],
+          (r) => r,
+        );
+        final List<Author> authors2 = authorProjections2
+            .map((p) => p.author)
+            .toList();
         final secondAuthor = authors2.firstWhere(
           (a) => a.name == 'Second Author',
         );
-        final secondTag = Tag(
-          id: TagHandle.fromName('Second Tag'),
-          name: 'Second Tag',
-        );
+        final secondTag = Tag(name: 'Second Tag');
         await addTagUsecase.call(tag: secondTag);
 
         final secondBook = Book(
@@ -139,7 +156,7 @@ void main() {
         // Verify count increases
         result = await getBooksUsecase();
         expect(result.isRight(), true);
-        books = result.getRight().fold(() => [], (value) => value);
+        books = result.fold((l) => [], (r) => r);
         expect(books.length, 2);
 
         // Delete one record
@@ -150,7 +167,7 @@ void main() {
         // Verify count decreases
         result = await getBooksUsecase();
         expect(result.isRight(), true);
-        books = result.getRight().fold(() => [], (value) => value);
+        books = result.fold((l) => [], (r) => r);
         expect(books.length, 1);
         expect(books.first.title, 'Second Test Book');
 
@@ -165,7 +182,7 @@ void main() {
           bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "67890"),
         );
         expect(bookResult.isRight(), true);
-        book = bookResult.getRight().fold<Book?>(() => null, (value) => value);
+        book = bookResult.fold<Book?>((l) => null, (r) => r);
         expect(book, isNotNull);
         expect(book!.title, 'Final Updated Book');
 
@@ -177,7 +194,7 @@ void main() {
         // Verify zero records
         result = await getBooksUsecase();
         expect(result.isRight(), true);
-        books = result.getRight().fold(() => [], (value) => value);
+        books = result.fold((l) => [], (r) => r);
         expect(books.isEmpty, true);
 
         // Close database

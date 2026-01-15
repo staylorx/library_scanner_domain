@@ -2,7 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
-/// Concrete implementation of book filtering service
+/// Implementation of book filtering service
 class BookFilteringServiceImpl with Loggable implements BookFilteringService {
   @override
   Either<Failure, List<Book>> filterBooks({

@@ -1,26 +1,21 @@
 import 'package:equatable/equatable.dart';
-import '../value_objects/tag_handle.dart';
 
-/// A domain entity representing a tag.
+/// Represents a tag.
 class Tag with EquatableMixin {
-  /// The unique identifier for the tag.
-  final TagHandle id;
-
-  /// The name of the tag.
+  /// Tag name.
   final String name;
 
-  /// The description of the tag.
+  /// Tag description.
   final String? description;
 
-  /// The color associated with the tag.
+  /// Tag color.
   final String color;
 
-  /// The slug version of the name for URL-friendly use.
+  /// Slug version of the name.
   String get slug => _sluggify(name);
 
-  /// Creates a [Tag] instance.
+  /// Creates Tag.
   Tag({
-    required this.id,
     required this.name,
     this.description,
     this.color = '#FF0000',
@@ -28,22 +23,16 @@ class Tag with EquatableMixin {
     /// Default red color
   });
 
-  /// Creates a copy of this [Tag] with optional field updates.
-  Tag copyWith({
-    TagHandle? id,
-    String? name,
-    String? description,
-    String? color,
-  }) {
+  /// Creates a copy with optional updates.
+  Tag copyWith({String? name, String? description, String? color}) {
     return Tag(
-      id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
       color: color ?? this.color,
     );
   }
 
-  /// Converts a string to a slug format.
+  /// Converts string to slug.
   String _sluggify(String input) {
     var slug = input
         .toLowerCase()
@@ -60,5 +49,5 @@ class Tag with EquatableMixin {
   }
 
   @override
-  List<Object?> get props => [id, name, description, color];
+  List<Object?> get props => [name, description, color];
 }

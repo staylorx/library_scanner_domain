@@ -4,12 +4,7 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'package:fpdart/fpdart.dart';
 
-/// Use case responsible for refetching book covers from the API.
-///
-/// This use case retrieves all books from the repository, checks for books
-/// with ISBNs, and refetches their cover images if overwrite is true or if
-/// the cover image is missing. It handles errors gracefully by skipping
-/// failed fetches and provides a success message with the count of updated books.
+/// Use case for refetching book covers from the API.
 class RefetchBookCoversUsecase with Loggable {
   final BookRepository bookRepository;
   final FetchBookMetadataByIsbnUsecase fetchBookMetadataByIsbnUsecase;
@@ -37,7 +32,8 @@ class RefetchBookCoversUsecase with Loggable {
         logger?.info('RefetchBookCoversUsecase: Failed to get books: $failure');
         return Left(failure);
       },
-      (books) async {
+      (projections) async {
+        final books = projections.map((p) => p.book).toList();
         int updatedCount = 0;
         for (final book in books) {
           if (book.businessIds.any((p) => p.idType == BookIdType.isbn)) {

@@ -15,7 +15,7 @@ abstract class TagRepository {
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
   });
-  Future<Either<Failure, TagHandle>> addTag({required Tag tag});
+  Future<Either<Failure, TagProjection>> addTag({required Tag tag});
   Future<Either<Failure, Unit>> updateTag({
     required TagHandle handle,
     required Tag tag,

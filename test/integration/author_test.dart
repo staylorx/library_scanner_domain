@@ -1,10 +1,22 @@
-import 'package:test/test.dart' show test, expect, group, Timeout;
-import 'package:matcher/matcher.dart';
+import 'package:test/test.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:path/path.dart' as p;
 
 void main() {
+  late DatabaseService database;
+  late TagDatasource tagDatasource;
+  late BookDatasource bookDatasource;
+  late AuthorDatasource authorDatasource;
+
+  setUpAll(() async {
+    database = SembastDatabase(testDbPath: p.join('build', 'author_test'));
+    tagDatasource = TagDatasource(dbService: database);
+    bookDatasource = BookDatasource(dbService: database);
+    authorDatasource = AuthorDatasource(dbService: database);
+  });
+
   group('Author Integration Tests', () {
     test(
       'Comprehensive Author Integration Test',
@@ -14,7 +26,6 @@ void main() {
 
         logger.info('Starting comprehensive test');
 
-        final database = SembastDatabase(testDbPath: null);
         logger.info('Database instance created');
         (await database.clearAll()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
@@ -22,12 +33,13 @@ void main() {
         final authorIdRegistryService = AuthorIdRegistryServiceImpl();
         final bookIdRegistryService = BookIdRegistryServiceImpl();
         final authorRepository = AuthorRepositoryImpl(
-          databaseService: database,
-          idRegistryService: authorIdRegistryService,
+          authorDatasource: authorDatasource,
         );
         final bookRepository = BookRepositoryImpl(
-          database: database,
+          authorDatasource: authorDatasource,
+          bookDatasource: bookDatasource,
           idRegistryService: bookIdRegistryService,
+          tagDatasource: tagDatasource,
         );
 
         final getAuthorsUsecase = GetAuthorsUsecase(
@@ -52,14 +64,16 @@ void main() {
           bookRepository: bookRepository,
           isBookDuplicateUsecase: IsBookDuplicateUsecase(),
         );
-        final addTagUsecase = AddTagUsecase(
-          tagRepository: TagRepositoryImpl(databaseService: database),
+        final tagRepository = TagRepositoryImpl(
+          tagDatasource: tagDatasource,
+          databaseService: database,
         );
+        final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 
         // Check for zero records
         var result = await getAuthorsUsecase();
         expect(result.isRight(), true);
-        List<Author> authors = result.fold((l) => [], (r) => r);
+        List<AuthorProjection> authors = result.fold((l) => [], (r) => r);
         expect(authors.isEmpty, true);
 
         // Add one record
@@ -70,13 +84,15 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.name, 'Test Author');
-        final newAuthor = authors.first;
+        expect(authors.first.author.name, 'Test Author');
+        final newAuthorProjection = authors.first;
 
         // Edit the record
-        final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
+        final updatedAuthor = newAuthorProjection.author.copyWith(
+          name: 'Updated Test Author',
+        );
         await updateAuthorUsecase.call(
-          handle: AuthorHandle.fromName(newAuthor.name),
+          handle: newAuthorProjection.handle,
           author: updatedAuthor,
         );
 
@@ -85,7 +101,7 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.name, 'Updated Test Author');
+        expect(authors.first.author.name, 'Updated Test Author');
 
         // Add another record
         await addAuthorUsecase.call(name: 'Second Author');
@@ -95,8 +111,8 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 2);
-        final secondAuthor = authors.firstWhere(
-          (a) => a.name == 'Second Author',
+        final secondAuthorProjection = authors.firstWhere(
+          (a) => a.author.name == 'Second Author',
         );
 
         // Get author by name
@@ -116,10 +132,10 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.name, 'Second Author');
+        expect(authors.first.author.name, 'Second Author');
 
         // Add a book with the remaining author
-        final tag = Tag(id: TagHandle.fromName('Test Tag'), name: 'Test Tag');
+        final tag = Tag(name: 'Test Tag');
         await addTagUsecase.call(tag: tag);
 
         final book = Book(
@@ -127,7 +143,7 @@ void main() {
             BookIdPair(idType: BookIdType.local, idCode: "test_book"),
           ],
           title: 'Test Book',
-          authors: [secondAuthor],
+          authors: [secondAuthorProjection.author],
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
         );

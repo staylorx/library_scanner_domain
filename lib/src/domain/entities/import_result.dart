@@ -1,18 +1,18 @@
 import "library.dart";
 import 'package:equatable/equatable.dart';
 
-/// Result of importing a library.
+/// Import result.
 class ImportResult with EquatableMixin {
-  /// The imported library.
+  /// Imported library.
   final Library library;
 
-  /// List of parse errors encountered.
+  /// Parse errors.
   final List<String> parseErrors;
 
-  /// List of warnings encountered.
+  /// Warnings.
   final List<String> warnings;
 
-  /// Creates an ImportResult instance.
+  /// Creates ImportResult.
   const ImportResult({
     required this.library,
     required this.parseErrors,

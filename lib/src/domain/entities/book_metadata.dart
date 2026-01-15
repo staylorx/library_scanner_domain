@@ -2,30 +2,30 @@ import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 
-/// A domain entity representing book metadata.
+/// Book metadata.
 class BookMetadata with EquatableMixin {
-  /// The title of the book.
+  /// Book title.
   final String? title;
 
-  /// The description of the book.
+  /// Book description.
   final String? description;
 
-  /// The list of author names.
+  /// Author names.
   final List<String>? authors;
 
-  /// The published date of the book.
+  /// Published date.
   final DateTime? publishedDate;
 
-  /// The URL of the cover image.
+  /// Cover image URL.
   final String? coverImageUrl;
 
-  /// The cover image data.
+  /// Cover image data.
   final Uint8List? coverImage;
 
-  /// Additional notes for the book.
+  /// Notes.
   final String? notes;
 
-  /// Creates a BookMetadata instance.
+  /// Creates BookMetadata.
   const BookMetadata({
     this.title,
     this.description,
@@ -36,7 +36,7 @@ class BookMetadata with EquatableMixin {
     this.notes,
   });
 
-  /// Creates a copy of this BookMetadata with optional field updates.
+  /// Creates a copy with optional updates.
   BookMetadata copyWith({
     String? title,
     String? description,

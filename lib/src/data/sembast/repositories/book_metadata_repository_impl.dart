@@ -17,7 +17,7 @@ class BookMetadataRepositoryImpl
     Logger? logger,
   });
 
-  /// Fetches book metadata by ISBN, optionally including cover art.
+  /// Fetches book metadata by ISBN.
   @override
   Future<Either<Failure, BookMetadata>> fetchBookByIsbn({
     required String isbn,

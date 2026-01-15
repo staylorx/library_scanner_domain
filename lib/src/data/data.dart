@@ -21,3 +21,11 @@ export 'core/services/book_filtering_service.dart';
 export 'core/services/book_validation_service.dart';
 export 'id_registry/services/author_id_registry_service.dart';
 export 'id_registry/services/book_id_registry_service.dart';
+
+// Storage
+export 'storage/author_datasource.dart';
+export 'storage/book_datasource.dart';
+export 'storage/tag_datasource.dart';
+
+// utils  # TODO: these should probably be sifted into something else
+export 'sembast/utils/yaml_parsing_utils.dart';

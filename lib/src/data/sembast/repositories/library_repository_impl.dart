@@ -3,24 +3,32 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
-import 'package:library_scanner_domain/src/data/sembast/utils/yaml_parsing_utils.dart';
-
-import 'package:sembast/sembast.dart';
-import 'package:uuid/uuid.dart';
+import 'package:library_scanner_domain/src/data/storage/library_datasource.dart';
 import 'package:yaml/yaml.dart';
 import 'package:yaml_writer/yaml_writer.dart';
 
 /// Implementation of library repository.
 class LibraryRepositoryImpl with Loggable implements LibraryRepository {
-  final SembastDatabase _database;
   final IsBookDuplicateUsecase _isBookDuplicateUsecase;
+  final AuthorDatasource _authorDatasource;
+  final BookDatasource _bookDatasource;
+  final TagDatasource _tagDatasource;
+  final LibraryDatasource _libraryDatasource;
 
   LibraryRepositoryImpl({
-    required DatabaseService database,
-    required IsBookDuplicateUsecase isBookDuplicateUsecase,
     Logger? logger,
-  }) : _database = database as SembastDatabase,
-       _isBookDuplicateUsecase = isBookDuplicateUsecase; // Initialize database
+    required IsBookDuplicateUsecase isBookDuplicateUsecase,
+    required AuthorDatasource authorDatasource,
+    required BookDatasource bookDatasource,
+    required TagDatasource tagDatasource,
+    required LibraryDatasource libraryDatasource,
+  }) : _isBookDuplicateUsecase = isBookDuplicateUsecase,
+       _authorDatasource = authorDatasource,
+       _bookDatasource = bookDatasource,
+       _tagDatasource = tagDatasource,
+       _libraryDatasource = libraryDatasource {
+    this.logger = logger;
+  }
 
   /// Imports a library from a YAML file.
   @override
@@ -62,10 +70,14 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
       }
       if (overwrite) {
         logger?.info('Clearing existing data due to overwrite flag');
-        final db = await _database.database;
-        await _database.authorsStore.delete(db);
-        await _database.booksStore.delete(db);
-        await _database.tagsStore.delete(db);
+        final clearResult = await _libraryDatasource.clearAll();
+        if (clearResult.isLeft()) {
+          return Left(
+            clearResult.getLeft().getOrElse(
+              () => ServiceFailure('Clear failed'),
+            ),
+          );
+        }
         logger?.info('Existing data cleared');
       }
 
@@ -74,7 +86,7 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
           yamlData['authors'] != null
           ? await parseAuthors(yamlData['authors'])
           : Right(<String, Author>{});
-      final authorMap = authorMapEither.fold(
+      final authorMap = authorMapEither.match(
         (failure) => throw failure, // Let the outer try-catch handle it
         (map) => map,
       );
@@ -85,7 +97,7 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
       final Either<Failure, List<Tag>> tagsEither = yamlData['tags'] != null
           ? await parseTags(yamlData['tags'])
           : Right(<Tag>[]);
-      final tags = tagsEither.fold((failure) => throw failure, (list) => list);
+      final tags = tagsEither.match((failure) => throw failure, (list) => list);
       logger?.info('Parsed ${tags.length} tags');
 
       // Collect all unique tagNames and authorNames from books
@@ -113,9 +125,7 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
 
       // Add missing tags
       for (final tagName in missingTagNames) {
-        tags.add(
-          Tag(id: TagHandle.fromName(tagName), name: tagName, color: "#808080"),
-        );
+        tags.add(Tag(name: tagName, color: "#808080"));
       }
 
       // Find missing authors
@@ -154,7 +164,7 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
       );
       final Either<Failure, BookParseResult> bookResultEither =
           await parseBooks(bookParseParams);
-      final bookResult = bookResultEither.fold(
+      final bookResult = bookResultEither.match(
         (failure) => throw failure,
         (result) => result,
       );
@@ -175,12 +185,16 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
 
       // First, filter duplicates within parsed books
       for (final book in parsedBooks) {
-        final isDuplicateInParsed = books.any(
-          (existing) => _isBookDuplicateUsecase
-              .call(bookA: book, bookB: existing)
-              .getRight()
-              .getOrElse(() => false),
-        );
+        final isDuplicateInParsed = books.any((existing) {
+          final duplicateResult = _isBookDuplicateUsecase.call(
+            bookA: book,
+            bookB: existing,
+          );
+          return duplicateResult.match((failure) {
+            logger?.warning('Failed to check duplicate: ${failure.message}');
+            return false;
+          }, (isDup) => isDup);
+        });
         if (!isDuplicateInParsed) {
           books.add(book);
         } else {
@@ -192,29 +206,35 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
 
       // If not overwrite, check against existing books
       if (!overwrite) {
-        final db = await _database.database;
-        final bookRecords = await _database.booksStore.find(db);
-        final authorRecords = await _database.authorsStore.find(db);
-        final tagRecords = await _database.tagsStore.find(db);
-        final processingParams = BookProcessingParams(
-          bookRecords,
-          authorRecords,
-          tagRecords,
-        );
-        final Either<Failure, List<Book>> existingBooksEither =
-            await processBooks(processingParams);
-        final existingBooks = existingBooksEither.fold(
+        final existingBooksEither = await _bookDatasource.getAllBooks();
+        final authorsEither = await _authorDatasource.getAllAuthors();
+        final tagsEither = await _tagDatasource.getAllTags();
+        final authors = authorsEither.match(
           (failure) => throw failure,
-          (books) => books,
+          (models) => models.map((m) => m.toEntity()).toList(),
+        );
+        final tags = tagsEither.match(
+          (failure) => throw failure,
+          (models) => models.map((m) => m.toEntity()).toList(),
+        );
+        final existingBooks = existingBooksEither.match(
+          (failure) => throw failure,
+          (models) => models
+              .map((m) => m.toEntity(authors: authors, tags: tags))
+              .toList(),
         );
         final List<Book> finalBooks = [];
         for (final book in books) {
-          final isDuplicateExisting = existingBooks.any(
-            (existing) => _isBookDuplicateUsecase
-                .call(bookA: book, bookB: existing)
-                .getRight()
-                .getOrElse(() => false),
-          );
+          final isDuplicateExisting = existingBooks.any((existing) {
+            final duplicateResult = _isBookDuplicateUsecase.call(
+              bookA: book,
+              bookB: existing,
+            );
+            return duplicateResult.match((failure) {
+              logger?.warning('Failed to check duplicate: ${failure.message}');
+              return false;
+            }, (isDup) => isDup);
+          });
           if (!isDuplicateExisting) {
             finalBooks.add(book);
           } else {
@@ -231,42 +251,57 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
         warnings.addAll(duplicateWarnings);
       }
 
-      // Update relationships
-      final relationshipParams = RelationshipUpdateParams(books, authors, tags);
-      await updateRelationships(relationshipParams);
-      logger?.info('Updated relationships');
-
-      final db = await _database.database;
       logger?.info('Starting database write operations...');
 
       // Use transaction for batch operations
-      await db.transaction((txn) async {
+      final transactionResult = await _bookDatasource.transaction((txn) async {
         // Save authors
         for (final author in authors) {
           final authorModel = AuthorModel.fromEntity(author, author.name);
-          await _database.authorsStore
-              .record(author.name)
-              .put(txn, authorModel.toMap());
+          final saveResult = await _authorDatasource.saveAuthor(
+            authorModel,
+            db: txn,
+          );
+          if (saveResult.isLeft()) {
+            throw saveResult.getLeft().getOrElse(
+              () => DatabaseFailure('Save author failed'),
+            );
+          }
         }
         logger?.info('Saved ${authors.length} authors to database');
 
         // Save tags
         for (final tag in tags) {
           final tagModel = TagModel.fromEntity(tag);
-          await _database.tagsStore.record(tag.name).put(txn, tagModel.toMap());
+          final saveResult = await _tagDatasource.saveTag(tagModel, db: txn);
+          if (saveResult.isLeft()) {
+            throw saveResult.getLeft().getOrElse(
+              () => DatabaseFailure('Save tag failed'),
+            );
+          }
         }
         logger?.info('Saved ${tags.length} tags to database');
 
         // Save books
         for (final book in books) {
-          final bookKey = const Uuid().v4();
-          final bookModel = BookModel.fromEntity(book, bookKey);
-          await _database.booksStore
-              .record(bookKey)
-              .put(txn, bookModel.toMap());
+          final bookKey = BookHandle.generate();
+          final bookModel = BookModel.fromEntity(book, bookKey.toString());
+          final saveResult = await _bookDatasource.saveBook(bookModel, db: txn);
+          if (saveResult.isLeft()) {
+            throw saveResult.getLeft().getOrElse(
+              () => DatabaseFailure('Save book failed'),
+            );
+          }
         }
         logger?.info('Saved ${books.length} books to database');
       });
+      if (transactionResult.isLeft()) {
+        return Left(
+          transactionResult.getLeft().getOrElse(
+            () => ServiceFailure('Transaction failed'),
+          ),
+        );
+      }
       logger?.info('Committed all database operations in transaction');
 
       final library = Library(
@@ -351,18 +386,16 @@ class LibraryRepositoryImpl with Loggable implements LibraryRepository {
   @override
   Future<Either<Failure, Unit>> clearLibrary() async {
     logger?.info('Entering clearLibrary');
-    try {
-      final db = await _database.database;
-      await db.transaction((txn) async {
-        await _database.authorsStore.delete(txn);
-        await _database.booksStore.delete(txn);
-        await _database.tagsStore.delete(txn);
-      });
-      logger?.info('Successfully cleared library');
-      return Right(unit);
-    } catch (e) {
-      logger?.error('Failed to clear library: $e');
-      return Left(ServiceFailure('Failed to clear library: $e'));
-    }
+    final clearResult = await _libraryDatasource.clearAll();
+    return clearResult.match(
+      (failure) {
+        logger?.error('Failed to clear library: ${failure.message}');
+        return Left(failure);
+      },
+      (_) {
+        logger?.info('Successfully cleared library');
+        return Right(unit);
+      },
+    );
   }
 }

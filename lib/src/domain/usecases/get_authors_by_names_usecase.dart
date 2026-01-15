@@ -9,7 +9,7 @@ class GetAuthorsByNamesUsecase with Loggable {
   GetAuthorsByNamesUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves multiple authors by their names.
-  Future<Either<Failure, List<Author>>> call({
+  Future<Either<Failure, List<AuthorProjection>>> call({
     required List<String> names,
   }) async {
     logger?.info('GetAuthorsByNamesUseCase: Entering call with names: $names');
@@ -17,7 +17,7 @@ class GetAuthorsByNamesUsecase with Loggable {
     logger?.info('GetAuthorsByNamesUsecase: Success in call');
     return result.fold((failure) => Left(failure), (authors) {
       logger?.info(
-        'GetAuthorsByNamesUsecase: Output: ${authors.map((a) => a.name).toList()}',
+        'GetAuthorsByNamesUsecase: Output: ${authors.map((a) => a.author.name).toList()}',
       );
       return Right(authors);
     });

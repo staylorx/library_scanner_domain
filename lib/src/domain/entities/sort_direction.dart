@@ -1,13 +1,14 @@
-/// Enum for sort direction
+/// Sort direction.
 enum SortDirection {
   ascending('Ascending'),
   descending('Descending');
 
   const SortDirection(this.displayName);
 
+  /// Display name.
   final String displayName;
 
-  /// Returns the opposite sort direction.
+  /// Opposite sort direction.
   SortDirection get opposite {
     return this == SortDirection.ascending
         ? SortDirection.descending
