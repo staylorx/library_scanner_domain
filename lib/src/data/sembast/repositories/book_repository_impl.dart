@@ -2,6 +2,8 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_transaction.dart';
+import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl with Loggable implements BookRepository {
@@ -9,6 +11,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   final AuthorDatasource _authorDatasource;
   final TagDatasource _tagDatasource;
   final BookIdRegistryService _idRegistryService;
+  final UnitOfWork _unitOfWork;
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
@@ -16,12 +19,13 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     required AuthorDatasource authorDatasource,
     required TagDatasource tagDatasource,
     required BookIdRegistryService idRegistryService,
-
+    required UnitOfWork unitOfWork,
     Logger? logger,
   }) : _bookDatasource = bookDatasource,
        _authorDatasource = authorDatasource,
        _tagDatasource = tagDatasource,
-       _idRegistryService = idRegistryService;
+       _idRegistryService = idRegistryService,
+       _unitOfWork = unitOfWork;
 
   /// Retrieves books from the database.
   @override
@@ -132,10 +136,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     logger?.info('Entering addBook with book: ${book.title}');
     final handle = BookHandle.generate();
     final model = BookModel.fromEntity(book, handle.toString());
-    BookProjection? projection;
-    final transactionResult = await _bookDatasource.transaction((txn) async {
+    return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for addBook');
-      final saveResult = await _bookDatasource.saveBook(model, db: txn);
+      final db = (txn as SembastTransaction).db;
+      final saveResult = await _bookDatasource.saveBook(model, db: db);
       if (saveResult.isLeft()) {
         throw saveResult.getLeft().getOrElse(
           () => DatabaseFailure('Save failed'),
@@ -155,7 +159,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final updateResult = await _tagDatasource.addBookToTags(
         handle.toString(),
         tagNames,
-        db: txn,
+        db: db,
       );
       if (updateResult.isLeft()) {
         throw updateResult.getLeft().getOrElse(
@@ -163,22 +167,20 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Transaction operation completed for addBook');
-      projection = BookProjection(handle: handle, book: book);
+      return BookProjection(handle: handle, book: book);
     });
-    final either = transactionResult;
-    return either.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(projection!),
-    );
   }
 
   // TODO: similar comment as addBook(); must sort out the transaction way of doing all this.
+  // This begs the question how much of changing can one do: update the book,
+  // but tags too? What if I change the author's name, maybe add their middle initial?
   /// Updates an existing book in the database.
   @override
   Future<Either<Failure, Unit>> updateBook({required Book book}) async {
     logger?.info('Entering updateBook with book: ${book.title}');
-    final transactionResult = await _bookDatasource.transaction((txn) async {
+    return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for updateBook');
+      final db = (txn as SembastTransaction).db;
       // Find existing book by businessIds
       final booksResult = await getBooks();
       if (booksResult.isLeft()) {
@@ -211,7 +213,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         final removeResult = await _tagDatasource.removeBookFromTags(
           existingProjection.handle.toString(),
           oldTagNames,
-          db: txn,
+          db: db,
         );
         if (removeResult.isLeft()) {
           throw removeResult.getLeft().getOrElse(
@@ -225,7 +227,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
             BookHandle.generate().toString(),
       );
       logger?.info('Saving updated book ${book.title}');
-      final saveResult = await _bookDatasource.saveBook(model, db: txn);
+      final saveResult = await _bookDatasource.saveBook(model, db: db);
       if (saveResult.isLeft()) {
         throw saveResult.getLeft().getOrElse(
           () => DatabaseFailure('Save failed'),
@@ -245,7 +247,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final addResult = await _tagDatasource.addBookToTags(
         model.id,
         newTagNames,
-        db: txn,
+        db: db,
       );
       if (addResult.isLeft()) {
         throw addResult.getLeft().getOrElse(
@@ -253,20 +255,17 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Transaction operation completed for updateBook');
+      return unit;
     });
-    final either = transactionResult;
-    return either.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(unit),
-    );
   }
 
   /// Deletes a book from the database.
   @override
   Future<Either<Failure, Unit>> deleteBook({required Book book}) async {
     logger?.info('Entering deleteBook with book: ${book.title}');
-    final transactionResult = await _bookDatasource.transaction((txn) async {
+    return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for deleteBook');
+      final db = (txn as SembastTransaction).db;
       // Find the handle
       final booksResult = await getBooks();
       if (booksResult.isLeft()) {
@@ -297,7 +296,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       logger?.info('Deleting book record');
       final deleteResult = await _bookDatasource.deleteBook(
         projection.handle.toString(),
-        db: txn,
+        db: db,
       );
       if (deleteResult.isLeft()) {
         throw deleteResult.getLeft().getOrElse(
@@ -309,7 +308,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final updateResult = await _tagDatasource.removeBookFromTags(
         projection.handle.toString(),
         tagNames,
-        db: txn,
+        db: db,
       );
       if (updateResult.isLeft()) {
         throw updateResult.getLeft().getOrElse(
@@ -317,12 +316,8 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Transaction operation completed for deleteBook');
+      return unit;
     });
-    final either = transactionResult;
-    return either.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(unit),
-    );
   }
 
   /// Retrieves books by a specific author.

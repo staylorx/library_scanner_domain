@@ -2,16 +2,20 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   final AuthorDatasource _authorDatasource;
+  final UnitOfWork _unitOfWork;
 
   /// Creates an AuthorRepositoryImpl instance.
   AuthorRepositoryImpl({
     required AuthorDatasource authorDatasource,
+    required UnitOfWork unitOfWork,
     Logger? logger,
-  }) : _authorDatasource = authorDatasource;
+  }) : _authorDatasource = authorDatasource,
+       _unitOfWork = unitOfWork;
 
   /// Retrieves all authors from the database.
   @override

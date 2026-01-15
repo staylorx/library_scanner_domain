@@ -8,11 +8,13 @@ import '../data/sembast/repositories/book_metadata_repository_impl.dart';
 import '../data/sembast/repositories/book_repository_impl.dart';
 import '../data/sembast/repositories/library_repository_impl.dart';
 import '../data/sembast/repositories/tag_repository_impl.dart';
+import '../data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import '../data/storage/author_datasource.dart';
 import '../data/storage/book_datasource.dart';
 import '../data/storage/library_datasource.dart';
 import '../data/storage/tag_datasource.dart';
 import 'domain.dart';
+import 'repositories/unit_of_work.dart';
 
 /// Factory for creating domain layer instances with data implementations.
 class LibraryFactory {
@@ -22,6 +24,7 @@ class LibraryFactory {
 
   late final SembastDatabase _database;
   late final BookIdRegistryServiceImpl _bookIdRegistry;
+  late final UnitOfWork _unitOfWork;
   late final BookDatasource bookDatasource;
   late final AuthorDatasource authorDatasource;
   late final TagDatasource tagDatasource;
@@ -35,6 +38,7 @@ class LibraryFactory {
   }) {
     _database = SembastDatabase(testDbPath: dbPath);
     _bookIdRegistry = BookIdRegistryServiceImpl();
+    _unitOfWork = SembastUnitOfWork(dbService: _database);
   }
 
   Future<AuthorDatasource> getAuthorDatasource() async {
@@ -55,7 +59,10 @@ class LibraryFactory {
   /// Creates an AuthorRepository instance.
   Future<AuthorRepository> createAuthorRepository() async {
     final authorDatasource = AuthorDatasource(dbService: _database);
-    return AuthorRepositoryImpl(authorDatasource: authorDatasource);
+    return AuthorRepositoryImpl(
+      authorDatasource: authorDatasource,
+      unitOfWork: _unitOfWork,
+    );
   }
 
   /// Creates a BookRepository instance.
@@ -68,6 +75,7 @@ class LibraryFactory {
       authorDatasource: authorDatasource,
       tagDatasource: tagDatasource,
       idRegistryService: _bookIdRegistry,
+      unitOfWork: _unitOfWork,
     );
   }
 
@@ -105,6 +113,7 @@ class LibraryFactory {
     return TagRepositoryImpl(
       tagDatasource: tagDatasource,
       databaseService: _database,
+      unitOfWork: _unitOfWork,
     );
   }
 

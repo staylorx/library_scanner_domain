@@ -2,19 +2,23 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of tag repository using Sembast.
 class TagRepositoryImpl with Loggable implements TagRepository {
   final TagDatasource _tagDatasource;
   final DatabaseService _databaseService;
+  final UnitOfWork _unitOfWork;
 
   /// Creates a TagRepositoryImpl instance.
   TagRepositoryImpl({
     required TagDatasource tagDatasource,
     required DatabaseService databaseService,
+    required UnitOfWork unitOfWork,
     Logger? logger,
   }) : _tagDatasource = tagDatasource,
-       _databaseService = databaseService;
+       _databaseService = databaseService,
+       _unitOfWork = unitOfWork;
 
   /// Retrieves all tags from the database.
   @override
@@ -79,24 +83,18 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     }
     final handle = TagHandle.fromName(tag.name);
     final model = TagModel.fromEntity(tag);
-    TagProjection? projection;
-    final transactionResult = await _databaseService.transaction(
-      operation: (txn) async {
-        logger?.info('Transaction started for addTag');
-        final saveResult = await _tagDatasource.saveTag(model, db: txn);
-        if (saveResult.isLeft()) {
-          throw saveResult.getLeft().getOrElse(
-            () => DatabaseFailure('Save failed'),
-          );
-        }
-        logger?.info('Transaction operation completed for addTag');
-        projection = TagProjection(handle: handle, tag: tag);
-      },
-    );
-    return transactionResult.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(projection!),
-    );
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for addTag');
+      final db = (txn as SembastTransaction).db;
+      final saveResult = await _tagDatasource.saveTag(model, db: db);
+      if (saveResult.isLeft()) {
+        throw saveResult.getLeft().getOrElse(
+          () => DatabaseFailure('Save failed'),
+        );
+      }
+      logger?.info('Transaction operation completed for addTag');
+      return TagProjection(handle: handle, tag: tag);
+    });
   }
 
   /// Updates an existing tag in the database.
@@ -108,62 +106,54 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     logger?.info(
       'Entering updateTag with handle: $handle and tag: ${tag.name}',
     );
-    final transactionResult = await _databaseService.transaction(
-      operation: (txn) async {
-        logger?.info('Transaction started for updateTag');
-        final newId = tag.name;
-        if (handle.toString() != newId) {
-          logger?.info('Name changed, deleting old record');
-          final deleteResult = await _tagDatasource.deleteTag(
-            handle.toString(),
-            db: txn,
-          );
-          if (deleteResult.isLeft()) {
-            throw deleteResult.getLeft().getOrElse(
-              () => DatabaseFailure('Delete old record failed'),
-            );
-          }
-        }
-        final model = TagModel.fromEntity(tag);
-        logger?.info('Saving updated tag ${tag.name}');
-        final saveResult = await _tagDatasource.saveTag(model, db: txn);
-        if (saveResult.isLeft()) {
-          throw saveResult.getLeft().getOrElse(
-            () => DatabaseFailure('Save failed'),
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for updateTag');
+      final db = (txn as SembastTransaction).db;
+      final newId = tag.name;
+      if (handle.toString() != newId) {
+        logger?.info('Name changed, deleting old record');
+        final deleteResult = await _tagDatasource.deleteTag(
+          handle.toString(),
+          db: db,
+        );
+        if (deleteResult.isLeft()) {
+          throw deleteResult.getLeft().getOrElse(
+            () => DatabaseFailure('Delete old record failed'),
           );
         }
-        logger?.info('Transaction operation completed for updateTag');
-      },
-    );
-    return transactionResult.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(unit),
-    );
+      }
+      final model = TagModel.fromEntity(tag);
+      logger?.info('Saving updated tag ${tag.name}');
+      final saveResult = await _tagDatasource.saveTag(model, db: db);
+      if (saveResult.isLeft()) {
+        throw saveResult.getLeft().getOrElse(
+          () => DatabaseFailure('Save failed'),
+        );
+      }
+      logger?.info('Transaction operation completed for updateTag');
+      return unit;
+    });
   }
 
   /// Deletes a tag from the database.
   @override
   Future<Either<Failure, Unit>> deleteTag({required TagHandle handle}) async {
     logger?.info('Entering deleteTag with handle: $handle');
-    final transactionResult = await _databaseService.transaction(
-      operation: (txn) async {
-        logger?.info('Transaction started for deleteTag');
-        final deleteResult = await _tagDatasource.deleteTag(
-          handle.toString(),
-          db: txn,
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for deleteTag');
+      final db = (txn as SembastTransaction).db;
+      final deleteResult = await _tagDatasource.deleteTag(
+        handle.toString(),
+        db: db,
+      );
+      if (deleteResult.isLeft()) {
+        throw deleteResult.getLeft().getOrElse(
+          () => DatabaseFailure('Delete failed'),
         );
-        if (deleteResult.isLeft()) {
-          throw deleteResult.getLeft().getOrElse(
-            () => DatabaseFailure('Delete failed'),
-          );
-        }
-        logger?.info('Transaction operation completed for deleteTag');
-      },
-    );
-    return transactionResult.fold(
-      (failure) => Either.left(failure),
-      (_) => Either.right(unit),
-    );
+      }
+      logger?.info('Transaction operation completed for deleteTag');
+      return unit;
+    });
   }
 
   /// Retrieves a tag by handle.

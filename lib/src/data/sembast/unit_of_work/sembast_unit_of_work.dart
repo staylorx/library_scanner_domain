@@ -1,0 +1,40 @@
+import 'package:fpdart/fpdart.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
+import 'sembast_transaction.dart';
+
+/// Sembast implementation of UnitOfWork.
+class SembastUnitOfWork implements UnitOfWork {
+  final DatabaseService _dbService;
+
+  /// Creates a SembastUnitOfWork with the required DatabaseService.
+  SembastUnitOfWork({required DatabaseService dbService})
+    : _dbService = dbService;
+
+  @override
+  Future<Either<Failure, T>> run<T>(
+    Future<T> Function(Transaction txn) operation,
+  ) async {
+    T? result;
+    final txnResult = await _dbService.transaction(
+      operation: (txn) async {
+        result = await operation(SembastTransaction(txn));
+      },
+    );
+    return txnResult.map((_) => result as T);
+  }
+
+  @override
+  Future<void> commit() async {
+    // Sembast transactions are auto-committed; manual commit not supported
+    throw UnsupportedError('Manual commit not supported in SembastUnitOfWork');
+  }
+
+  @override
+  Future<void> rollback() async {
+    // Sembast transactions are auto-rolled back on failure; manual rollback not supported
+    throw UnsupportedError(
+      'Manual rollback not supported in SembastUnitOfWork',
+    );
+  }
+}

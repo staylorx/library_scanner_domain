@@ -22,9 +22,11 @@ void main() {
       (await database.clearAll()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
+      final unitOfWork = SembastUnitOfWork(dbService: database);
       final tagRepository = TagRepositoryImpl(
         tagDatasource: tagDatasource,
         databaseService: database,
+        unitOfWork: unitOfWork,
       );
 
       final getTagsUsecase = GetTagsUsecase(tagRepository: tagRepository);
@@ -111,9 +113,11 @@ void main() {
       (await database.clearAll()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
+      final unitOfWork = SembastUnitOfWork(dbService: database);
       final tagRepository = TagRepositoryImpl(
         tagDatasource: tagDatasource,
         databaseService: database,
+        unitOfWork: unitOfWork,
       );
       final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 

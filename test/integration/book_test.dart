@@ -30,11 +30,13 @@ void main() {
 
         final authorIdRegistryService = AuthorIdRegistryServiceImpl();
         final bookIdRegistryService = BookIdRegistryServiceImpl();
+        final unitOfWork = SembastUnitOfWork(dbService: database);
         final bookRepository = BookRepositoryImpl(
           authorDatasource: authorDatasource,
           tagDatasource: tagDatasource,
           bookDatasource: bookDatasource,
           idRegistryService: bookIdRegistryService,
+          unitOfWork: unitOfWork,
         );
 
         final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
@@ -53,6 +55,7 @@ void main() {
         );
         final authorRepository = AuthorRepositoryImpl(
           authorDatasource: authorDatasource,
+          unitOfWork: unitOfWork,
         );
         final addAuthorUsecase = AddAuthorUsecase(
           authorRepository: authorRepository,
@@ -65,6 +68,7 @@ void main() {
         tagRepository = TagRepositoryImpl(
           tagDatasource: tagDatasource,
           databaseService: database,
+          unitOfWork: unitOfWork,
         );
         final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
 
