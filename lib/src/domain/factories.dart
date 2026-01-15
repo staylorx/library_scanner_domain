@@ -6,15 +6,12 @@ import '../data/sembast/datasources/sembast_database.dart';
 import '../data/sembast/repositories/author_repository_impl.dart';
 import '../data/sembast/repositories/book_metadata_repository_impl.dart';
 import '../data/sembast/repositories/book_repository_impl.dart';
-import '../data/sembast/repositories/library_repository_impl.dart';
 import '../data/sembast/repositories/tag_repository_impl.dart';
 import '../data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import '../data/storage/author_datasource.dart';
 import '../data/storage/book_datasource.dart';
-import '../data/storage/library_datasource.dart';
 import '../data/storage/tag_datasource.dart';
 import 'domain.dart';
-import 'repositories/unit_of_work.dart';
 
 /// Factory for creating domain layer instances with data implementations.
 class LibraryFactory {
@@ -84,26 +81,6 @@ class LibraryFactory {
     return BookMetadataRepositoryImpl(
       apiService: apiService,
       imageService: imageService,
-    );
-  }
-
-  /// Creates a LibraryRepository instance.
-  Future<LibraryRepository> createLibraryRepository() async {
-    final bookDatasource = BookDatasource(dbService: _database);
-    final authorDatasource = AuthorDatasource(dbService: _database);
-    final tagDatasource = TagDatasource(dbService: _database);
-    final libraryDatasource = LibraryDatasource(
-      dbService: _database,
-      authorDatasource: authorDatasource,
-      bookDatasource: bookDatasource,
-      tagDatasource: tagDatasource,
-    );
-    return LibraryRepositoryImpl(
-      isBookDuplicateUsecase: IsBookDuplicateUsecase(),
-      authorDatasource: authorDatasource,
-      bookDatasource: bookDatasource,
-      tagDatasource: tagDatasource,
-      libraryDatasource: libraryDatasource,
     );
   }
 

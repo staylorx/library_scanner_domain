@@ -13,8 +13,8 @@ export 'entities/tag.dart';
 export 'repositories/author_repository.dart';
 export 'repositories/book_metadata_repository.dart';
 export 'repositories/book_repository.dart';
-export 'repositories/library_repository.dart';
 export 'repositories/tag_repository.dart';
+export 'repositories/unit_of_work.dart';
 
 // Usecases
 export 'usecases/add_author_usecase.dart';

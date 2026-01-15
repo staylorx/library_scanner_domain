@@ -11,7 +11,6 @@ export 'core/models/tag_model.dart';
 export 'sembast/repositories/author_repository_impl.dart';
 export 'sembast/repositories/book_metadata_repository_impl.dart';
 export 'sembast/repositories/book_repository_impl.dart';
-export 'sembast/repositories/library_repository_impl.dart';
 export 'sembast/repositories/tag_repository_impl.dart';
 
 // Services

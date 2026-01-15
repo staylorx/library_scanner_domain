@@ -2,8 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_transaction.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl with Loggable implements BookRepository {
@@ -127,9 +125,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     });
   }
 
-  // TODO: is there a way to do this without a transaction here, or perhaps create a custom
-  // helper in the library_datasource. Maybe that's the library_datasource's job now
-
   /// Adds a new book to the database.
   @override
   Future<Either<Failure, BookProjection>> addBook({required Book book}) async {
@@ -171,9 +166,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     });
   }
 
-  // TODO: similar comment as addBook(); must sort out the transaction way of doing all this.
-  // This begs the question how much of changing can one do: update the book,
-  // but tags too? What if I change the author's name, maybe add their middle initial?
   /// Updates an existing book in the database.
   @override
   Future<Either<Failure, Unit>> updateBook({required Book book}) async {

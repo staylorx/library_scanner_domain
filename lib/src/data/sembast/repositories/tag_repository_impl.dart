@@ -2,12 +2,10 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of tag repository using Sembast.
 class TagRepositoryImpl with Loggable implements TagRepository {
   final TagDatasource _tagDatasource;
-  final DatabaseService _databaseService;
   final UnitOfWork _unitOfWork;
 
   /// Creates a TagRepositoryImpl instance.
@@ -17,7 +15,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     required UnitOfWork unitOfWork,
     Logger? logger,
   }) : _tagDatasource = tagDatasource,
-       _databaseService = databaseService,
        _unitOfWork = unitOfWork;
 
   /// Retrieves all tags from the database.

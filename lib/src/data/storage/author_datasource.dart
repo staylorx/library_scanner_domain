@@ -121,11 +121,12 @@ class AuthorDatasource {
 
   /// Deletes an author.
   Future<Either<Failure, Unit>> deleteAuthorWithCascade(
-    String authorName,
-  ) async {
+    String authorName, {
+    dynamic db,
+  }) async {
     try {
       // Delete the author
-      final deleteAuthorResult = await deleteAuthor(authorName);
+      final deleteAuthorResult = await deleteAuthor(authorName, db: db);
       return deleteAuthorResult;
     } catch (e) {
       return Either.left(

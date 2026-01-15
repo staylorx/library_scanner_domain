@@ -1,7 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
-import 'sembast_transaction.dart';
+import 'package:library_scanner_domain/src/data/data.dart';
 
 /// Sembast implementation of UnitOfWork.
 class SembastUnitOfWork implements UnitOfWork {

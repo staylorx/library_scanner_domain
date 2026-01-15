@@ -2,7 +2,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 /// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl with Loggable implements AuthorRepository {
@@ -87,19 +86,18 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     logger?.info('Entering addAuthor with author: ${author.name}');
     final handle = AuthorHandle.fromName(author.name);
     final model = AuthorModel.fromEntity(author, handle.toString());
-    final saveResult = await _authorDatasource.saveAuthor(model);
-    if (saveResult.isLeft()) {
-      logger?.warning(
-        'Failed to save author: ${saveResult.getLeft().getOrElse(() => DatabaseFailure('Save failed')).message}',
-      );
-      return Either.left(
-        saveResult.getLeft().getOrElse(() => DatabaseFailure('Save failed')),
-      );
-    }
-
-    logger?.info('Add author completed');
-    final projection = AuthorProjection(handle: handle, author: author);
-    return Either.right(projection);
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for addAuthor');
+      final db = (txn as SembastTransaction).db;
+      final saveResult = await _authorDatasource.saveAuthor(model, db: db);
+      if (saveResult.isLeft()) {
+        throw saveResult.getLeft().getOrElse(
+          () => DatabaseFailure('Save failed'),
+        );
+      }
+      logger?.info('Transaction operation completed for addAuthor');
+      return AuthorProjection(handle: handle, author: author);
+    });
   }
 
   /// Updates an existing author in the database.
@@ -112,13 +110,18 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       'Entering updateAuthor with handle: $handle and author: ${author.name}',
     );
     final model = AuthorModel.fromEntity(author, handle.toString());
-    final result = await _authorDatasource.saveAuthor(model);
-    result.fold(
-      (failure) =>
-          logger?.warning('Failed to update author: ${failure.message}'),
-      (_) => logger?.info('Update author completed'),
-    );
-    return result.map((_) => unit);
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for updateAuthor');
+      final db = (txn as SembastTransaction).db;
+      final result = await _authorDatasource.saveAuthor(model, db: db);
+      if (result.isLeft()) {
+        throw result.getLeft().getOrElse(
+          () => DatabaseFailure('Update failed'),
+        );
+      }
+      logger?.info('Update author completed');
+      return unit;
+    });
   }
 
   /// Deletes an author from the database.
@@ -127,19 +130,21 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     required AuthorHandle handle,
   }) async {
     logger?.info('Entering deleteAuthor with handle: $handle');
-    final result = await _authorDatasource.deleteAuthorWithCascade(
-      handle.toString(),
-    );
-    if (result.isLeft()) {
-      logger?.warning(
-        'Failed to delete author: ${result.getLeft().getOrElse(() => DatabaseFailure('Delete failed')).message}',
+    return _unitOfWork.run((Transaction txn) async {
+      logger?.info('Transaction started for deleteAuthor');
+      final db = (txn as SembastTransaction).db;
+      final result = await _authorDatasource.deleteAuthorWithCascade(
+        handle.toString(),
+        db: db,
       );
-      return Either.left(
-        result.getLeft().getOrElse(() => DatabaseFailure('Delete failed')),
-      );
-    }
-    logger?.info('Delete author completed');
-    return Either.right(unit);
+      if (result.isLeft()) {
+        throw result.getLeft().getOrElse(
+          () => DatabaseFailure('Delete failed'),
+        );
+      }
+      logger?.info('Delete author completed');
+      return unit;
+    });
   }
 
   /// Retrieves an author by handle.
