@@ -35,12 +35,10 @@ class GetTagByNameUsecase with Loggable {
     return result.match(
       (failure) {
         logger?.info('getByNameUsecase: Failure: $failure');
-        logger?.info('getByNameUsecase: Exiting call');
         return Left(failure);
       },
       (tag) {
         logger?.info('getByNameUsecase: Output: ${tag.name}');
-        logger?.info('getByNameUsecase: Exiting call');
         return Right(tag);
       },
     );

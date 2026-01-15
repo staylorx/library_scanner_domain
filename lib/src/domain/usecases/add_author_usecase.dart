@@ -31,7 +31,6 @@ class AddAuthorUsecase with Loggable {
       logger?.info('AddAuthorUsecase: Success in call');
       return addEither.fold((failure) => Left(failure), (handle) {
         logger?.info('AddAuthorUsecase: Output: $handle');
-        logger?.info('AddAuthorUsecase: Exiting call');
         return Right(handle);
       });
     });

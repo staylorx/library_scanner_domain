@@ -42,7 +42,6 @@ class UpdateAuthorUsecase with Loggable {
     );
     logger?.info('UpdateAuthorUsecase: Success in call');
     return updateEither.fold((failure) => Left(failure), (_) {
-      logger?.info('UpdateAuthorUsecase: Exiting call');
       return Right(unit);
     });
   }

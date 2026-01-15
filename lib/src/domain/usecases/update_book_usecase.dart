@@ -23,7 +23,6 @@ class UpdateBookUsecase with Loggable {
         logger?.info(
           'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
-        logger?.info('UpdateBookUsecase: Exiting call');
         return Right(books);
       });
     });

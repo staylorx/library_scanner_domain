@@ -49,7 +49,6 @@ class DeleteAuthorUsecase with Loggable {
         logger?.info(
           'DeleteAuthorUsecase: Output: ${updatedAuthors.map((a) => a.name).toList()}',
         );
-        logger?.info('DeleteAuthorUsecase: Exiting call');
         return Right(updatedAuthors);
       });
     });

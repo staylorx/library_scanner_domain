@@ -19,7 +19,6 @@ class GetAuthorsUsecase with Loggable {
       logger?.info(
         'GetAuthorsUsecase: Output: ${authors.map((a) => a.name).toList()}',
       );
-      logger?.info('GetAuthorsUsecase: Exiting call');
       return Right(authors);
     });
   }

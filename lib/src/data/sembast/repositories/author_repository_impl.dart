@@ -33,7 +33,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
             'Success in getAuthors, fetched ${authors.length} authors',
           );
           logger?.info('Output: ${authors.map((a) => a.name).toList()}');
-          logger?.info('Exiting getAuthors');
           return authors;
         });
       },
@@ -59,7 +58,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
         (records) {
           if (records.isEmpty) {
             logger?.info('Author with name $name not found');
-            logger?.info('Exiting getByName');
             return Either.left(NotFoundFailure('Author not found'));
           }
           try {
@@ -67,7 +65,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
             logger?.info('Success, fetched author ${model.name}');
             final author = model.toEntity();
             logger?.info('Output: ${author.name}');
-            logger?.info('Exiting getByName');
             return Either.right(author);
           } catch (e) {
             return Either.left(DataParsingFailure(e.toString()));
@@ -89,7 +86,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       if (names.isEmpty) {
         logger?.info('names is empty, returning empty list');
         logger?.info('Output: []');
-        logger?.info('Exiting getAuthorsByNames');
         return Either.right([]);
       }
 
@@ -113,7 +109,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
           'Success in getAuthorsByNames, fetched ${authors.length} authors',
         );
         logger?.info('Output: ${authors.map((a) => a.name).toList()}');
-        logger?.info('Exiting getAuthorsByNames');
         return Either.right(authors);
       });
     } catch (e) {
@@ -176,7 +171,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       );
       return result.fold((failure) => Either.left(failure), (_) {
         logger?.info('Success added author ${author.name} with handle $handle');
-        logger?.info('Exiting addAuthor');
         return Either.right(handle);
       });
     } catch (e) {
@@ -314,7 +308,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       );
       return result.fold((failure) => Either.left(failure), (_) {
         logger?.info('Success updated author ${author.name}');
-        logger?.info('Exiting updateAuthor');
         return Either.right(unit);
       });
     } catch (e) {
@@ -398,7 +391,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       );
       return result.fold((failure) => Either.left(failure), (_) {
         logger?.info('Success deleted author with handle $handle');
-        logger?.info('Exiting deleteAuthor');
         return Either.right(unit);
       });
     } catch (e) {
@@ -428,7 +420,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
           logger?.info('Successfully retrieved Author by handle: $handle');
           if (records.isEmpty) {
             logger?.info('Author with handle $handle not found');
-            logger?.info('Exiting getByHandle');
             return Either.left(NotFoundFailure('Author not found'));
           }
           try {
@@ -436,7 +427,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
             logger?.info('Success, fetched author ${model.name}');
             final author = model.toEntity();
             logger?.info('Output: ${author.name}');
-            logger?.info('Exiting getByHandle');
             return Either.right(author);
           } catch (e) {
             return Either.left(DataParsingFailure(e.toString()));
@@ -514,7 +504,6 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
         }
       }
       logger?.info('Success in _updateRelationshipsForAuthor');
-      logger?.info('Exiting _updateRelationshipsForAuthor');
       return Either.right(unit);
     } catch (e) {
       return Either.left(DatabaseConstraintFailure(e.toString()));

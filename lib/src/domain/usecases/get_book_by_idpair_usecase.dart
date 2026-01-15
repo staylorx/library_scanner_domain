@@ -39,14 +39,12 @@ class GetBookByIdPairUsecase with Loggable {
     return result.match(
       (failure) {
         logger?.info('getByIdPairpairUsecase: Failure: $failure');
-        logger?.info('getByIdPairpairUsecase: Exiting call');
         return Left(failure);
       },
       (book) {
         logger?.info(
           'getByIdPairpairUsecase: Output: ${book.title} (businessIds: ${book.businessIds})',
         );
-        logger?.info('getByIdPairpairUsecase: Exiting call');
         return Right(book);
       },
     );

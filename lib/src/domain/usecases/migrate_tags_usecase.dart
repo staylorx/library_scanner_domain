@@ -129,7 +129,6 @@ class MigrateTagsUsecase with Loggable {
     }
 
     logger?.info('MigrateTagsUsecase: Migration completed successfully');
-    logger?.info('MigrateTagsUsecase: Exiting call');
     return Right(unit);
   }
 }

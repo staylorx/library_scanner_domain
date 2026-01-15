@@ -46,7 +46,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
           logger?.info(
             'TagRepositoryImpl: Output: ${tags.map((t) => t.name).toList()}',
           );
-          logger?.info('TagRepositoryImpl: Exiting getTags');
           return tags;
         });
       },
@@ -75,7 +74,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
           (records) {
             if (records.isEmpty) {
               logger?.info('TagRepositoryImpl: Tag with name $name not found');
-              logger?.info('TagRepositoryImpl: Exiting getByName');
               throw NotFoundFailure('Tag not found');
             }
             final model = TagModel.fromMap(map: records.first);
@@ -84,7 +82,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
             );
             final tag = model.toEntity();
             logger?.info('TagRepositoryImpl: Output: ${tag.name}');
-            logger?.info('TagRepositoryImpl: Exiting getByName');
             return tag;
           },
         );
@@ -116,7 +113,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
               logger?.info(
                 'TagRepositoryImpl: Tag with handle $handle not found',
               );
-              logger?.info('TagRepositoryImpl: Exiting getByHandle');
               throw NotFoundFailure('Tag not found');
             }
             final model = TagModel.fromMap(map: records.first);
@@ -125,7 +121,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
             );
             final tag = model.toEntity();
             logger?.info('TagRepositoryImpl: Output: ${tag.name}');
-            logger?.info('TagRepositoryImpl: Exiting getByHandle');
             return tag;
           },
         );
@@ -170,7 +165,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
       logger?.info(
         'TagRepositoryImpl: Output: ${tags.map((t) => t.name).toList()}',
       );
-      logger?.info('TagRepositoryImpl: Exiting getTagsByNames');
       return Either.right(tags);
     });
   }
@@ -207,7 +201,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
         );
         return saveResult.match((failure) => Either.left(failure), (_) {
           logger?.info('TagRepositoryImpl: Success added tag ${tag.name}');
-          logger?.info('TagRepositoryImpl: Exiting addTag');
           return Either.right(TagHandle(tag.name));
         });
       });
@@ -245,7 +238,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
           logger?.info('TagRepositoryImpl: Database save completed');
           return saveResult.match((failure) => Either.left(failure), (_) {
             logger?.info('TagRepositoryImpl: Success updated tag ${tag.name}');
-            logger?.info('TagRepositoryImpl: Exiting updateTag');
             return Either.right(unit);
           });
         });
@@ -263,7 +255,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
         logger?.info('TagRepositoryImpl: Database save completed');
         return saveResult.match((failure) => Either.left(failure), (_) {
           logger?.info('TagRepositoryImpl: Success updated tag ${tag.name}');
-          logger?.info('TagRepositoryImpl: Exiting updateTag');
           return Either.right(unit);
         });
       }
@@ -326,7 +317,6 @@ class TagRepositoryImpl with Loggable implements TagRepository {
           logger?.info(
             'TagRepositoryImpl: Success deleted tag and updated associated books',
           );
-          logger?.info('TagRepositoryImpl: Exiting deleteTag');
           return Either.right(unit);
         });
       });

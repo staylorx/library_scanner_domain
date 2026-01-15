@@ -58,7 +58,6 @@ class DeleteBookUsecase with Loggable {
         logger?.info(
           'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
         );
-        logger?.info('DeleteBookUsecase: Exiting call');
         return Right(updatedBooks);
       });
     });

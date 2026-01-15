@@ -19,7 +19,6 @@ class GetBooksUsecase with Loggable {
       logger?.info(
         'GetBooksUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
       );
-      logger?.info('GetBooksUsecase: Exiting call');
       return Right(books);
     });
   }

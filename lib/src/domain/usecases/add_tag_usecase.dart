@@ -32,7 +32,6 @@ class AddTagUsecase with Loggable {
         logger?.info(
           'AddTagUsecase: Output: ${tags.map((t) => t.name).toList()}',
         );
-        logger?.info('AddTagUsecase: Exiting call');
         return Right(tags);
       });
     });

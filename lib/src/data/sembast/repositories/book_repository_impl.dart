@@ -114,7 +114,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         logger?.info(
           'BookRepositoryImpl: Output: ${books.map((b) => b.title).toList()}',
         );
-        logger?.info('BookRepositoryImpl: Exiting getBooks');
         return books;
       },
       (error, stackTrace) =>
@@ -137,7 +136,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
         if (record == null) {
           logger?.info('Book with handle $handle not found');
-          logger?.debug('Exiting getByHandle');
           throw NotFoundFailure('Book not found');
         }
         final model = BookModel.fromMap(map: record.value);
@@ -168,7 +166,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         }
         final book = model.toEntity(authors: authors, tags: tags);
         logger?.debug('Output: ${book.title}');
-        logger?.debug('Exiting getByHandle');
         return book;
       },
       (error, stackTrace) =>
@@ -191,11 +188,9 @@ class BookRepositoryImpl with Loggable implements BookRepository {
               .firstOrNull;
           if (book == null) {
             logger?.debug('Book not found');
-            logger?.debug('Exiting getByIdPair');
             throw NotFoundFailure('Book not found');
           }
           logger?.debug('Output: ${book.title}');
-          logger?.debug('Exiting getByIdPair');
           return book;
         });
       },
@@ -241,7 +236,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           return unit;
         });
         logger?.info('BookRepositoryImpl: Success added book ${book.title}');
-        logger?.info('BookRepositoryImpl: Exiting addBook');
         return handle;
       },
       (error, stackTrace) =>
@@ -329,7 +323,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           return unit;
         });
         logger?.info('BookRepositoryImpl: Success updated book ${book.title}');
-        logger?.info('BookRepositoryImpl: Exiting updateBook');
         return unit;
       },
       (error, stackTrace) =>
@@ -386,7 +379,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           return unit;
         });
         logger?.info('BookRepositoryImpl: Success deleted book ${book.title}');
-        logger?.info('BookRepositoryImpl: Exiting deleteBook');
         return unit;
       },
       (error, stackTrace) =>
@@ -437,7 +429,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         logger?.info(
           'BookRepositoryImpl: Success in _updateRelationshipsForBook',
         );
-        logger?.info('BookRepositoryImpl: Exiting _updateRelationshipsForBook');
         return unit;
       },
       (error, stackTrace) => DatabaseConstraintFailure(error.toString()),
@@ -509,11 +500,9 @@ class BookRepositoryImpl with Loggable implements BookRepository {
               .firstOrNull;
           if (book == null) {
             logger?.info('Book with id $bookId not found');
-            logger?.info('Exiting getBookById');
             throw NotFoundFailure('Book not found');
           }
           logger?.info('Output: ${book.title}');
-          logger?.info('Exiting getBookById');
           return book;
         });
       },

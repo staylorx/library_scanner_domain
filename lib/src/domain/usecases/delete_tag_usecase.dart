@@ -48,7 +48,6 @@ class DeleteTagUsecase with Loggable {
         logger?.info(
           'DeleteTagUsecase: Output: ${updatedTags.map((t) => t.name).toList()}',
         );
-        logger?.info('DeleteTagUsecase: Exiting call');
         return Right(updatedTags);
       });
     });

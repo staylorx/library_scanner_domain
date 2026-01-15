@@ -45,7 +45,6 @@ class UpdateTagUsecase with Loggable {
         logger?.info(
           'UpdateTagUsecase: Output: ${tags.map((t) => t.name).toList()}',
         );
-        logger?.info('UpdateTagUsecase: Exiting call');
         return Right(tags);
       });
     });

@@ -36,7 +36,6 @@ class GetTagsByNamesUsecase with Loggable {
       logger?.info(
         'getTagsByNamesUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );
-      logger?.info('getTagsByNamesUsecase: Exiting call');
       return Right(tags);
     });
   }
