@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
@@ -27,35 +26,35 @@ class BookMetadataRepositoryImpl implements AbstractBookMetadataRepository {
       );
     }
 
-    final bookModel = fetchEither.getRight().getOrElse(() => null);
-    if (bookModel == null || bookModel.coverImageUrl == null) {
-      return Right(bookModel?.toBookMetadata());
+    final bookMetadata = fetchEither.getRight().getOrElse(() => null);
+    if (bookMetadata == null || bookMetadata.coverImageUrl == null) {
+      return Right(bookMetadata);
     }
 
     if (!fetchCoverArt) {
-      return Right(bookModel.toBookMetadata());
+      return Right(bookMetadata);
     }
 
     // Download the cover image bytes
     final downloadEither = await imageService.downloadImageBytesFromUrl(
-      url: bookModel.coverImageUrl!,
+      url: bookMetadata.coverImageUrl!,
     );
     if (downloadEither.isLeft()) {
-      return Right(bookModel.toBookMetadata());
+      return Right(bookMetadata);
     }
 
     final bytes = downloadEither.getRight().getOrElse(() => Uint8List(0));
-    if (bytes.isEmpty) return Right(bookModel.toBookMetadata());
+    if (bytes.isEmpty) return Right(bookMetadata);
 
     final thumbnailEither = await imageService.generateThumbnail(
       imageBytes: bytes,
     );
     if (thumbnailEither.isLeft()) {
-      return Right(bookModel.toBookMetadata());
+      return Right(bookMetadata);
     }
 
     final coverImage = thumbnailEither.getRight().getOrElse(() => Uint8List(0));
-    final updatedModel = bookModel.copyWith(coverImage: coverImage);
-    return Right(updatedModel.toBookMetadata());
+    final updatedModel = bookMetadata.copyWith(coverImage: coverImage);
+    return Right(updatedModel);
   }
 }

@@ -1,8 +1,8 @@
 import 'package:fpdart/fpdart.dart';
-
+import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:sembast/sembast.dart';
 import 'package:logging/logging.dart';
+import 'package:sembast/sembast.dart';
 
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl implements AbstractBookRepository {

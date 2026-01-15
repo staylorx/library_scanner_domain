@@ -1,5 +1,6 @@
-import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:logging/logging.dart';
 
 /// Implementation of author repository using Sembast.

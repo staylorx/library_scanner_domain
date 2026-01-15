@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:logging/logging.dart';
+import 'package:sembast/sembast.dart';
+import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 import 'package:yaml_writer/yaml_writer.dart';
-import 'package:uuid/uuid.dart';
-import 'package:sembast/sembast.dart';
-import 'package:logging/logging.dart';
 
 // Top-level functions for parsing
 /// Parses YAML data from a string.

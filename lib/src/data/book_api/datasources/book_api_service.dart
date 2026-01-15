@@ -11,7 +11,7 @@ class BookApiService implements AbstractBookApiService {
   BookApiService({required Dio dio}) : _dio = dio;
 
   @override
-  Future<Either<Failure, BookModel?>> fetchBookByIsbn({
+  Future<Either<Failure, BookMetadata?>> fetchBookByIsbn({
     required String isbn,
   }) async {
     _logger.info('Fetching book by ISBN: $isbn');
@@ -74,16 +74,14 @@ class BookApiService implements AbstractBookApiService {
             'Successfully parsed book: ${volumeInfo['title'] ?? 'Unknown Title'} by ${authorIds.join(', ')}',
           );
           return Right(
-            BookModel(
-              id: isbn,
-              businessIds: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
+            BookMetadata(
               title: volumeInfo['title'] as String? ?? 'Unknown Title',
               description: description,
-              authorIds: authorIds,
-              tagIds: [], // Empty for partial model
+              authors: authorIds,
               publishedDate: publishedDate,
-              coverImage: null, // Will be downloaded later
               coverImageUrl: coverImageUrl,
+              coverImage: null, // Will be downloaded later
+              notes: null,
             ),
           );
         } catch (e) {

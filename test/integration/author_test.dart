@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:test/test.dart' show test, expect, group, Timeout;
 import 'package:matcher/matcher.dart';
 import 'package:logging/logging.dart';
+import 'package:library_scanner_domain/src/data/data.dart';
 
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 

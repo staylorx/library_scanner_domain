@@ -1,6 +1,4 @@
-import '../../../domain/entities/author.dart';
-import '../../../domain/value_objects/author_id_pair.dart';
-import '../../../domain/value_objects/author_id_type.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// A data model representing an author with their metadata and identifiers.
 class AuthorModel {

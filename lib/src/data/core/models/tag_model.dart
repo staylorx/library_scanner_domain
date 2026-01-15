@@ -1,5 +1,4 @@
-import '../../../domain/entities/tag.dart';
-import '../../../domain/value_objects/tag_handle.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// A data model representing a tag with its metadata.
 class TagModel {
