@@ -1,0 +1,14 @@
+name: library_scanner_cli_example
+description: A CLI example demonstrating how to configure the library_scanner_domain package.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.0
+
+dependencies:
+  library_scanner_domain:
+    path: ../..
+  dio: ^5.4.0
+  fpdart: ^1.2.0
+  path: ^1.9.1
