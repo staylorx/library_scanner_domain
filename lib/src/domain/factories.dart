@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:fpdart/fpdart.dart';
 
 import '../data/book_api/datasources/book_api_service.dart';
+import '../utils/failure.dart';
 import '../data/id_registry/services/book_id_registry_service.dart';
 import '../data/sembast/datasources/sembast_database.dart';
 import '../data/sembast/repositories/author_repository_impl.dart';
@@ -95,8 +97,8 @@ class LibraryFactory {
   }
 
   /// Closes the database connection.
-  Future<void> close() async {
-    await _database.close();
+  Future<Either<Failure, Unit>> close() async {
+    return _database.close();
   }
 }
 

@@ -57,7 +57,7 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Saves data to the specified collection.
   @override
-  Future<Either<Failure, void>> save({
+  Future<Either<Failure, Unit>> save({
     required String collection,
     required String id,
     required Map<String, dynamic> data,
@@ -75,7 +75,7 @@ class SembastDatabase with Loggable implements DatabaseService {
         logger?.debug('SembastDatabase: About to put record');
         await store.record(id).put(client, data);
         logger?.debug('SembastDatabase: Put completed successfully');
-        return null;
+        return unit;
       },
       (error, stackTrace) {
         logger?.error('Save failed: $error');
@@ -178,7 +178,7 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Deletes a record from the collection.
   @override
-  Future<Either<Failure, void>> delete({
+  Future<Either<Failure, Unit>> delete({
     required String collection,
     required String id,
     dynamic db,
@@ -188,7 +188,7 @@ class SembastDatabase with Loggable implements DatabaseService {
         final client = db as DatabaseClient? ?? await database;
         final store = _getStore(collection);
         await store.record(id).delete(client);
-        return null;
+        return unit;
       },
       (error, stackTrace) => DatabaseFailure('Failed to delete: $error'),
     ).run();
@@ -196,25 +196,25 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Clears all records from the collection.
   @override
-  Future<Either<Failure, void>> clear({required String collection}) async {
+  Future<Either<Failure, Unit>> clear({required String collection}) async {
     return TaskEither.tryCatch(() async {
       final db = await database;
       final store = _getStore(collection);
       await store.delete(db);
-      return null;
+      return unit;
     }, (error, stackTrace) => DatabaseFailure('Failed to clear: $error')).run();
   }
 
   /// Clears all records from all collections.
   @override
-  Future<Either<Failure, void>> clearAll() async {
+  Future<Either<Failure, Unit>> clearAll() async {
     return TaskEither.tryCatch(
       () async {
         final db = await database;
         await booksStore.delete(db);
         await authorsStore.delete(db);
         await tagsStore.delete(db);
-        return null;
+        return unit;
       },
       (error, stackTrace) => DatabaseFailure('Failed to clear all: $error'),
     ).run();
@@ -222,8 +222,8 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Executes an operation within a database transaction.
   @override
-  Future<Either<Failure, void>> transaction({
-    required Future<void> Function(dynamic txn) operation,
+  Future<Either<Failure, Unit>> transaction({
+    required Future<Unit> Function(dynamic txn) operation,
   }) async {
     return TaskEither.tryCatch(
       () async {
@@ -231,7 +231,7 @@ class SembastDatabase with Loggable implements DatabaseService {
         await db.transaction((txn) async {
           await operation(txn);
         });
-        return null;
+        return unit;
       },
       (error, stackTrace) => DatabaseFailure('Transaction failed: $error'),
     ).run();
@@ -239,11 +239,18 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Closes the database connection.
   @override
-  Future<void> close() async {
-    final db = _database;
-    if (db != null) {
-      await db.close();
-      _database = null;
-    }
+  Future<Either<Failure, Unit>> close() async {
+    return TaskEither.tryCatch(
+      () async {
+        final db = _database;
+        if (db != null) {
+          await db.close();
+          _database = null;
+        }
+        return unit;
+      },
+      (error, stackTrace) =>
+          DatabaseFailure('Failed to close database: $error'),
+    ).run();
   }
 }

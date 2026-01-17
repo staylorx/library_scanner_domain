@@ -14,8 +14,8 @@ abstract class UnitOfWork {
   );
 
   /// Manually commits the current transaction.
-  Future<void> commit();
+  Future<Either<Failure, Unit>> commit();
 
   /// Manually rolls back the current transaction.
-  Future<void> rollback();
+  Future<Either<Failure, Unit>> rollback();
 }

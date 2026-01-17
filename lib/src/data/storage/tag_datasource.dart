@@ -191,7 +191,7 @@ class TagDatasource {
 
   /// Executes a transaction with the given operation.
   Future<Either<Failure, Unit>> transaction(
-    Future<void> Function(dynamic txn) operation,
+    Future<Unit> Function(dynamic txn) operation,
   ) async {
     final result = await _dbService.transaction(operation: operation);
     return result.map((_) => unit);

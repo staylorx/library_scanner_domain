@@ -7,5 +7,5 @@ abstract class BarcodeScannerService {
   Future<Either<Failure, String?>> startScanning();
 
   /// Stops the barcode scanning process.
-  Future<Either<Failure, void>> stopScanning();
+  Future<Either<Failure, Unit>> stopScanning();
 }
