@@ -14,6 +14,8 @@ import '../data/storage/author_datasource.dart';
 import '../data/storage/book_datasource.dart';
 import '../data/storage/tag_datasource.dart';
 import '../data/core/services/author_filtering_service.dart';
+import '../data/core/services/author_sorting_service.dart';
+import '../data/core/services/book_sorting_service.dart';
 import '../data/core/services/book_filtering_service.dart';
 import '../data/core/services/author_validation_service.dart';
 import '../data/core/services/book_validation_service.dart';
@@ -122,6 +124,16 @@ class LibraryFactory {
     return AuthorFilteringServiceImpl();
   }
 
+  /// Creates an AuthorSortingService instance.
+  AuthorSortingService createAuthorSortingService() {
+    return AuthorSortingServiceImpl();
+  }
+
+  /// Creates an BookSortingService instance.
+  BookSortingService createBookSortingService() {
+    return BookSortingServiceImpl();
+  }
+
   /// Creates a BookFilteringService instance.
   BookFilteringService createBookFilteringService() {
     return BookFilteringServiceImpl();
@@ -145,6 +157,22 @@ class LibraryFactory {
   /// Creates a BookValidationService instance.
   BookValidationService createBookValidationService() {
     return BookValidationServiceImpl(idRegistryService: _bookIdRegistry);
+  }
+
+  /// Creates a LibraryDataAccess instance with all data services.
+  Future<LibraryDataAccess> createLibraryDataAccess() async {
+    final authorRepository = await createAuthorRepository();
+    final bookRepository = await createBookRepository();
+    final tagRepository = await createTagRepository();
+    return LibraryDataAccess(
+      unitOfWork: _unitOfWork,
+      databaseService: _dbService,
+      authorRepository: authorRepository,
+      bookRepository: bookRepository,
+      tagRepository: tagRepository,
+      authorIdRegistryService: _authorIdRegistry,
+      bookIdRegistryService: _bookIdRegistry,
+    );
   }
 
   /// Closes the database connection.

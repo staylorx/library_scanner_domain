@@ -7,8 +7,8 @@ abstract class TagRepository {
   Future<Either<Failure, List<Tag>>> getTagsByNames({
     required List<String> names,
   });
-  Future<Either<Failure, Tag>> addTag({required Tag tag});
-  Future<Either<Failure, Unit>> updateTag({required Tag tag});
-  Future<Either<Failure, Unit>> deleteTag({required Tag tag});
+  Future<Either<Failure, Tag>> addTag({required Tag tag, Transaction? txn});
+  Future<Either<Failure, Unit>> updateTag({required Tag tag, Transaction? txn});
+  Future<Either<Failure, Unit>> deleteTag({required Tag tag, Transaction? txn});
   Future<Either<Failure, Tag>> getById({required String id});
 }

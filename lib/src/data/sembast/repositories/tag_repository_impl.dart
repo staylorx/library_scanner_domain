@@ -70,7 +70,10 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Adds a new tag to the database.
   @override
-  Future<Either<Failure, Tag>> addTag({required Tag tag}) async {
+  Future<Either<Failure, Tag>> addTag({
+    required Tag tag,
+    Transaction? txn,
+  }) async {
     logger?.info('Entering addTag with tag: ${tag.name}, id: ${tag.id}');
     // Check for duplicate
     final existingResult = await getByName(name: tag.name);
@@ -83,56 +86,94 @@ class TagRepositoryImpl with Loggable implements TagRepository {
         ? tag
         : tag.copyWith(id: const Uuid().v4());
     final model = TagModel.fromEntity(tagWithId);
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for addTag');
+    if (txn != null) {
+      logger?.info('Using provided transaction for addTag');
       final db = (txn as SembastTransaction).db;
       final saveResult = await _tagDatasource.saveTag(model, db: db);
-      if (saveResult.isLeft()) {
-        throw saveResult.getLeft().getOrElse(
-          () => DatabaseFailure('Save failed'),
-        );
-      }
-      logger?.info('Transaction operation completed for addTag');
-      return tagWithId;
-    });
+      return saveResult.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(tagWithId),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for addTag');
+        final db = (txn as SembastTransaction).db;
+        final saveResult = await _tagDatasource.saveTag(model, db: db);
+        if (saveResult.isLeft()) {
+          throw saveResult.getLeft().getOrElse(
+            () => DatabaseFailure('Save failed'),
+          );
+        }
+        logger?.info('Transaction operation completed for addTag');
+        return tagWithId;
+      });
+    }
   }
 
   /// Updates an existing tag in the database.
   @override
-  Future<Either<Failure, Unit>> updateTag({required Tag tag}) async {
+  Future<Either<Failure, Unit>> updateTag({
+    required Tag tag,
+    Transaction? txn,
+  }) async {
     logger?.info('Entering updateTag with tag: ${tag.name}');
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for updateTag');
+    if (txn != null) {
+      logger?.info('Using provided transaction for updateTag');
       final db = (txn as SembastTransaction).db;
       final model = TagModel.fromEntity(tag);
       logger?.info('Saving updated tag ${tag.name}');
       final saveResult = await _tagDatasource.saveTag(model, db: db);
-      if (saveResult.isLeft()) {
-        throw saveResult.getLeft().getOrElse(
-          () => DatabaseFailure('Save failed'),
-        );
-      }
-      logger?.info('Transaction operation completed for updateTag');
-      return unit;
-    });
+      return saveResult.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(unit),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for updateTag');
+        final db = (txn as SembastTransaction).db;
+        final model = TagModel.fromEntity(tag);
+        logger?.info('Saving updated tag ${tag.name}');
+        final saveResult = await _tagDatasource.saveTag(model, db: db);
+        if (saveResult.isLeft()) {
+          throw saveResult.getLeft().getOrElse(
+            () => DatabaseFailure('Save failed'),
+          );
+        }
+        logger?.info('Transaction operation completed for updateTag');
+        return unit;
+      });
+    }
   }
 
   /// Deletes a tag from the database.
   @override
-  Future<Either<Failure, Unit>> deleteTag({required Tag tag}) async {
+  Future<Either<Failure, Unit>> deleteTag({
+    required Tag tag,
+    Transaction? txn,
+  }) async {
     logger?.info('Entering deleteTag with tag: ${tag.name}');
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for deleteTag');
+    if (txn != null) {
+      logger?.info('Using provided transaction for deleteTag');
       final db = (txn as SembastTransaction).db;
       final deleteResult = await _tagDatasource.deleteTag(tag.id, db: db);
-      if (deleteResult.isLeft()) {
-        throw deleteResult.getLeft().getOrElse(
-          () => DatabaseFailure('Delete failed'),
-        );
-      }
-      logger?.info('Transaction operation completed for deleteTag');
-      return unit;
-    });
+      return deleteResult.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(unit),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for deleteTag');
+        final db = (txn as SembastTransaction).db;
+        final deleteResult = await _tagDatasource.deleteTag(tag.id, db: db);
+        if (deleteResult.isLeft()) {
+          throw deleteResult.getLeft().getOrElse(
+            () => DatabaseFailure('Delete failed'),
+          );
+        }
+        logger?.info('Transaction operation completed for deleteTag');
+        return unit;
+      });
+    }
   }
 
   /// Retrieves a tag by handle.

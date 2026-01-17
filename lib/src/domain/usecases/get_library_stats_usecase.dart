@@ -4,30 +4,24 @@ import 'package:id_logging/id_logging.dart';
 
 /// Usecase for getting library statistics
 class GetLibraryStatsUsecase with Loggable {
-  final GetBooksUsecase _getBooksUsecase;
-  final GetAuthorsUsecase _getAuthorsUsecase;
-  final GetTagsUsecase _getTagsUsecase;
+  final LibraryDataAccess _dataAccess;
 
   GetLibraryStatsUsecase({
     Logger? logger,
-    required GetBooksUsecase getBooksUsecase,
-    required GetAuthorsUsecase getAuthorsUsecase,
-    required GetTagsUsecase getTagsUsecase,
-  }) : _getBooksUsecase = getBooksUsecase,
-       _getAuthorsUsecase = getAuthorsUsecase,
-       _getTagsUsecase = getTagsUsecase;
+    required LibraryDataAccess dataAccess,
+  }) : _dataAccess = dataAccess;
 
   /// Gets comprehensive library statistics.
   Future<Either<Failure, LibraryStats>> call() async {
-    final booksResult = await _getBooksUsecase();
+    final booksResult = await _dataAccess.bookRepository.getBooks();
     return booksResult.fold((failure) => Future.value(Left(failure)), (
       books,
     ) async {
-      final authorsResult = await _getAuthorsUsecase();
+      final authorsResult = await _dataAccess.authorRepository.getAuthors();
       return authorsResult.fold((failure) => Future.value(Left(failure)), (
         authors,
       ) async {
-        final tagsResult = await _getTagsUsecase();
+        final tagsResult = await _dataAccess.tagRepository.getTags();
         return tagsResult.fold(
           (failure) => Future.value(Left(failure)),
           (tags) => Right(
@@ -59,24 +53,4 @@ class GetLibraryStatsUsecase with Loggable {
     }
     return result;
   }
-}
-
-/// Data class for library statistics.
-class LibraryStats {
-  final int totalBooks;
-  final int totalAuthors;
-  final int totalTags;
-  final int booksWithCovers;
-  final Map<String, int> booksByTag;
-
-  LibraryStats({
-    required this.totalBooks,
-    required this.totalAuthors,
-    required this.totalTags,
-    required this.booksWithCovers,
-    required this.booksByTag,
-  });
-
-  double get coverPercentage =>
-      totalBooks > 0 ? (booksWithCovers / totalBooks) * 100 : 0.0;
 }

@@ -5,7 +5,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_registry/id_registry.dart';
 
 /// Use case for checking if two books are duplicates.
-
 class IsBookDuplicateUsecase with Loggable {
   IsBookDuplicateUsecase();
 

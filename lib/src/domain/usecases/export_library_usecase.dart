@@ -6,15 +6,52 @@ import 'package:yaml_writer/yaml_writer.dart';
 
 /// Use case for exporting a library to a file.
 class ExportLibraryUsecase with Loggable {
-  ExportLibraryUsecase({Logger? logger});
+  final LibraryDataAccess dataAccess;
 
-  /// Exports the library to the specified file path.
-  Future<Either<Failure, Unit>> call({
-    required String filePath,
-    required Library library,
-  }) async {
+  ExportLibraryUsecase({Logger? logger, required this.dataAccess});
+
+  /// Exports the current library to the specified file path.
+  Future<Either<Failure, Unit>> call({required String filePath}) async {
     logger?.info('ExportLibraryUsecase: Exporting library to $filePath');
     try {
+      // Fetch current library data
+      final booksEither = await dataAccess.bookRepository.getBooks();
+      if (booksEither.isLeft()) {
+        return Left(
+          booksEither.getLeft().getOrElse(
+            () => ServiceFailure('Failed to fetch books'),
+          ),
+        );
+      }
+      final books = booksEither.getRight().getOrElse(() => []);
+
+      final authorsEither = await dataAccess.authorRepository.getAuthors();
+      if (authorsEither.isLeft()) {
+        return Left(
+          authorsEither.getLeft().getOrElse(
+            () => ServiceFailure('Failed to fetch authors'),
+          ),
+        );
+      }
+      final authors = authorsEither.getRight().getOrElse(() => []);
+
+      final tagsEither = await dataAccess.tagRepository.getTags();
+      if (tagsEither.isLeft()) {
+        return Left(
+          tagsEither.getLeft().getOrElse(
+            () => ServiceFailure('Failed to fetch tags'),
+          ),
+        );
+      }
+      final tags = tagsEither.getRight().getOrElse(() => []);
+
+      final library = Library(
+        name: 'Exported Library',
+        description: 'Current library exported on ${DateTime.now()}',
+        books: books,
+        authors: authors,
+        tags: tags,
+      );
       final yamlWriter = YamlWriter();
       // Build the data map, skipping null values
       final data = <String, dynamic>{};

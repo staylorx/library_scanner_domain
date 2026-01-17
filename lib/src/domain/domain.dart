@@ -55,17 +55,21 @@ export 'value_objects/book_id_type.dart';
 export 'value_objects/author_id_pairs.dart';
 export 'value_objects/author_id_type.dart';
 export 'value_objects/author_id_pair.dart';
+export 'value_objects/library_stats.dart';
 
 // Services
 export 'services/author_filtering_service.dart';
 export 'services/author_id_registry_service.dart';
+export 'services/author_sorting_service.dart';
 export 'services/author_validation_service.dart';
 export 'services/barcode_scanner_service.dart';
 export 'services/book_api_service.dart';
 export 'services/book_filtering_service.dart';
 export 'services/book_id_registry_service.dart';
+export 'services/book_sorting_service.dart';
 export 'services/book_validation_service.dart';
 export 'services/database_service.dart';
 export 'services/image_service.dart';
+export 'services/library_data_access.dart';
 
 export 'factories.dart';

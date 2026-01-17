@@ -79,65 +79,107 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Adds a new author to the database.
   @override
-  Future<Either<Failure, Author>> addAuthor({required Author author}) async {
+  Future<Either<Failure, Author>> addAuthor({
+    required Author author,
+    Transaction? txn,
+  }) async {
     logger?.info('Entering addAuthor with author: ${author.name}');
     final id = const Uuid().v4();
     final authorWithId = author.copyWith(id: id);
     final model = AuthorModel.fromEntity(authorWithId);
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for addAuthor');
+    if (txn != null) {
+      logger?.info('Using provided transaction for addAuthor');
       final db = (txn as SembastTransaction).db;
       final saveResult = await _authorDatasource.saveAuthor(model, db: db);
-      if (saveResult.isLeft()) {
-        throw saveResult.getLeft().getOrElse(
-          () => DatabaseFailure('Save failed'),
-        );
-      }
-      logger?.info('Transaction operation completed for addAuthor');
-      return authorWithId;
-    });
+      return saveResult.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(authorWithId),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for addAuthor');
+        final db = (txn as SembastTransaction).db;
+        final saveResult = await _authorDatasource.saveAuthor(model, db: db);
+        if (saveResult.isLeft()) {
+          throw saveResult.getLeft().getOrElse(
+            () => DatabaseFailure('Save failed'),
+          );
+        }
+        logger?.info('Transaction operation completed for addAuthor');
+        return authorWithId;
+      });
+    }
   }
 
   /// Updates an existing author in the database.
   @override
-  Future<Either<Failure, Unit>> updateAuthor({required Author author}) async {
+  Future<Either<Failure, Unit>> updateAuthor({
+    required Author author,
+    Transaction? txn,
+  }) async {
     logger?.info(
       'Entering updateAuthor with id: ${author.id} and author: ${author.name}',
     );
     final model = AuthorModel.fromEntity(author);
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for updateAuthor');
+    if (txn != null) {
+      logger?.info('Using provided transaction for updateAuthor');
       final db = (txn as SembastTransaction).db;
       final result = await _authorDatasource.saveAuthor(model, db: db);
-      if (result.isLeft()) {
-        throw result.getLeft().getOrElse(
-          () => DatabaseFailure('Update failed'),
-        );
-      }
-      logger?.info('Update author completed');
-      return unit;
-    });
+      return result.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(unit),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for updateAuthor');
+        final db = (txn as SembastTransaction).db;
+        final result = await _authorDatasource.saveAuthor(model, db: db);
+        if (result.isLeft()) {
+          throw result.getLeft().getOrElse(
+            () => DatabaseFailure('Update failed'),
+          );
+        }
+        logger?.info('Update author completed');
+        return unit;
+      });
+    }
   }
 
   /// Deletes an author from the database.
   @override
-  Future<Either<Failure, Unit>> deleteAuthor({required Author author}) async {
+  Future<Either<Failure, Unit>> deleteAuthor({
+    required Author author,
+    Transaction? txn,
+  }) async {
     logger?.info('Entering deleteAuthor with id: ${author.id}');
-    return _unitOfWork.run((Transaction txn) async {
-      logger?.info('Transaction started for deleteAuthor');
+    if (txn != null) {
+      logger?.info('Using provided transaction for deleteAuthor');
       final db = (txn as SembastTransaction).db;
       final result = await _authorDatasource.deleteAuthorWithCascade(
         author.id,
         db: db,
       );
-      if (result.isLeft()) {
-        throw result.getLeft().getOrElse(
-          () => DatabaseFailure('Delete failed'),
+      return result.fold(
+        (failure) => Either.left(failure),
+        (_) => Either.right(unit),
+      );
+    } else {
+      return _unitOfWork.run((Transaction txn) async {
+        logger?.info('Transaction started for deleteAuthor');
+        final db = (txn as SembastTransaction).db;
+        final result = await _authorDatasource.deleteAuthorWithCascade(
+          author.id,
+          db: db,
         );
-      }
-      logger?.info('Delete author completed');
-      return unit;
-    });
+        if (result.isLeft()) {
+          throw result.getLeft().getOrElse(
+            () => DatabaseFailure('Delete failed'),
+          );
+        }
+        logger?.info('Delete author completed');
+        return unit;
+      });
+    }
   }
 
   /// Retrieves an author by id.

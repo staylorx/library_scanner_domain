@@ -15,8 +15,10 @@ export 'sembast/repositories/tag_repository_impl.dart';
 
 // Services
 export 'core/services/author_filtering_service.dart';
+export 'core/services/author_sorting_service.dart';
 export 'core/services/author_validation_service.dart';
 export 'core/services/book_filtering_service.dart';
+export 'core/services/book_sorting_service.dart';
 export 'core/services/book_validation_service.dart';
 export 'id_registry/services/author_id_registry_service.dart';
 export 'id_registry/services/book_id_registry_service.dart';

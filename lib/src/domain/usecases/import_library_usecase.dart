@@ -2,27 +2,19 @@ import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:library_scanner_domain/src/data/sembast/utils/yaml_parsing_utils.dart';
 import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase with Loggable {
-  final UnitOfWork unitOfWork;
-  final DatabaseService databaseService;
+  final LibraryDataAccess dataAccess;
   final IsBookDuplicateUsecase isBookDuplicateUsecase;
-  final AuthorDatasource authorDatasource;
-  final BookDatasource bookDatasource;
-  final TagDatasource tagDatasource;
 
   ImportLibraryUsecase({
     Logger? logger,
-    required this.unitOfWork,
-    required this.databaseService,
+    required this.dataAccess,
     required this.isBookDuplicateUsecase,
-    required this.authorDatasource,
-    required this.bookDatasource,
-    required this.tagDatasource,
   });
 
   /// Imports a library from the specified file path.
@@ -64,7 +56,7 @@ class ImportLibraryUsecase with Loggable {
       }
       if (overwrite) {
         logger?.info('Clearing existing data due to overwrite flag');
-        final clearResult = await databaseService.clearAll();
+        final clearResult = await dataAccess.databaseService.clearAll();
         if (clearResult.isLeft()) {
           return Left(
             clearResult.getLeft().getOrElse(
@@ -206,22 +198,10 @@ class ImportLibraryUsecase with Loggable {
 
       // If not overwrite, check against existing books
       if (!overwrite) {
-        final existingBooksEither = await bookDatasource.getAllBooks();
-        final authorsEither = await authorDatasource.getAllAuthors();
-        final tagsEither = await tagDatasource.getAllTags();
-        final authors = authorsEither.match(
-          (failure) => throw ServiceFailure('Parse error'),
-          (models) => models.map((m) => m.toEntity()).toList(),
-        );
-        final tags = tagsEither.match(
-          (failure) => throw ServiceFailure('Parse error'),
-          (models) => models.map((m) => m.toEntity()).toList(),
-        );
+        final existingBooksEither = await dataAccess.bookRepository.getBooks();
         final existingBooks = existingBooksEither.match(
           (failure) => throw ServiceFailure('Parse error'),
-          (models) => models
-              .map((m) => m.toEntity(authors: authors, tags: tags))
-              .toList(),
+          (books) => books,
         );
         final List<Book> finalBooks = [];
         for (final book in books) {
@@ -254,14 +234,12 @@ class ImportLibraryUsecase with Loggable {
       logger?.info('Starting database write operations...');
 
       // Use unit of work for batch operations
-      final transactionResult = await unitOfWork.run((txn) async {
-        final db = (txn as SembastTransaction).db;
+      final transactionResult = await dataAccess.unitOfWork.run((txn) async {
         // Save authors
         for (final author in authors) {
-          final authorModel = AuthorModel.fromEntity(author);
-          final saveResult = await authorDatasource.saveAuthor(
-            authorModel,
-            db: db,
+          final saveResult = await dataAccess.authorRepository.addAuthor(
+            author: author,
+            txn: txn,
           );
           if (saveResult.isLeft()) {
             throw saveResult.getLeft().getOrElse(
@@ -273,8 +251,10 @@ class ImportLibraryUsecase with Loggable {
 
         // Save tags
         for (final tag in tags) {
-          final tagModel = TagModel.fromEntity(tag);
-          final saveResult = await tagDatasource.saveTag(tagModel, db: db);
+          final saveResult = await dataAccess.tagRepository.addTag(
+            tag: tag,
+            txn: txn,
+          );
           if (saveResult.isLeft()) {
             throw saveResult.getLeft().getOrElse(
               () => DatabaseFailure('Save tag failed'),
@@ -285,8 +265,10 @@ class ImportLibraryUsecase with Loggable {
 
         // Save books
         for (final book in books) {
-          final bookModel = BookModel.fromEntity(book);
-          final saveResult = await bookDatasource.saveBook(bookModel, db: db);
+          final saveResult = await dataAccess.bookRepository.addBook(
+            book: book,
+            txn: txn,
+          );
           if (saveResult.isLeft()) {
             throw saveResult.getLeft().getOrElse(
               () => DatabaseFailure('Save book failed'),
