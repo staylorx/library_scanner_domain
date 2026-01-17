@@ -8,6 +8,7 @@ analyzer:
     - build/**
     # - bin/**
     # - test/**
+    - example/**
 
   language:
     strict-casts: true
