@@ -17,7 +17,7 @@ class UpdateAuthorUsecase with Loggable {
     logger?.info(
       'UpdateAuthorUsecase: Entering call with id: $id, name: $name',
     );
-    final getEither = await authorRepository.getById(id: id);
+    final getEither = await authorRepository.getAuthorById(id: id);
     return getEither.fold((failure) => Left(failure), (existingAuthor) async {
       final updatedAuthor = existingAuthor.copyWith(
         name: name,

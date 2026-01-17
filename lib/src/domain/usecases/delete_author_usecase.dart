@@ -11,7 +11,7 @@ class DeleteAuthorUsecase with Loggable {
   /// Deletes an author by id and returns the updated list of authors.
   Future<Either<Failure, List<Author>>> call({required String id}) async {
     logger?.info('DeleteAuthorUsecase: Entering call with id: $id');
-    final getAuthorEither = await authorRepository.getById(id: id);
+    final getAuthorEither = await authorRepository.getAuthorById(id: id);
     return getAuthorEither.fold((failure) => Left(failure), (author) async {
       logger?.info('DeleteAuthorUsecase: Deleting author: ${author.name}');
       final deleteEither = await authorRepository.deleteAuthor(author: author);

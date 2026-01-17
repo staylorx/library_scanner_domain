@@ -24,7 +24,7 @@ class UpdateBookUsecase with Loggable {
     logger?.info(
       'UpdateBookUsecase: Entering call with id: $id, title: $title',
     );
-    final getEither = await bookRepository.getById(id: id);
+    final getEither = await bookRepository.getBookById(id: id);
     return getEither.fold((failure) => Left(failure), (existingBook) async {
       final finalBusinessIds = businessIds ?? existingBook.businessIds;
       final updatedBook = existingBook.copyWith(

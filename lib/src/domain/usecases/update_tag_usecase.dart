@@ -14,7 +14,7 @@ class UpdateTagUsecase with Loggable {
     String color = '#FF0000',
   }) async {
     logger?.info('UpdateTagUsecase: Entering call with id: $id, name: $name');
-    final getEither = await tagRepository.getById(id: id);
+    final getEither = await tagRepository.getTagById(id: id);
     return getEither.fold((failure) => Left(failure), (existingTag) async {
       final updatedTag = existingTag.copyWith(
         name: name,

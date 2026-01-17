@@ -15,7 +15,7 @@ class GetBookByIdPairUsecase with Loggable {
     logger?.info(
       'getByIdPairpairUsecase: Entering call with bookIdPair: $bookIdPair',
     );
-    final result = await bookRepository.getByIdPair(bookIdPair: bookIdPair);
+    final result = await bookRepository.getBookByIdPair(bookIdPair: bookIdPair);
     logger?.info('getByIdPairpairUsecase: Success in call');
     return result.match(
       (failure) {

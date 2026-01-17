@@ -11,7 +11,7 @@ class GetTagByNameUsecase with Loggable {
   /// Retrieves a tag by name.
   Future<Either<Failure, Tag>> call({required String name}) async {
     logger?.info('getByNameUsecase: Entering call with name: $name');
-    final result = await tagRepository.getByName(name: name);
+    final result = await tagRepository.getTagByName(name: name);
     logger?.info('getByNameUsecase: Success in call');
     return result.match(
       (failure) {

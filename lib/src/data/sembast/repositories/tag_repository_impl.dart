@@ -38,7 +38,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Retrieves a tag by name.
   @override
-  Future<Either<Failure, Tag>> getByName({required String name}) async {
+  Future<Either<Failure, Tag>> getTagByName({required String name}) async {
     logger?.info('Entering getByName with name: $name');
     final result = await _tagDatasource.getTagByName(name);
     return result.fold((failure) => Either.left(failure), (model) {
@@ -76,7 +76,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
   }) async {
     logger?.info('Entering addTag with tag: ${tag.name}, id: ${tag.id}');
     // Check for duplicate
-    final existingResult = await getByName(name: tag.name);
+    final existingResult = await getTagByName(name: tag.name);
     if (existingResult.isRight()) {
       return Either.left(
         ValidationFailure('A tag with the slug "${tag.slug}" already exists.'),
@@ -178,7 +178,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Retrieves a tag by handle.
   @override
-  Future<Either<Failure, Tag>> getById({required String id}) async {
+  Future<Either<Failure, Tag>> getTagById({required String id}) async {
     logger?.info('Entering getById with id: $id');
     final result = await _tagDatasource.getTagById(id);
     return result.fold(

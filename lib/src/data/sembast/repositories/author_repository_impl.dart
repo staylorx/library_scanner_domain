@@ -41,7 +41,9 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves an author by name.
   @override
-  Future<Either<Failure, Author>> getByName({required String name}) async {
+  Future<Either<Failure, Author>> getAuthorByName({
+    required String name,
+  }) async {
     logger?.info('Entering getByName with name: $name');
     final result = await _authorDatasource.getAuthorByName(name);
     return result.fold((failure) => Either.left(failure), (model) {
@@ -184,7 +186,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves an author by id.
   @override
-  Future<Either<Failure, Author>> getById({required String id}) async {
+  Future<Either<Failure, Author>> getAuthorById({required String id}) async {
     logger?.info('Entering getById with id: $id');
     final result = await _authorDatasource.getAuthorById(id);
     return result.fold(

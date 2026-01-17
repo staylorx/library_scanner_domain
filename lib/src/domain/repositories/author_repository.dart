@@ -5,7 +5,7 @@ import 'unit_of_work.dart';
 
 abstract class AuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthors();
-  Future<Either<Failure, Author>> getByName({required String name});
+  Future<Either<Failure, Author>> getAuthorByName({required String name});
   Future<Either<Failure, List<Author>>> getAuthorsByNames({
     required List<String> names,
   });
@@ -21,5 +21,5 @@ abstract class AuthorRepository {
     required Author author,
     Transaction? txn,
   });
-  Future<Either<Failure, Author>> getById({required String id});
+  Future<Either<Failure, Author>> getAuthorById({required String id});
 }

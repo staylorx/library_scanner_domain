@@ -11,7 +11,7 @@ class DeleteTagUsecase with Loggable {
   /// Deletes a tag by id and returns the updated list of tags.
   Future<Either<Failure, List<Tag>>> call({required String id}) async {
     logger?.info('DeleteTagUsecase: Entering call with id: $id');
-    final getTagEither = await tagRepository.getById(id: id);
+    final getTagEither = await tagRepository.getTagById(id: id);
     return getTagEither.fold((failure) => Left(failure), (tag) async {
       final deleteEither = await tagRepository.deleteTag(tag: tag);
       return deleteEither.fold((failure) => Left(failure), (_) async {

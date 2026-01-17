@@ -11,7 +11,7 @@ class GetAuthorByNameUsecase with Loggable {
   /// Retrieves an author by name.
   Future<Either<Failure, Author>> call({required String name}) async {
     logger?.info('getByNameUsecase: Entering call with name: $name');
-    final result = await authorRepository.getByName(name: name);
+    final result = await authorRepository.getAuthorByName(name: name);
     logger?.info('getByNameUsecase: Success in call');
     return result.match(
       (failure) {

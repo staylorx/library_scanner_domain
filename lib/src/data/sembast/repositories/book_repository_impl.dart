@@ -83,7 +83,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Retrieves a book by its id.
   @override
-  Future<Either<Failure, Book>> getById({required String id}) async {
+  Future<Either<Failure, Book>> getBookById({required String id}) async {
     logger?.info('Entering getById with id: $id');
     final result = await _bookDatasource.getBookById(id);
     if (result.isLeft()) {
@@ -107,7 +107,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Retrieves a book by its ID pair.
   @override
-  Future<Either<Failure, Book>> getByIdPair({
+  Future<Either<Failure, Book>> getBookByIdPair({
     required BookIdPair bookIdPair,
   }) async {
     logger?.info('Entering getByIdPair with bookIdPair: $bookIdPair');
@@ -320,15 +320,15 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     required Author author,
   }) async {
     logger?.info('Entering getBooksByAuthor with author: ${author.name}');
-    final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (books) {
-      final filteredBooks = books
-          .where((book) => book.authors.any((a) => a.name == author.name))
-          .toList();
-      logger?.info(
-        'Found ${filteredBooks.length} books for author ${author.name}',
-      );
-      return Either.right(filteredBooks);
+    final result = await _bookDatasource.getBooksByAuthorId(author.id);
+    return result.fold((failure) => Either.left(failure), (models) async {
+      final books = <Book>[];
+      for (final model in models) {
+        final book = await _loadBookWithRelations(model);
+        books.add(book);
+      }
+      logger?.info('Found ${books.length} books for author ${author.name}');
+      return Either.right(books);
     });
   }
 
@@ -336,31 +336,31 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   @override
   Future<Either<Failure, List<Book>>> getBooksByTag({required Tag tag}) async {
     logger?.info('Entering getBooksByTag with tag: ${tag.name}');
-    final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (books) {
-      final filteredBooks = books
-          .where((book) => book.tags.any((t) => t.name == tag.name))
-          .toList();
-      logger?.info('Found ${filteredBooks.length} books for tag ${tag.name}');
-      return Either.right(filteredBooks);
+    final result = await _bookDatasource.getBooksByTagId(tag.id);
+    return result.fold((failure) => Either.left(failure), (models) async {
+      final books = <Book>[];
+      for (final model in models) {
+        final book = await _loadBookWithRelations(model);
+        books.add(book);
+      }
+      logger?.info('Found ${books.length} books for tag ${tag.name}');
+      return Either.right(books);
     });
   }
 
-  /// Retrieves a book by its ID pairs.
+  /// Retrieves a book by its business ID pairs.
   @override
-  Future<Either<Failure, Book>> getBookById({
+  Future<Either<Failure, Book>> getBookByBusinessIds({
     required BookIdPairs bookId,
   }) async {
-    logger?.info('Entering getBookById with bookId: $bookId');
-    final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (books) {
-      final book = books
-          .where((b) => BookIdPairs(pairs: b.businessIds) == bookId)
-          .firstOrNull;
-      if (book == null) {
-        logger?.info('Book with id $bookId not found');
+    logger?.info('Entering getBookByBusinessIds with bookId: $bookId');
+    final result = await _bookDatasource.getBookByBusinessIds(bookId.idPairs);
+    return result.fold((failure) => Either.left(failure), (model) async {
+      if (model == null) {
+        logger?.info('Book with business ids $bookId not found');
         return Either.left(NotFoundFailure('Book not found'));
       }
+      final book = await _loadBookWithRelations(model);
       logger?.info('Output: ${book.title}');
       return Either.right(book);
     });

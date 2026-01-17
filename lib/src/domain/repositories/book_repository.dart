@@ -9,8 +9,12 @@ import 'unit_of_work.dart';
 
 abstract class BookRepository {
   Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});
-  Future<Either<Failure, Book>> getByIdPair({required BookIdPair bookIdPair});
-  Future<Either<Failure, Book>> getBookById({required BookIdPairs bookId});
+  Future<Either<Failure, Book>> getBookByIdPair({
+    required BookIdPair bookIdPair,
+  });
+  Future<Either<Failure, Book>> getBookByBusinessIds({
+    required BookIdPairs bookId,
+  });
   Future<Either<Failure, Book>> addBook({required Book book, Transaction? txn});
   Future<Either<Failure, Unit>> updateBook({
     required Book book,
@@ -20,7 +24,7 @@ abstract class BookRepository {
     required Book book,
     Transaction? txn,
   });
-  Future<Either<Failure, Book>> getById({required String id});
+  Future<Either<Failure, Book>> getBookById({required String id});
   Future<Either<Failure, List<Book>>> getBooksByAuthor({
     required Author author,
   });

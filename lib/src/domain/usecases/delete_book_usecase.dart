@@ -12,7 +12,7 @@ class DeleteBookUsecase with Loggable {
   /// Deletes a book by id and returns the updated list of books.
   Future<Either<Failure, List<Book>>> call({required String id}) async {
     logger?.info('DeleteBookUsecase: Entering call with id: $id');
-    final getBookEither = await bookRepository.getById(id: id);
+    final getBookEither = await bookRepository.getBookById(id: id);
     return getBookEither.fold((failure) => Left(failure), (book) async {
       logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
