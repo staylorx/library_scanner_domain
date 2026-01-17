@@ -209,80 +209,12 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     Transaction? txn,
   }) async {
     logger?.info('Entering updateBook with book: ${book.title}');
+    final model = BookModel.fromEntity(book);
     if (txn != null) {
       logger?.info('Using provided transaction for updateBook');
       final db = (txn as SembastTransaction).db;
-      // Find existing book by businessIds
-      final booksResult = await getBooks();
-      if (booksResult.isLeft()) {
-        return Either.left(
-          booksResult.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to get books'),
-          ),
-        );
-      }
-      final books = booksResult.getRight().getOrElse(() => []);
-      final existingBook = books
-          .where(
-            (b) =>
-                BookIdPairs(pairs: b.businessIds) ==
-                BookIdPairs(pairs: book.businessIds),
-          )
-          .firstOrNull;
-      if (existingBook != null) {
-        logger?.info('Unregistering old book ID pairs');
-        final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-          BookIdPairs(pairs: existingBook.businessIds),
-        );
-        if (unregisterResult.isLeft()) {
-          return Either.left(
-            unregisterResult.getLeft().getOrElse(
-              () => RegistryFailure('Unregister ID pairs failed'),
-            ),
-          );
-        }
-        // Remove from old tags
-        final oldTagNames = existingBook.tags.map((t) => t.name).toList();
-        final removeResult = await _tagDatasource.removeBookFromTags(
-          existingBook.id,
-          oldTagNames,
-          db: db,
-        );
-        if (removeResult.isLeft()) {
-          return Either.left(
-            removeResult.getLeft().getOrElse(
-              () => DatabaseFailure('Remove relationships failed'),
-            ),
-          );
-        }
-      }
-      final model = BookModel.fromEntity(book);
-      logger?.info('Saving updated book ${book.title}');
       final saveResult = await _bookDatasource.saveBook(model, db: db);
-      if (saveResult.isLeft()) {
-        return Either.left(
-          saveResult.getLeft().getOrElse(() => DatabaseFailure('Save failed')),
-        );
-      }
-      logger?.info('Registering new book ID pairs');
-      final registerResult = _idRegistryService.registerBookIdPairs(
-        BookIdPairs(pairs: book.businessIds),
-      );
-      if (registerResult.isLeft()) {
-        return Either.left(
-          registerResult.getLeft().getOrElse(
-            () => RegistryFailure('Register ID pairs failed'),
-          ),
-        );
-      }
-      logger?.info('ID pairs registered, adding to new tags');
-      final newTagNames = book.tags.map((t) => t.name).toList();
-      final addResult = await _tagDatasource.addBookToTags(
-        model.id,
-        newTagNames,
-        db: db,
-      );
-      return addResult.fold(
+      return saveResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(unit),
       );
@@ -290,71 +222,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for updateBook');
         final db = (txn as SembastTransaction).db;
-        // Find existing book by businessIds
-        final booksResult = await getBooks();
-        if (booksResult.isLeft()) {
-          throw booksResult.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to get books'),
-          );
-        }
-        final books = booksResult.getRight().getOrElse(() => []);
-        final existingBook = books
-            .where(
-              (b) =>
-                  BookIdPairs(pairs: b.businessIds) ==
-                  BookIdPairs(pairs: book.businessIds),
-            )
-            .firstOrNull;
-        if (existingBook != null) {
-          logger?.info('Unregistering old book ID pairs');
-          final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-            BookIdPairs(pairs: existingBook.businessIds),
-          );
-          if (unregisterResult.isLeft()) {
-            throw unregisterResult.getLeft().getOrElse(
-              () => RegistryFailure('Unregister ID pairs failed'),
-            );
-          }
-          // Remove from old tags
-          final oldTagNames = existingBook.tags.map((t) => t.name).toList();
-          final removeResult = await _tagDatasource.removeBookFromTags(
-            existingBook.id,
-            oldTagNames,
-            db: db,
-          );
-          if (removeResult.isLeft()) {
-            throw removeResult.getLeft().getOrElse(
-              () => DatabaseFailure('Remove relationships failed'),
-            );
-          }
-        }
-        final model = BookModel.fromEntity(book);
-        logger?.info('Saving updated book ${book.title}');
         final saveResult = await _bookDatasource.saveBook(model, db: db);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
-          );
-        }
-        logger?.info('Registering new book ID pairs');
-        final registerResult = _idRegistryService.registerBookIdPairs(
-          BookIdPairs(pairs: book.businessIds),
-        );
-        if (registerResult.isLeft()) {
-          throw registerResult.getLeft().getOrElse(
-            () => RegistryFailure('Register ID pairs failed'),
-          );
-        }
-        logger?.info('ID pairs registered, adding to new tags');
-        final newTagNames = book.tags.map((t) => t.name).toList();
-        final addResult = await _tagDatasource.addBookToTags(
-          model.id,
-          newTagNames,
-          db: db,
-        );
-        if (addResult.isLeft()) {
-          throw addResult.getLeft().getOrElse(
-            () => DatabaseFailure('Add relationships failed'),
           );
         }
         logger?.info('Transaction operation completed for updateBook');
@@ -370,29 +241,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     Transaction? txn,
   }) async {
     logger?.info('Entering deleteBook with book: ${book.title}');
+
     if (txn != null) {
       logger?.info('Using provided transaction for deleteBook');
       final db = (txn as SembastTransaction).db;
-      // Find the book
-      final booksResult = await getBooks();
-      if (booksResult.isLeft()) {
-        return Either.left(
-          booksResult.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to get books'),
-          ),
-        );
-      }
-      final books = booksResult.getRight().getOrElse(() => []);
-      final existingBook = books
-          .where(
-            (b) =>
-                BookIdPairs(pairs: b.businessIds) ==
-                BookIdPairs(pairs: book.businessIds),
-          )
-          .firstOrNull;
-      if (existingBook == null) {
-        return Either.left(NotFoundFailure('Book not found'));
-      }
       logger?.info('Unregistering book ID pairs');
       final unregisterResult = _idRegistryService.unregisterBookIdPairs(
         BookIdPairs(pairs: book.businessIds),
@@ -405,10 +257,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Deleting book record');
-      final deleteResult = await _bookDatasource.deleteBook(
-        existingBook.id,
-        db: db,
-      );
+      final deleteResult = await _bookDatasource.deleteBook(book.id, db: db);
       if (deleteResult.isLeft()) {
         return Either.left(
           deleteResult.getLeft().getOrElse(
@@ -419,7 +268,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       logger?.info('Removing from tags');
       final tagNames = book.tags.map((t) => t.name).toList();
       final updateResult = await _tagDatasource.removeBookFromTags(
-        existingBook.id,
+        book.id,
         tagNames,
         db: db,
       );
@@ -431,24 +280,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for deleteBook');
         final db = (txn as SembastTransaction).db;
-        // Find the book
-        final booksResult = await getBooks();
-        if (booksResult.isLeft()) {
-          throw booksResult.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to get books'),
-          );
-        }
-        final books = booksResult.getRight().getOrElse(() => []);
-        final existingBook = books
-            .where(
-              (b) =>
-                  BookIdPairs(pairs: b.businessIds) ==
-                  BookIdPairs(pairs: book.businessIds),
-            )
-            .firstOrNull;
-        if (existingBook == null) {
-          throw NotFoundFailure('Book not found');
-        }
         logger?.info('Unregistering book ID pairs');
         final unregisterResult = _idRegistryService.unregisterBookIdPairs(
           BookIdPairs(pairs: book.businessIds),
@@ -459,10 +290,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           );
         }
         logger?.info('Deleting book record');
-        final deleteResult = await _bookDatasource.deleteBook(
-          existingBook.id,
-          db: db,
-        );
+        final deleteResult = await _bookDatasource.deleteBook(book.id, db: db);
         if (deleteResult.isLeft()) {
           throw deleteResult.getLeft().getOrElse(
             () => DatabaseFailure('Delete failed'),
@@ -471,7 +299,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         logger?.info('Removing from tags');
         final tagNames = book.tags.map((t) => t.name).toList();
         final updateResult = await _tagDatasource.removeBookFromTags(
-          existingBook.id,
+          book.id,
           tagNames,
           db: db,
         );

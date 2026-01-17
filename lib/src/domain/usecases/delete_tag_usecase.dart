@@ -8,23 +8,22 @@ class DeleteTagUsecase with Loggable {
 
   DeleteTagUsecase({Logger? logger, required this.tagRepository});
 
-  /// Deletes a tag by name and returns the updated list of tags.
-  Future<Either<Failure, List<Tag>>> call({required String name}) async {
-    logger?.info('DeleteTagUsecase: Entering call with name: $name');
-    final getTagsEither = await tagRepository.getTags();
-    return getTagsEither.fold((failure) => Left(failure), (tags) async {
-      final tag = tags.where((t) => t.name == name).firstOrNull;
-      if (tag == null) {
-        return Left(NotFoundFailure('Tag not found'));
-      }
+  /// Deletes a tag by id and returns the updated list of tags.
+  Future<Either<Failure, List<Tag>>> call({required String id}) async {
+    logger?.info('DeleteTagUsecase: Entering call with id: $id');
+    final getTagEither = await tagRepository.getById(id: id);
+    return getTagEither.fold((failure) => Left(failure), (tag) async {
       final deleteEither = await tagRepository.deleteTag(tag: tag);
-      return deleteEither.fold((failure) => Left(failure), (_) {
-        final updatedTags = tags.where((t) => t.name != name).toList();
-        logger?.info('DeleteTagUsecase: Success in call');
-        logger?.info(
-          'DeleteTagUsecase: Output: ${updatedTags.map((t) => t.name).toList()}',
-        );
-        return Right(updatedTags);
+      return deleteEither.fold((failure) => Left(failure), (_) async {
+        final getTagsEither = await tagRepository.getTags();
+        return getTagsEither.fold((failure) => Left(failure), (tags) {
+          final updatedTags = tags.where((t) => t.id != id).toList();
+          logger?.info('DeleteTagUsecase: Success in call');
+          logger?.info(
+            'DeleteTagUsecase: Output: ${updatedTags.map((t) => t.name).toList()}',
+          );
+          return Right(updatedTags);
+        });
       });
     });
   }

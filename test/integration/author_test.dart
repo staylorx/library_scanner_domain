@@ -67,6 +67,7 @@ void main() {
         final addBookUsecase = AddBookUsecase(
           bookRepository: bookRepository,
           isBookDuplicateUsecase: IsBookDuplicateUsecase(),
+          bookIdRegistryService: bookIdRegistryService,
         );
         final tagRepository = TagRepositoryImpl(
           tagDatasource: tagDatasource,
@@ -82,7 +83,7 @@ void main() {
         expect(authors.isEmpty, true);
 
         // Add one record
-        await addAuthorUsecase.call(name: 'Test Author');
+        await addAuthorUsecase(name: 'Test Author');
 
         // Verify count
         result = await getAuthorsUsecase();
@@ -94,7 +95,11 @@ void main() {
 
         // Edit the record
         final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
-        await updateAuthorUsecase.call(id: newAuthor.id, author: updatedAuthor);
+        await updateAuthorUsecase(
+          id: newAuthor.id,
+          name: updatedAuthor.name,
+          biography: updatedAuthor.biography,
+        );
 
         // Verify count remains the same
         result = await getAuthorsUsecase();
@@ -104,7 +109,7 @@ void main() {
         expect(authors.first.name, 'Updated Test Author');
 
         // Add another record
-        await addAuthorUsecase.call(name: 'Second Author');
+        await addAuthorUsecase(name: 'Second Author');
 
         // Verify count increases
         result = await getAuthorsUsecase();
@@ -125,7 +130,7 @@ void main() {
         expect(author!.name, 'Updated Test Author');
 
         // Delete one record
-        await deleteAuthorUsecase.call(name: 'Updated Test Author');
+        await deleteAuthorUsecase(id: newAuthor.id);
 
         // Verify count decreases
         result = await getAuthorsUsecase();
@@ -136,7 +141,7 @@ void main() {
 
         // Add a book with the remaining author
         final tag = Tag(id: const Uuid().v4(), name: 'Test Tag');
-        await addTagUsecase.call(tag: tag);
+        await addTagUsecase(name: tag.name);
 
         final book = Book(
           id: const Uuid().v4(),
@@ -148,7 +153,16 @@ void main() {
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
         );
-        await addBookUsecase.call(book: book);
+        await addBookUsecase(
+          title: book.title,
+          authors: book.authors,
+          tags: book.tags,
+          description: book.description,
+          publishedDate: book.publishedDate,
+          coverImage: book.coverImage,
+          notes: book.notes,
+          businessIds: book.businessIds,
+        );
 
         // Verify book has the author
         var booksResult = await getBooksUsecase();
@@ -159,7 +173,7 @@ void main() {
         expect(books.first.authors.first.name, 'Second Author');
 
         // Delete the author
-        await deleteAuthorUsecase.call(name: 'Second Author');
+        await deleteAuthorUsecase(id: secondAuthor.id);
 
         // Verify author removed from book
         booksResult = await getBooksUsecase();

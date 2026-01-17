@@ -44,7 +44,16 @@ class ScanAndAddBookUsecase with Loggable {
             );
           }
           final book = _createBookFromMetadata(metadata, validIsbn);
-          final addResult = await _addBookUsecase(book: book);
+          final addResult = await _addBookUsecase(
+            title: book.title,
+            authors: book.authors,
+            tags: book.tags,
+            description: book.description,
+            publishedDate: book.publishedDate,
+            coverImage: book.coverImage,
+            notes: book.notes,
+            businessIds: book.businessIds,
+          );
           return addResult.map((books) => books.last);
         });
       });

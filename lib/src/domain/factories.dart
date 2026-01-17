@@ -225,9 +225,11 @@ class LibraryFactory {
   Future<AddBookUsecase> createAddBookUsecase() async {
     final bookRepository = await createBookRepository();
     final isBookDuplicateUsecase = createIsBookDuplicateUsecase();
+    final bookIdRegistryService = createBookIdRegistryService();
     return AddBookUsecase(
       bookRepository: bookRepository,
       isBookDuplicateUsecase: isBookDuplicateUsecase,
+      bookIdRegistryService: bookIdRegistryService,
     );
   }
 

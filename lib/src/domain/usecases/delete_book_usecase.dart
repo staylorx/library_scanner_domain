@@ -9,34 +9,25 @@ class DeleteBookUsecase with Loggable {
 
   DeleteBookUsecase({Logger? logger, required this.bookRepository});
 
-  /// Deletes a book by BookIdPair and returns the updated list of books.
-  Future<Either<Failure, List<Book>>> call({
-    required BookIdPair bookIdPair,
-  }) async {
-    logger?.info(
-      'DeleteBookUsecase: Entering call with bookIdPair: $bookIdPair',
-    );
-    final getBooksEither = await bookRepository.getBooks();
-    return getBooksEither.fold((failure) => Left(failure), (books) async {
-      final book = books
-          .where((b) => b.businessIds.any((p) => p == bookIdPair))
-          .firstOrNull;
-      if (book == null) {
-        return Left(NotFoundFailure('Book not found'));
-      }
+  /// Deletes a book by id and returns the updated list of books.
+  Future<Either<Failure, List<Book>>> call({required String id}) async {
+    logger?.info('DeleteBookUsecase: Entering call with id: $id');
+    final getBookEither = await bookRepository.getById(id: id);
+    return getBookEither.fold((failure) => Left(failure), (book) async {
       logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
       );
       final deleteEither = await bookRepository.deleteBook(book: book);
-      return deleteEither.fold((failure) => Left(failure), (_) {
-        final updatedBooks = books
-            .where((b) => !b.businessIds.any((p) => p == bookIdPair))
-            .toList();
-        logger?.info('DeleteBookUsecase: Success in call');
-        logger?.info(
-          'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
-        );
-        return Right(updatedBooks);
+      return deleteEither.fold((failure) => Left(failure), (_) async {
+        final getBooksEither = await bookRepository.getBooks();
+        return getBooksEither.fold((failure) => Left(failure), (books) {
+          final updatedBooks = books.where((b) => b.id != id).toList();
+          logger?.info('DeleteBookUsecase: Success in call');
+          logger?.info(
+            'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
+          );
+          return Right(updatedBooks);
+        });
       });
     });
   }

@@ -11,15 +11,25 @@ class UpdateAuthorUsecase with Loggable {
   /// Updates an existing author.
   Future<Either<Failure, Unit>> call({
     required String id,
-    required Author author,
+    required String name,
+    String? biography,
   }) async {
     logger?.info(
-      'UpdateAuthorUsecase: Entering call with id: $id and author: ${author.name}',
+      'UpdateAuthorUsecase: Entering call with id: $id, name: $name',
     );
-    final updateEither = await authorRepository.updateAuthor(author: author);
-    logger?.info('UpdateAuthorUsecase: Success in call');
-    return updateEither.fold((failure) => Left(failure), (_) {
-      return Right(unit);
+    final getEither = await authorRepository.getById(id: id);
+    return getEither.fold((failure) => Left(failure), (existingAuthor) async {
+      final updatedAuthor = existingAuthor.copyWith(
+        name: name,
+        biography: biography,
+      );
+      final updateEither = await authorRepository.updateAuthor(
+        author: updatedAuthor,
+      );
+      logger?.info('UpdateAuthorUsecase: Success in call');
+      return updateEither.fold((failure) => Left(failure), (_) {
+        return Right(unit);
+      });
     });
   }
 }

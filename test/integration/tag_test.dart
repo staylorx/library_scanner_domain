@@ -46,7 +46,7 @@ void main() {
         name: 'Test Tag',
         description: 'A test tag',
       );
-      await addTagUsecase.call(tag: newTag);
+      await addTagUsecase(name: newTag.name, description: newTag.description);
 
       // Verify count
       result = await getTagsUsecase();
@@ -61,7 +61,12 @@ void main() {
         description: 'Updated description',
       );
       logger.info('About to call updateTagUsecase');
-      final updateResult = await updateTagUsecase.call(tag: updatedTag);
+      final updateResult = await updateTagUsecase(
+        id: updatedTag.id,
+        name: updatedTag.name,
+        description: updatedTag.description,
+        color: updatedTag.color,
+      );
       logger.info('updateTagUsecase call completed');
       expect(updateResult.isRight(), true);
       final updatedTags = updateResult.fold((l) => <Tag>[], (r) => r);
@@ -82,7 +87,7 @@ void main() {
         name: 'Second Tag',
         color: '#00FF00',
       );
-      await addTagUsecase.call(tag: secondTag);
+      await addTagUsecase(name: secondTag.name, color: secondTag.color);
 
       // Verify count increases
       result = await getTagsUsecase();
@@ -91,7 +96,7 @@ void main() {
       expect(tags.length, 2);
 
       // Delete one record
-      await deleteTagUsecase.call(name: updatedTag.name);
+      await deleteTagUsecase(id: updatedTag.id);
 
       // Verify count decreases
       result = await getTagsUsecase();
@@ -131,7 +136,10 @@ void main() {
         name: 'Unique Tag',
         description: 'A unique tag',
       );
-      var result = await addTagUsecase.call(tag: tag);
+      var result = await addTagUsecase(
+        name: tag.name,
+        description: tag.description,
+      );
       expect(result.isRight(), true);
 
       // Try to add duplicate tag
@@ -140,7 +148,10 @@ void main() {
         name: 'Unique Tag',
         description: 'Another description',
       );
-      result = await addTagUsecase.call(tag: duplicateTag);
+      result = await addTagUsecase(
+        name: duplicateTag.name,
+        description: duplicateTag.description,
+      );
       expect(result.isLeft(), true);
       final failure = result.fold((l) => l, (r) => null);
       expect(failure.runtimeType, ValidationFailure);

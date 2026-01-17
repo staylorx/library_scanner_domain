@@ -21,7 +21,9 @@ class AddAuthorUsecase with Loggable {
   }) async {
     logger?.info('AddAuthorUsecase: Entering call with name: $name');
     final idEither = await idRegistryService.generateLocalId();
-    return idEither.fold((failure) => Left(failure), (idCode) async {
+    return idEither.fold((failure) => Future.value(Left(failure)), (
+      idCode,
+    ) async {
       final idPair = AuthorIdPair(idType: AuthorIdType.local, idCode: idCode);
       final author = Author(
         id: const Uuid().v4(),

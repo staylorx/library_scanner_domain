@@ -178,7 +178,7 @@ class ImportLibraryUsecase with Loggable {
       // First, filter duplicates within parsed books
       for (final book in parsedBooks) {
         final isDuplicateInParsed = books.any((existing) {
-          final duplicateResult = isBookDuplicateUsecase.call(
+          final duplicateResult = isBookDuplicateUsecase(
             bookA: book,
             bookB: existing,
           );
@@ -206,7 +206,7 @@ class ImportLibraryUsecase with Loggable {
         final List<Book> finalBooks = [];
         for (final book in books) {
           final isDuplicateExisting = existingBooks.any((existing) {
-            final duplicateResult = isBookDuplicateUsecase.call(
+            final duplicateResult = isBookDuplicateUsecase(
               bookA: book,
               bookB: existing,
             );
