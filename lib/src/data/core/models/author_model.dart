@@ -58,13 +58,18 @@ class AuthorModel {
 
   /// Converts to entity.
   Author toEntity() {
-    return Author(businessIds: businessIds, name: name, biography: biography);
+    return Author(
+      id: id,
+      businessIds: businessIds,
+      name: name,
+      biography: biography,
+    );
   }
 
   /// Creates from entity.
-  factory AuthorModel.fromEntity(Author author, String handleId) {
+  factory AuthorModel.fromEntity(Author author) {
     return AuthorModel(
-      id: handleId,
+      id: author.id,
       businessIds: author.businessIds,
       name: author.name,
       biography: author.biography,

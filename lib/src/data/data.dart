@@ -30,5 +30,4 @@ export 'storage/tag_datasource.dart';
 export 'sembast/unit_of_work/sembast_transaction.dart';
 export 'sembast/unit_of_work/sembast_unit_of_work.dart';
 
-// utils  # TODO: these should probably be sifted into something else
 export 'sembast/utils/yaml_parsing_utils.dart';

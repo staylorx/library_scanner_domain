@@ -5,7 +5,6 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
 
-// TODO: /ask is this or should it be a factory?
 /// Database service using Sembast for local storage.
 class SembastDatabase with Loggable implements DatabaseService {
   static const String _booksStoreName = 'books';

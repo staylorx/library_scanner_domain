@@ -17,8 +17,7 @@ class DeleteBookUsecase with Loggable {
       'DeleteBookUsecase: Entering call with bookIdPair: $bookIdPair',
     );
     final getBooksEither = await bookRepository.getBooks();
-    return getBooksEither.fold((failure) => Left(failure), (projections) async {
-      final books = projections.map((p) => p.book).toList();
+    return getBooksEither.fold((failure) => Left(failure), (books) async {
       final book = books
           .where((b) => b.businessIds.any((p) => p == bookIdPair))
           .firstOrNull;

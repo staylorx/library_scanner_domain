@@ -1,6 +1,7 @@
 import 'package:test/test.dart'
     show test, expect, group, setUp, contains, Timeout;
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:uuid/uuid.dart';
 
 // Extracted filtering logic from BookListScreen for testing
 List<Book> filterBooks(
@@ -52,33 +53,37 @@ void main() {
     setUp(() {
       // Create test tags
       testTags = [
-        Tag(name: 'fiction', color: '#FF0000'),
-        Tag(name: 'science fiction', color: '#00FF00'),
-        Tag(name: 'mystery', color: '#0000FF'),
-        Tag(name: 'romance', color: '#FFFF00'),
+        Tag(id: const Uuid().v4(), name: 'fiction', color: '#FF0000'),
+        Tag(id: const Uuid().v4(), name: 'science fiction', color: '#00FF00'),
+        Tag(id: const Uuid().v4(), name: 'mystery', color: '#0000FF'),
+        Tag(id: const Uuid().v4(), name: 'romance', color: '#FFFF00'),
       ];
 
       // Create test books
       testBooks = [
         Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: '1')],
           title: 'Dune',
           authors: [], // Simplified for test
           tags: [testTags[0], testTags[1]], // Fiction, Science Fiction
         ),
         Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: '2')],
           title: 'The Hobbit',
           authors: [],
           tags: [testTags[0]], // Fiction
         ),
         Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: '3')],
           title: 'Sherlock Holmes',
           authors: [],
           tags: [testTags[2]], // Mystery
         ),
         Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: '4')],
           title: 'Pride and Prejudice',
           authors: [],

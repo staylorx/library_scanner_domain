@@ -32,8 +32,7 @@ class RefetchBookCoversUsecase with Loggable {
         logger?.info('RefetchBookCoversUsecase: Failed to get books: $failure');
         return Left(failure);
       },
-      (projections) async {
-        final books = projections.map((p) => p.book).toList();
+      (books) async {
         int updatedCount = 0;
         for (final book in books) {
           if (book.businessIds.any((p) => p.idType == BookIdType.isbn)) {

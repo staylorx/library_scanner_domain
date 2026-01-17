@@ -113,7 +113,6 @@ class LibraryFactory {
     final tagDatasource = TagDatasource(dbService: _dbService);
     return TagRepositoryImpl(
       tagDatasource: tagDatasource,
-      databaseService: _dbService,
       unitOfWork: _unitOfWork,
     );
   }

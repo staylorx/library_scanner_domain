@@ -3,6 +3,7 @@ import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 void main() {
   late DatabaseService database;
@@ -69,7 +70,7 @@ void main() {
         );
         final tagRepository = TagRepositoryImpl(
           tagDatasource: tagDatasource,
-          databaseService: database,
+
           unitOfWork: unitOfWork,
         );
         final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
@@ -77,7 +78,7 @@ void main() {
         // Check for zero records
         var result = await getAuthorsUsecase();
         expect(result.isRight(), true);
-        List<AuthorProjection> authors = result.fold((l) => [], (r) => r);
+        List<Author> authors = result.fold((l) => [], (r) => r);
         expect(authors.isEmpty, true);
 
         // Add one record
@@ -88,24 +89,19 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.author.name, 'Test Author');
-        final newAuthorProjection = authors.first;
+        expect(authors.first.name, 'Test Author');
+        final newAuthor = authors.first;
 
         // Edit the record
-        final updatedAuthor = newAuthorProjection.author.copyWith(
-          name: 'Updated Test Author',
-        );
-        await updateAuthorUsecase.call(
-          handle: newAuthorProjection.handle,
-          author: updatedAuthor,
-        );
+        final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
+        await updateAuthorUsecase.call(id: newAuthor.id, author: updatedAuthor);
 
         // Verify count remains the same
         result = await getAuthorsUsecase();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.author.name, 'Updated Test Author');
+        expect(authors.first.name, 'Updated Test Author');
 
         // Add another record
         await addAuthorUsecase.call(name: 'Second Author');
@@ -115,8 +111,8 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 2);
-        final secondAuthorProjection = authors.firstWhere(
-          (a) => a.author.name == 'Second Author',
+        final secondAuthor = authors.firstWhere(
+          (a) => a.name == 'Second Author',
         );
 
         // Get author by name
@@ -136,18 +132,19 @@ void main() {
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
-        expect(authors.first.author.name, 'Second Author');
+        expect(authors.first.name, 'Second Author');
 
         // Add a book with the remaining author
-        final tag = Tag(name: 'Test Tag');
+        final tag = Tag(id: const Uuid().v4(), name: 'Test Tag');
         await addTagUsecase.call(tag: tag);
 
         final book = Book(
+          id: const Uuid().v4(),
           businessIds: [
             BookIdPair(idType: BookIdType.local, idCode: "test_book"),
           ],
           title: 'Test Book',
-          authors: [secondAuthorProjection.author],
+          authors: [secondAuthor],
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
         );

@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:uuid/uuid.dart';
 
 /// Usecase for scanning and adding a book by ISBN
 class ScanAndAddBookUsecase with Loggable {
@@ -73,11 +74,15 @@ class ScanAndAddBookUsecase with Loggable {
   /// Creates a Book entity from fetched metadata.
   Book _createBookFromMetadata(BookMetadata metadata, String isbn) {
     return Book(
+      id: const Uuid().v4(),
       businessIds: [BookIdPair(idType: BookIdType.isbn, idCode: isbn)],
       title: metadata.title ?? 'Unknown Title',
       authors:
           metadata.authors
-              ?.map((name) => Author(businessIds: [], name: name))
+              ?.map(
+                (name) =>
+                    Author(businessIds: [], name: name, id: const Uuid().v4()),
+              )
               .toList() ??
           [],
       tags: [],

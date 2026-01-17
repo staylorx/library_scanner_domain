@@ -55,9 +55,6 @@ export 'value_objects/book_id_type.dart';
 export 'value_objects/author_id_pairs.dart';
 export 'value_objects/author_id_type.dart';
 export 'value_objects/author_id_pair.dart';
-export 'value_objects/author_handle.dart';
-export 'value_objects/book_handle.dart';
-export 'value_objects/tag_handle.dart';
 
 // Services
 export 'services/author_filtering_service.dart';

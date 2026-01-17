@@ -1,6 +1,7 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:uuid/uuid.dart';
 
 /// Use case for adding a new author to the repository.
 class AddAuthorUsecase with Loggable {
@@ -13,8 +14,8 @@ class AddAuthorUsecase with Loggable {
     required this.idRegistryService,
   });
 
-  /// Adds a new author and returns the projection.
-  Future<Either<Failure, AuthorProjection>> call({
+  /// Adds a new author and returns the author.
+  Future<Either<Failure, Author>> call({
     required String name,
     String? biography,
   }) async {
@@ -23,15 +24,16 @@ class AddAuthorUsecase with Loggable {
     return idEither.fold((failure) => Left(failure), (idCode) async {
       final idPair = AuthorIdPair(idType: AuthorIdType.local, idCode: idCode);
       final author = Author(
+        id: const Uuid().v4(),
         businessIds: [idPair],
         name: name,
         biography: biography,
       );
       final addEither = await authorRepository.addAuthor(author: author);
       logger?.info('AddAuthorUsecase: Success in call');
-      return addEither.fold((failure) => Left(failure), (handle) {
-        logger?.info('AddAuthorUsecase: Output: $handle');
-        return Right(handle);
+      return addEither.fold((failure) => Left(failure), (author) {
+        logger?.info('AddAuthorUsecase: Output: $author');
+        return Right(author);
       });
     });
   }

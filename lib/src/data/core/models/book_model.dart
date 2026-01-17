@@ -128,6 +128,7 @@ class BookModel {
   /// Converts to entity.
   Book toEntity({required List<Author> authors, required List<Tag> tags}) {
     return Book(
+      id: id,
       businessIds: businessIds,
       title: title,
       originalTitle: originalTitle,
@@ -141,15 +142,15 @@ class BookModel {
   }
 
   /// Creates from entity.
-  factory BookModel.fromEntity(Book book, String handleId) {
+  factory BookModel.fromEntity(Book book) {
     return BookModel(
-      id: handleId,
+      id: book.id,
       businessIds: book.businessIds,
       title: book.title,
       originalTitle: book.originalTitle,
       description: book.description,
-      authorIds: book.authors.map((a) => a.name).toList(),
-      tagIds: book.tags.map((t) => t.name).toList(),
+      authorIds: book.authors.map((a) => a.id).toList(),
+      tagIds: book.tags.map((t) => t.id).toList(),
       publishedDate: book.publishedDate,
       coverImage: book.coverImage,
       coverImageUrl: null, // Entity doesn't have URL

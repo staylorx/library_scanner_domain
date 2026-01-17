@@ -45,7 +45,7 @@ class TagModel {
   /// Converts to map.
   Map<String, dynamic> toMap() {
     return {
-      'id': name,
+      'id': id,
       'name': name,
       'description': description,
       'color': color,
@@ -56,13 +56,13 @@ class TagModel {
 
   /// Converts to entity.
   Tag toEntity() {
-    return Tag(name: name, description: description, color: color);
+    return Tag(id: id, name: name, description: description, color: color);
   }
 
   /// Creates from entity.
   factory TagModel.fromEntity(Tag tag) {
     return TagModel(
-      id: tag.name,
+      id: tag.id,
       name: tag.name,
       description: tag.description,
       color: tag.color,

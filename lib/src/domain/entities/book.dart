@@ -6,6 +6,9 @@ import 'tag.dart';
 
 /// Represents a book.
 class Book with EquatableMixin {
+  /// Entity identifier.
+  final String id;
+
   /// Business identifiers.
   final List<BookIdPair> businessIds;
 
@@ -35,6 +38,7 @@ class Book with EquatableMixin {
 
   /// Creates Book.
   Book({
+    required this.id,
     required this.businessIds,
     required this.title,
     this.originalTitle,
@@ -48,6 +52,7 @@ class Book with EquatableMixin {
 
   /// Creates a copy with optional updates.
   Book copyWith({
+    String? id,
     List<BookIdPair>? businessIds,
     String? title,
     String? originalTitle,
@@ -59,6 +64,7 @@ class Book with EquatableMixin {
     String? notes,
   }) {
     return Book(
+      id: id ?? this.id,
       businessIds: businessIds ?? this.businessIds,
       title: title ?? this.title,
       originalTitle: originalTitle ?? this.originalTitle,
@@ -72,5 +78,11 @@ class Book with EquatableMixin {
   }
 
   @override
-  List<Object?> get props => [businessIds, title, originalTitle, description];
+  List<Object?> get props => [
+    id,
+    businessIds,
+    title,
+    originalTitle,
+    description,
+  ];
 }

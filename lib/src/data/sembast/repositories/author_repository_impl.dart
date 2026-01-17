@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:uuid/uuid.dart';
 
 /// Implementation of author repository using Sembast.
 class AuthorRepositoryImpl with Loggable implements AuthorRepository {
@@ -18,7 +19,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves all authors from the database.
   @override
-  Future<Either<Failure, List<AuthorProjection>>> getAuthors() async {
+  Future<Either<Failure, List<Author>>> getAuthors() async {
     logger?.info('Entering getAuthors');
     final result = await _authorDatasource.getAllAuthors();
     return result.fold(
@@ -28,13 +29,12 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       },
       (models) {
         logger?.info('Successfully retrieved ${models.length} authors');
-        final projections = <AuthorProjection>[];
+        final authors = <Author>[];
         for (final model in models) {
           final author = model.toEntity();
-          final handle = AuthorHandle.fromString(model.id);
-          projections.add(AuthorProjection(handle: handle, author: author));
+          authors.add(author);
         }
-        return Either.right(projections);
+        return Either.right(authors);
       },
     );
   }
@@ -55,7 +55,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves authors by a list of names.
   @override
-  Future<Either<Failure, List<AuthorProjection>>> getAuthorsByNames({
+  Future<Either<Failure, List<Author>>> getAuthorsByNames({
     required List<String> names,
   }) async {
     logger?.info('Entering getAuthorsByNames with names: $names');
@@ -65,27 +65,25 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     }
     final result = await _authorDatasource.getAuthorsByNames(names);
     return result.fold((failure) => Either.left(failure), (models) {
-      final projections = <AuthorProjection>[];
+      final authors = <Author>[];
       for (final model in models) {
         final author = model.toEntity();
-        final handle = AuthorHandle.fromString(model.id);
-        projections.add(AuthorProjection(handle: handle, author: author));
+        authors.add(author);
       }
       logger?.info(
-        'Success in getAuthorsByNames, fetched ${projections.length} authors',
+        'Success in getAuthorsByNames, fetched ${authors.length} authors',
       );
-      return Either.right(projections);
+      return Either.right(authors);
     });
   }
 
   /// Adds a new author to the database.
   @override
-  Future<Either<Failure, AuthorProjection>> addAuthor({
-    required Author author,
-  }) async {
+  Future<Either<Failure, Author>> addAuthor({required Author author}) async {
     logger?.info('Entering addAuthor with author: ${author.name}');
-    final handle = AuthorHandle.fromName(author.name);
-    final model = AuthorModel.fromEntity(author, handle.toString());
+    final id = const Uuid().v4();
+    final authorWithId = author.copyWith(id: id);
+    final model = AuthorModel.fromEntity(authorWithId);
     return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for addAuthor');
       final db = (txn as SembastTransaction).db;
@@ -96,20 +94,17 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
         );
       }
       logger?.info('Transaction operation completed for addAuthor');
-      return AuthorProjection(handle: handle, author: author);
+      return authorWithId;
     });
   }
 
   /// Updates an existing author in the database.
   @override
-  Future<Either<Failure, Unit>> updateAuthor({
-    required AuthorHandle handle,
-    required Author author,
-  }) async {
+  Future<Either<Failure, Unit>> updateAuthor({required Author author}) async {
     logger?.info(
-      'Entering updateAuthor with handle: $handle and author: ${author.name}',
+      'Entering updateAuthor with id: ${author.id} and author: ${author.name}',
     );
-    final model = AuthorModel.fromEntity(author, handle.toString());
+    final model = AuthorModel.fromEntity(author);
     return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for updateAuthor');
       final db = (txn as SembastTransaction).db;
@@ -126,15 +121,13 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Deletes an author from the database.
   @override
-  Future<Either<Failure, Unit>> deleteAuthor({
-    required AuthorHandle handle,
-  }) async {
-    logger?.info('Entering deleteAuthor with handle: $handle');
+  Future<Either<Failure, Unit>> deleteAuthor({required Author author}) async {
+    logger?.info('Entering deleteAuthor with id: ${author.id}');
     return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for deleteAuthor');
       final db = (txn as SembastTransaction).db;
       final result = await _authorDatasource.deleteAuthorWithCascade(
-        handle.toString(),
+        author.id,
         db: db,
       );
       if (result.isLeft()) {
@@ -147,24 +140,22 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     });
   }
 
-  /// Retrieves an author by handle.
+  /// Retrieves an author by id.
   @override
-  Future<Either<Failure, Author>> getByHandle({
-    required AuthorHandle handle,
-  }) async {
-    logger?.info('Entering getByHandle with handle: $handle');
-    final result = await _authorDatasource.getAuthorById(handle.toString());
+  Future<Either<Failure, Author>> getById({required String id}) async {
+    logger?.info('Entering getById with id: $id');
+    final result = await _authorDatasource.getAuthorById(id);
     return result.fold(
       (failure) {
         logger?.warning(
-          'Failed to get Author by handle: $handle, Error: ${failure.message}',
+          'Failed to get Author by id: $id, Error: ${failure.message}',
         );
         return Either.left(failure);
       },
       (model) {
-        logger?.info('Successfully retrieved Author by handle: $handle');
+        logger?.info('Successfully retrieved Author by id: $id');
         if (model == null) {
-          logger?.info('Author with handle $handle not found');
+          logger?.info('Author with id $id not found');
           return Either.left(NotFoundFailure('Author not found'));
         }
         final author = model.toEntity();

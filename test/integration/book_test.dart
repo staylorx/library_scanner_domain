@@ -3,6 +3,7 @@ import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
 
 void main() {
   late DatabaseService database;
@@ -67,7 +68,7 @@ void main() {
         final TagRepository tagRepository;
         tagRepository = TagRepositoryImpl(
           tagDatasource: tagDatasource,
-          databaseService: database,
+
           unitOfWork: unitOfWork,
         );
         final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
@@ -82,18 +83,13 @@ void main() {
         await addAuthorUsecase.call(name: 'Test Author');
         final authorsResult = await getAuthorsUsecase();
         expect(authorsResult.isRight(), true);
-        final List<AuthorProjection> authorProjections = authorsResult.fold(
-          (l) => [],
-          (r) => r,
-        );
-        final List<Author> authors = authorProjections
-            .map((p) => p.author)
-            .toList();
+        final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
         final newAuthor = authors.first;
-        final newTag = Tag(name: 'Test Tag');
+        final newTag = Tag(id: const Uuid().v4(), name: 'Test Tag');
         await addTagUsecase.call(tag: newTag);
 
         final newBook = Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: "12345")],
           title: 'New Test Book',
           authors: [newAuthor],
@@ -135,20 +131,16 @@ void main() {
         await addAuthorUsecase.call(name: 'Second Author');
         final authorsResult2 = await getAuthorsUsecase();
         expect(authorsResult2.isRight(), true);
-        final List<AuthorProjection> authorProjections2 = authorsResult2.fold(
-          (l) => [],
-          (r) => r,
-        );
-        final List<Author> authors2 = authorProjections2
-            .map((p) => p.author)
-            .toList();
+        final List<Author> authors2 = authorsResult2.fold((l) => [], (r) => r);
+
         final secondAuthor = authors2.firstWhere(
           (a) => a.name == 'Second Author',
         );
-        final secondTag = Tag(name: 'Second Tag');
+        final secondTag = Tag(id: const Uuid().v4(), name: 'Second Tag');
         await addTagUsecase.call(tag: secondTag);
 
         final secondBook = Book(
+          id: const Uuid().v4(),
           businessIds: [BookIdPair(idType: BookIdType.local, idCode: "67890")],
           title: 'Second Test Book',
           authors: [secondAuthor],

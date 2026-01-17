@@ -35,6 +35,7 @@ Future<Either<Failure, Map<String, Author>>> parseAuthors(
           idPairs.add(AuthorIdPair(idType: AuthorIdType.local, idCode: name));
         }
         authors[name] = Author(
+          id: const Uuid().v4(),
           businessIds: idPairs,
           name: name,
           biography: yamlAuthor['biography'] as String?,
@@ -58,7 +59,11 @@ Future<Either<Failure, List<Tag>>> parseTags(dynamic yamlTags) async {
         final slug = computeSlug(name);
         // Skip if already exists (slug-based duplicate)
         if (!tagMap.containsKey(slug)) {
-          tagMap[slug] = Tag(name: name, color: yamlTag['color'] as String);
+          tagMap[slug] = Tag(
+            id: const Uuid().v4(),
+            name: name,
+            color: yamlTag['color'] as String,
+          );
         }
       }
       return tagMap.values.toList();
@@ -160,6 +165,7 @@ Future<Either<Failure, BookParseResult>> parseBooks(
             : null;
         books.add(
           Book(
+            id: const Uuid().v4(),
             businessIds: idPairs,
             title: cleanBookTitle(title: originalTitle),
             originalTitle: originalTitle,

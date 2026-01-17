@@ -3,6 +3,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 
 /// Use case for importing a library from a file.
@@ -123,7 +124,7 @@ class ImportLibraryUsecase with Loggable {
 
       // Add missing tags
       for (final tagName in missingTagNames) {
-        tags.add(Tag(name: tagName, color: "#808080"));
+        tags.add(Tag(id: const Uuid().v4(), name: tagName, color: "#808080"));
       }
 
       // Find missing authors
@@ -135,6 +136,7 @@ class ImportLibraryUsecase with Loggable {
       // Add missing authors
       for (final authorName in missingAuthorNames) {
         final author = Author(
+          id: const Uuid().v4(),
           businessIds: [
             AuthorIdPair(idType: AuthorIdType.local, idCode: authorName),
           ],
@@ -256,7 +258,7 @@ class ImportLibraryUsecase with Loggable {
         final db = (txn as SembastTransaction).db;
         // Save authors
         for (final author in authors) {
-          final authorModel = AuthorModel.fromEntity(author, author.name);
+          final authorModel = AuthorModel.fromEntity(author);
           final saveResult = await authorDatasource.saveAuthor(
             authorModel,
             db: db,
@@ -283,8 +285,7 @@ class ImportLibraryUsecase with Loggable {
 
         // Save books
         for (final book in books) {
-          final bookKey = BookHandle.generate();
-          final bookModel = BookModel.fromEntity(book, bookKey.toString());
+          final bookModel = BookModel.fromEntity(book);
           final saveResult = await bookDatasource.saveBook(bookModel, db: db);
           if (saveResult.isLeft()) {
             throw saveResult.getLeft().getOrElse(

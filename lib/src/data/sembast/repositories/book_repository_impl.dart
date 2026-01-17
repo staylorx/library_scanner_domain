@@ -2,6 +2,7 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:uuid/uuid.dart';
 
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl with Loggable implements BookRepository {
@@ -27,7 +28,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Retrieves books from the database.
   @override
-  Future<Either<Failure, List<BookProjection>>> getBooks({
+  Future<Either<Failure, List<Book>>> getBooks({
     int? limit,
     int? offset,
   }) async {
@@ -41,14 +42,13 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       return Either.left(failure);
     }
     final models = result.getRight().getOrElse(() => []);
-    final projections = <BookProjection>[];
+    final books = <Book>[];
     for (final model in models) {
       final book = await _loadBookWithRelations(model);
-      final handle = BookHandle(model.id);
-      projections.add(BookProjection(handle: handle, book: book));
+      books.add(book);
     }
-    logger?.info('Successfully retrieved ${projections.length} books');
-    return Either.right(projections);
+    logger?.info('Successfully retrieved ${books.length} books');
+    return Either.right(books);
   }
 
   Future<Book> _loadBookWithRelations(BookModel model) async {
@@ -81,25 +81,23 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     return model.toEntity(authors: authors, tags: tags);
   }
 
-  /// Retrieves a book by its handle.
+  /// Retrieves a book by its id.
   @override
-  Future<Either<Failure, Book>> getByHandle({
-    required BookHandle handle,
-  }) async {
-    logger?.info('Entering getByHandle with handle: $handle');
-    final result = await _bookDatasource.getBookById(handle.toString());
+  Future<Either<Failure, Book>> getById({required String id}) async {
+    logger?.info('Entering getById with id: $id');
+    final result = await _bookDatasource.getBookById(id);
     if (result.isLeft()) {
       final failure = result.getLeft().getOrElse(
         () => DatabaseFailure('Failed to get book'),
       );
       logger?.warning(
-        'Failed to get book by handle: $handle, Error: ${failure.message}',
+        'Failed to get book by id: $id, Error: ${failure.message}',
       );
       return Either.left(failure);
     }
     final model = result.getRight().getOrElse(() => null);
     if (model == null) {
-      logger?.info('Book with handle $handle not found');
+      logger?.info('Book with id $id not found');
       return Either.left(NotFoundFailure('Book not found'));
     }
     final book = await _loadBookWithRelations(model);
@@ -127,10 +125,12 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Adds a new book to the database.
   @override
-  Future<Either<Failure, BookProjection>> addBook({required Book book}) async {
-    logger?.info('Entering addBook with book: ${book.title}');
-    final handle = BookHandle.generate();
-    final model = BookModel.fromEntity(book, handle.toString());
+  Future<Either<Failure, Book>> addBook({required Book book}) async {
+    logger?.info('Entering addBook with book: ${book.title}, id: ${book.id}');
+    final bookWithId = book.id.isNotEmpty
+        ? book
+        : book.copyWith(id: const Uuid().v4());
+    final model = BookModel.fromEntity(bookWithId);
     return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for addBook');
       final db = (txn as SembastTransaction).db;
@@ -152,7 +152,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       logger?.info('ID pairs registered, updating relationships');
       final tagNames = book.tags.map((t) => t.name).toList();
       final updateResult = await _tagDatasource.addBookToTags(
-        handle.toString(),
+        bookWithId.id,
         tagNames,
         db: db,
       );
@@ -162,7 +162,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Transaction operation completed for addBook');
-      return BookProjection(handle: handle, book: book);
+      return bookWithId;
     });
   }
 
@@ -180,18 +180,18 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           () => DatabaseFailure('Failed to get books'),
         );
       }
-      final projections = booksResult.getRight().getOrElse(() => []);
-      final existingProjection = projections
+      final books = booksResult.getRight().getOrElse(() => []);
+      final existingBook = books
           .where(
-            (p) =>
-                BookIdPairs(pairs: p.book.businessIds) ==
+            (b) =>
+                BookIdPairs(pairs: b.businessIds) ==
                 BookIdPairs(pairs: book.businessIds),
           )
           .firstOrNull;
-      if (existingProjection != null) {
+      if (existingBook != null) {
         logger?.info('Unregistering old book ID pairs');
         final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-          BookIdPairs(pairs: existingProjection.book.businessIds),
+          BookIdPairs(pairs: existingBook.businessIds),
         );
         if (unregisterResult.isLeft()) {
           throw unregisterResult.getLeft().getOrElse(
@@ -199,11 +199,9 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           );
         }
         // Remove from old tags
-        final oldTagNames = existingProjection.book.tags
-            .map((t) => t.name)
-            .toList();
+        final oldTagNames = existingBook.tags.map((t) => t.name).toList();
         final removeResult = await _tagDatasource.removeBookFromTags(
-          existingProjection.handle.toString(),
+          existingBook.id,
           oldTagNames,
           db: db,
         );
@@ -213,11 +211,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           );
         }
       }
-      final model = BookModel.fromEntity(
-        book,
-        existingProjection?.handle.toString() ??
-            BookHandle.generate().toString(),
-      );
+      final model = BookModel.fromEntity(book);
       logger?.info('Saving updated book ${book.title}');
       final saveResult = await _bookDatasource.saveBook(model, db: db);
       if (saveResult.isLeft()) {
@@ -258,22 +252,22 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     return _unitOfWork.run((Transaction txn) async {
       logger?.info('Transaction started for deleteBook');
       final db = (txn as SembastTransaction).db;
-      // Find the handle
+      // Find the book
       final booksResult = await getBooks();
       if (booksResult.isLeft()) {
         throw booksResult.getLeft().getOrElse(
           () => DatabaseFailure('Failed to get books'),
         );
       }
-      final projections = booksResult.getRight().getOrElse(() => []);
-      final projection = projections
+      final books = booksResult.getRight().getOrElse(() => []);
+      final existingBook = books
           .where(
-            (p) =>
-                BookIdPairs(pairs: p.book.businessIds) ==
+            (b) =>
+                BookIdPairs(pairs: b.businessIds) ==
                 BookIdPairs(pairs: book.businessIds),
           )
           .firstOrNull;
-      if (projection == null) {
+      if (existingBook == null) {
         throw NotFoundFailure('Book not found');
       }
       logger?.info('Unregistering book ID pairs');
@@ -287,7 +281,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       }
       logger?.info('Deleting book record');
       final deleteResult = await _bookDatasource.deleteBook(
-        projection.handle.toString(),
+        existingBook.id,
         db: db,
       );
       if (deleteResult.isLeft()) {
@@ -298,7 +292,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       logger?.info('Removing from tags');
       final tagNames = book.tags.map((t) => t.name).toList();
       final updateResult = await _tagDatasource.removeBookFromTags(
-        projection.handle.toString(),
+        existingBook.id,
         tagNames,
         db: db,
       );
@@ -319,13 +313,14 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   }) async {
     logger?.info('Entering getBooksByAuthor with author: ${author.name}');
     final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (projections) {
-      final books = projections
-          .map((p) => p.book)
+    return booksResult.fold((failure) => Either.left(failure), (books) {
+      final filteredBooks = books
           .where((book) => book.authors.any((a) => a.name == author.name))
           .toList();
-      logger?.info('Found ${books.length} books for author ${author.name}');
-      return Either.right(books);
+      logger?.info(
+        'Found ${filteredBooks.length} books for author ${author.name}',
+      );
+      return Either.right(filteredBooks);
     });
   }
 
@@ -334,13 +329,12 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   Future<Either<Failure, List<Book>>> getBooksByTag({required Tag tag}) async {
     logger?.info('Entering getBooksByTag with tag: ${tag.name}');
     final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (projections) {
-      final books = projections
-          .map((p) => p.book)
+    return booksResult.fold((failure) => Either.left(failure), (books) {
+      final filteredBooks = books
           .where((book) => book.tags.any((t) => t.name == tag.name))
           .toList();
-      logger?.info('Found ${books.length} books for tag ${tag.name}');
-      return Either.right(books);
+      logger?.info('Found ${filteredBooks.length} books for tag ${tag.name}');
+      return Either.right(filteredBooks);
     });
   }
 
@@ -351,9 +345,8 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   }) async {
     logger?.info('Entering getBookById with bookId: $bookId');
     final booksResult = await getBooks();
-    return booksResult.fold((failure) => Either.left(failure), (projections) {
-      final book = projections
-          .map((p) => p.book)
+    return booksResult.fold((failure) => Either.left(failure), (books) {
+      final book = books
           .where((b) => BookIdPairs(pairs: b.businessIds) == bookId)
           .firstOrNull;
       if (book == null) {

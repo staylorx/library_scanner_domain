@@ -17,9 +17,7 @@ class DeleteTagUsecase with Loggable {
       if (tag == null) {
         return Left(NotFoundFailure('Tag not found'));
       }
-      final deleteEither = await tagRepository.deleteTag(
-        handle: TagHandle(tag.name),
-      );
+      final deleteEither = await tagRepository.deleteTag(tag: tag);
       return deleteEither.fold((failure) => Left(failure), (_) {
         final updatedTags = tags.where((t) => t.name != name).toList();
         logger?.info('DeleteTagUsecase: Success in call');
