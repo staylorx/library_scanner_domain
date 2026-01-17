@@ -13,51 +13,73 @@ import '../data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import '../data/storage/author_datasource.dart';
 import '../data/storage/book_datasource.dart';
 import '../data/storage/tag_datasource.dart';
+import '../data/core/services/author_filtering_service.dart';
+import '../data/core/services/book_filtering_service.dart';
+import '../data/core/services/author_validation_service.dart';
+import '../data/core/services/book_validation_service.dart';
+import '../data/id_registry/services/author_id_registry_service.dart';
 import 'domain.dart';
 
 /// Factory for creating domain layer instances with data implementations.
 class LibraryFactory {
-  final String? dbPath;
+  final DatabaseService _dbService;
+  final UnitOfWork _unitOfWork;
   final BookApiService apiService;
   final ImageService imageService;
 
-  late final SembastDatabase _database;
+  late final AuthorIdRegistryServiceImpl _authorIdRegistry;
   late final BookIdRegistryServiceImpl _bookIdRegistry;
-  late final UnitOfWork _unitOfWork;
   late final BookDatasource bookDatasource;
   late final AuthorDatasource authorDatasource;
   late final TagDatasource tagDatasource;
 
-  /// Creates a LibraryFactory with the specified database path.
-  /// If dbPath is null, uses in-memory database.
-  LibraryFactory(
-    this.dbPath, {
+  /// Creates a LibraryFactory with the specified database service and unit of work.
+  LibraryFactory({
+    required DatabaseService dbService,
+    required UnitOfWork unitOfWork,
     required this.apiService,
     required this.imageService,
-  }) {
-    _database = SembastDatabase(testDbPath: dbPath);
+  }) : _dbService = dbService,
+       _unitOfWork = unitOfWork {
+    _authorIdRegistry = AuthorIdRegistryServiceImpl();
     _bookIdRegistry = BookIdRegistryServiceImpl();
-    _unitOfWork = SembastUnitOfWork(dbService: _database);
+  }
+
+  /// Convenience factory for Sembast database.
+  /// If dbPath is null, uses in-memory database.
+  factory LibraryFactory.sembast(
+    String? dbPath, {
+    required BookApiService apiService,
+    required ImageService imageService,
+  }) {
+    final database = SembastDatabase(testDbPath: dbPath);
+    final unitOfWork = SembastUnitOfWork(dbService: database);
+    return LibraryFactory(
+      dbService: database,
+      unitOfWork: unitOfWork,
+      apiService: apiService,
+      imageService: imageService,
+    );
   }
 
   Future<AuthorDatasource> getAuthorDatasource() async {
-    authorDatasource = AuthorDatasource(dbService: _database);
+    authorDatasource = AuthorDatasource(dbService: _dbService);
     return authorDatasource;
   }
 
   Future<BookDatasource> getBookDatasource() async {
-    bookDatasource = BookDatasource(dbService: _database);
+    bookDatasource = BookDatasource(dbService: _dbService);
     return bookDatasource;
   }
 
   Future<TagDatasource> getTagDatasource() async {
-    tagDatasource = TagDatasource(dbService: _database);
+    tagDatasource = TagDatasource(dbService: _dbService);
     return tagDatasource;
   }
 
   /// Creates an AuthorRepository instance.
   Future<AuthorRepository> createAuthorRepository() async {
-    final authorDatasource = AuthorDatasource(dbService: _database);
+    final authorDatasource = AuthorDatasource(dbService: _dbService);
     return AuthorRepositoryImpl(
       authorDatasource: authorDatasource,
       unitOfWork: _unitOfWork,
@@ -66,9 +88,9 @@ class LibraryFactory {
 
   /// Creates a BookRepository instance.
   Future<BookRepository> createBookRepository() async {
-    final bookDatasource = BookDatasource(dbService: _database);
-    final authorDatasource = AuthorDatasource(dbService: _database);
-    final tagDatasource = TagDatasource(dbService: _database);
+    final bookDatasource = BookDatasource(dbService: _dbService);
+    final authorDatasource = AuthorDatasource(dbService: _dbService);
+    final tagDatasource = TagDatasource(dbService: _dbService);
     return BookRepositoryImpl(
       bookDatasource: bookDatasource,
       authorDatasource: authorDatasource,
@@ -88,17 +110,47 @@ class LibraryFactory {
 
   /// Creates a TagRepository instance.
   Future<TagRepository> createTagRepository() async {
-    final tagDatasource = TagDatasource(dbService: _database);
+    final tagDatasource = TagDatasource(dbService: _dbService);
     return TagRepositoryImpl(
       tagDatasource: tagDatasource,
-      databaseService: _database,
+      databaseService: _dbService,
       unitOfWork: _unitOfWork,
     );
   }
 
+  /// Creates an AuthorFilteringService instance.
+  AuthorFilteringService createAuthorFilteringService() {
+    return AuthorFilteringServiceImpl();
+  }
+
+  /// Creates a BookFilteringService instance.
+  BookFilteringService createBookFilteringService() {
+    return BookFilteringServiceImpl();
+  }
+
+  /// Creates an AuthorIdRegistryService instance.
+  AuthorIdRegistryService createAuthorIdRegistryService() {
+    return _authorIdRegistry;
+  }
+
+  /// Creates a BookIdRegistryService instance.
+  BookIdRegistryService createBookIdRegistryService() {
+    return _bookIdRegistry;
+  }
+
+  /// Creates an AuthorValidationService instance.
+  AuthorValidationService createAuthorValidationService() {
+    return AuthorValidationServiceImpl(idRegistryService: _authorIdRegistry);
+  }
+
+  /// Creates a BookValidationService instance.
+  BookValidationService createBookValidationService() {
+    return BookValidationServiceImpl(idRegistryService: _bookIdRegistry);
+  }
+
   /// Closes the database connection.
   Future<Either<Failure, Unit>> close() async {
-    return _database.close();
+    return _dbService.close();
   }
 }
 

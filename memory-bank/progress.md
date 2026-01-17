@@ -16,3 +16,12 @@ This file tracks the project's progress...
 [2026-01-15 03:15:49] - Fixed getByName method in AuthorRepositoryImpl to use AuthorHandle and delegate to getByHandle, making it simple, clean, and functional.
 
 [2026-01-15 03:20:01] - Revised getByName method in AuthorRepositoryImpl to query by 'name' field directly, handle not found case, and use TaskEither for functional programming.
+
+## Unit of Work Testing
+
+[2026-01-17 17:49:35] - Added comprehensive unit tests for unit of work functionality: SembastUnitOfWork and SembastTransaction. Tests cover success/failure cases for run method, commit/rollback unsupported operations, and transaction handling.
+
+## Unit of Work Testing Enhancement
+
+[2026-01-17 17:52:26] - Added benchmark_harness dependency and created benchmark test for SembastUnitOfWork.run() showing ~127μs performance. Enhanced integration tests with dedicated unit of work test covering success/failure scenarios and manual commit/rollback behaviors.
+[2026-01-17 17:55:03] - Enhanced unit of work integration test with comprehensive database operations testing commit/rollback behavior, atomicity of multiple operations, and proper transaction isolation.

@@ -1,6 +1,0 @@
-{"version":1,"sembast":1}
-{"key":"Test Tag","store":"tags","value":{"id":"Test Tag","name":"Test Tag","description":"A test tag","color":"#FF0000","slug":"test-tag","bookIdPairs":[]}}
-{"key":"Test Tag","deleted":true,"store":"tags"}
-{"key":"Updated Test Tag","store":"tags","value":{"id":"Updated Test Tag","name":"Updated Test Tag","description":"Updated description","color":"#FF0000","slug":"updated-test-tag","bookIdPairs":[]}}
-{"key":"Second Tag","store":"tags","value":{"id":"Second Tag","name":"Second Tag","description":null,"color":"#00FF00","slug":"second-tag","bookIdPairs":[]}}
-{"key":"Updated Test Tag","deleted":true,"store":"tags"}
