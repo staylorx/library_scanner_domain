@@ -63,7 +63,7 @@ final tagDatasourceProvider = Provider<TagDatasource>((ref) {
 });
 
 // Repositories
-final authorRepositoryProvider = FutureProvider<AuthorRepository>((ref) async {
+final authorRepositoryProvider = Provider<AuthorRepository>((ref) {
   final datasource = ref.watch(authorDatasourceProvider);
   final unitOfWork = ref.watch(unitOfWorkProvider);
   return AuthorRepositoryImpl(
@@ -72,7 +72,7 @@ final authorRepositoryProvider = FutureProvider<AuthorRepository>((ref) async {
   );
 });
 
-final bookRepositoryProvider = FutureProvider<BookRepository>((ref) async {
+final bookRepositoryProvider = Provider<BookRepository>((ref) {
   final bookDatasource = ref.watch(bookDatasourceProvider);
   final authorDatasource = ref.watch(authorDatasourceProvider);
   final tagDatasource = ref.watch(tagDatasourceProvider);
@@ -87,9 +87,7 @@ final bookRepositoryProvider = FutureProvider<BookRepository>((ref) async {
   );
 });
 
-final bookMetadataRepositoryProvider = FutureProvider<BookMetadataRepository>((
-  ref,
-) async {
+final bookMetadataRepositoryProvider = Provider<BookMetadataRepository>((ref) {
   final apiService = ref.watch(bookApiServiceProvider);
   final imageService = ref.watch(imageServiceProvider);
   return BookMetadataRepositoryImpl(
@@ -98,7 +96,7 @@ final bookMetadataRepositoryProvider = FutureProvider<BookMetadataRepository>((
   );
 });
 
-final tagRepositoryProvider = FutureProvider<TagRepository>((ref) async {
+final tagRepositoryProvider = Provider<TagRepository>((ref) {
   final tagDatasource = ref.watch(tagDatasourceProvider);
   final unitOfWork = ref.watch(unitOfWorkProvider);
   return TagRepositoryImpl(
@@ -137,12 +135,10 @@ final bookValidationServiceProvider = Provider<BookValidationService>((ref) {
 });
 
 // LibraryDataAccess
-final libraryDataAccessProvider = FutureProvider<LibraryDataAccess>((
-  ref,
-) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final libraryDataAccessProvider = Provider<LibraryDataAccess>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
+  final bookRepository = ref.watch(bookRepositoryProvider);
+  final tagRepository = ref.watch(tagRepositoryProvider);
   final unitOfWork = ref.watch(unitOfWorkProvider);
   final dbService = ref.watch(databaseServiceProvider);
   final authorIdRegistryService = ref.watch(authorIdRegistryServiceProvider);
@@ -159,8 +155,8 @@ final libraryDataAccessProvider = FutureProvider<LibraryDataAccess>((
 });
 
 // Usecases
-final addAuthorUsecaseProvider = FutureProvider<AddAuthorUsecase>((ref) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
+final addAuthorUsecaseProvider = Provider<AddAuthorUsecase>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
   final idRegistryService = ref.watch(authorIdRegistryServiceProvider);
   return AddAuthorUsecase(
     authorRepository: authorRepository,
@@ -168,8 +164,8 @@ final addAuthorUsecaseProvider = FutureProvider<AddAuthorUsecase>((ref) async {
   );
 });
 
-final addBookUsecaseProvider = FutureProvider<AddBookUsecase>((ref) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+final addBookUsecaseProvider = Provider<AddBookUsecase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   final isBookDuplicateUsecase = ref.watch(isBookDuplicateUsecaseProvider);
   final bookIdRegistryService = ref.watch(bookIdRegistryServiceProvider);
   return AddBookUsecase(
@@ -179,30 +175,24 @@ final addBookUsecaseProvider = FutureProvider<AddBookUsecase>((ref) async {
   );
 });
 
-final addTagUsecaseProvider = FutureProvider<AddTagUsecase>((ref) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final addTagUsecaseProvider = Provider<AddTagUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return AddTagUsecase(tagRepository: tagRepository);
 });
 
-final clearLibraryUsecaseProvider = FutureProvider<ClearLibraryUsecase>((
-  ref,
-) async {
-  final dataAccess = await ref.watch(libraryDataAccessProvider.future);
+final clearLibraryUsecaseProvider = Provider<ClearLibraryUsecase>((ref) {
+  final dataAccess = ref.watch(libraryDataAccessProvider);
   return ClearLibraryUsecase(dataAccess: dataAccess);
 });
 
-final exportLibraryUsecaseProvider = FutureProvider<ExportLibraryUsecase>((
-  ref,
-) async {
-  final dataAccess = await ref.watch(libraryDataAccessProvider.future);
+final exportLibraryUsecaseProvider = Provider<ExportLibraryUsecase>((ref) {
+  final dataAccess = ref.watch(libraryDataAccessProvider);
   return ExportLibraryUsecase(dataAccess: dataAccess);
 });
 
 final fetchBookMetadataByIsbnUsecaseProvider =
-    FutureProvider<FetchBookMetadataByIsbnUsecase>((ref) async {
-      final bookMetadataRepository = await ref.watch(
-        bookMetadataRepositoryProvider.future,
-      );
+    Provider<FetchBookMetadataByIsbnUsecase>((ref) {
+      final bookMetadataRepository = ref.watch(bookMetadataRepositoryProvider);
       return FetchBookMetadataByIsbnUsecase(
         bookMetadataRepository: bookMetadataRepository,
       );
@@ -218,56 +208,47 @@ final filterBooksUsecaseProvider = Provider<FilterBooksUsecase>((ref) {
   return FilterBooksUsecase(bookFilteringService);
 });
 
-final getAuthorByNameUsecaseProvider = FutureProvider<GetAuthorByNameUsecase>((
-  ref,
-) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
+final getAuthorByNameUsecaseProvider = Provider<GetAuthorByNameUsecase>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
   return GetAuthorByNameUsecase(authorRepository: authorRepository);
 });
 
-final getAuthorsByNamesUsecaseProvider =
-    FutureProvider<GetAuthorsByNamesUsecase>((ref) async {
-      final authorRepository = await ref.watch(authorRepositoryProvider.future);
-      return GetAuthorsByNamesUsecase(authorRepository: authorRepository);
-    });
-
-final getAuthorsUsecaseProvider = FutureProvider<GetAuthorsUsecase>((
+final getAuthorsByNamesUsecaseProvider = Provider<GetAuthorsByNamesUsecase>((
   ref,
-) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
+) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
+  return GetAuthorsByNamesUsecase(authorRepository: authorRepository);
+});
+
+final getAuthorsUsecaseProvider = Provider<GetAuthorsUsecase>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
   return GetAuthorsUsecase(authorRepository: authorRepository);
 });
 
-final getBookByIdPairUsecaseProvider = FutureProvider<GetBookByIdPairUsecase>((
-  ref,
-) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+final getBookByIdPairUsecaseProvider = Provider<GetBookByIdPairUsecase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   return GetBookByIdPairUsecase(bookRepository: bookRepository);
 });
 
-final getBooksByAuthorUsecaseProvider = FutureProvider<GetBooksByAuthorUseCase>(
-  (ref) async {
-    final bookRepository = await ref.watch(bookRepositoryProvider.future);
-    return GetBooksByAuthorUseCase(bookRepository: bookRepository);
-  },
-);
-
-final getBooksByTagUsecaseProvider = FutureProvider<GetBooksByTagUseCase>((
+final getBooksByAuthorUsecaseProvider = Provider<GetBooksByAuthorUseCase>((
   ref,
-) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
+  return GetBooksByAuthorUseCase(bookRepository: bookRepository);
+});
+
+final getBooksByTagUsecaseProvider = Provider<GetBooksByTagUseCase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   return GetBooksByTagUseCase(bookRepository: bookRepository);
 });
 
-final getBooksUsecaseProvider = FutureProvider<GetBooksUsecase>((ref) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+final getBooksUsecaseProvider = Provider<GetBooksUsecase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   return GetBooksUsecase(bookRepository: bookRepository);
 });
 
-final getLibraryStatsUsecaseProvider = FutureProvider<GetLibraryStatsUsecase>((
-  ref,
-) async {
-  final dataAccess = await ref.watch(libraryDataAccessProvider.future);
+final getLibraryStatsUsecaseProvider = Provider<GetLibraryStatsUsecase>((ref) {
+  final dataAccess = ref.watch(libraryDataAccessProvider);
   return GetLibraryStatsUsecase(dataAccess: dataAccess);
 });
 
@@ -283,29 +264,23 @@ final getSortedBooksUsecaseProvider = Provider<GetSortedBooksUsecase>((ref) {
   return GetSortedBooksUsecase(sortingService: sortingService);
 });
 
-final getTagByNameUsecaseProvider = FutureProvider<GetTagByNameUsecase>((
-  ref,
-) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final getTagByNameUsecaseProvider = Provider<GetTagByNameUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return GetTagByNameUsecase(tagRepository: tagRepository);
 });
 
-final getTagsByNamesUsecaseProvider = FutureProvider<GetTagsByNamesUsecase>((
-  ref,
-) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final getTagsByNamesUsecaseProvider = Provider<GetTagsByNamesUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return GetTagsByNamesUsecase(tagRepository: tagRepository);
 });
 
-final getTagsUsecaseProvider = FutureProvider<GetTagsUsecase>((ref) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final getTagsUsecaseProvider = Provider<GetTagsUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return GetTagsUsecase(tagRepository: tagRepository);
 });
 
-final importLibraryUsecaseProvider = FutureProvider<ImportLibraryUsecase>((
-  ref,
-) async {
-  final dataAccess = await ref.watch(libraryDataAccessProvider.future);
+final importLibraryUsecaseProvider = Provider<ImportLibraryUsecase>((ref) {
+  final dataAccess = ref.watch(libraryDataAccessProvider);
   final isBookDuplicateUsecase = ref.watch(isBookDuplicateUsecaseProvider);
   return ImportLibraryUsecase(
     dataAccess: dataAccess,
@@ -317,30 +292,27 @@ final isBookDuplicateUsecaseProvider = Provider<IsBookDuplicateUsecase>((ref) {
   return IsBookDuplicateUsecase();
 });
 
-final refetchBookCoversUsecaseProvider =
-    FutureProvider<RefetchBookCoversUsecase>((ref) async {
-      final bookRepository = await ref.watch(bookRepositoryProvider.future);
-      final fetchBookMetadataByIsbnUsecase = await ref.watch(
-        fetchBookMetadataByIsbnUsecaseProvider.future,
-      );
-      final imageService = ref.watch(imageServiceProvider);
-      return RefetchBookCoversUsecase(
-        bookRepository: bookRepository,
-        fetchBookMetadataByIsbnUsecase: fetchBookMetadataByIsbnUsecase,
-        imageService: imageService,
-      );
-    });
-
-final scanAndAddBookUsecaseProvider = FutureProvider<ScanAndAddBookUsecase>((
+final refetchBookCoversUsecaseProvider = Provider<RefetchBookCoversUsecase>((
   ref,
-) async {
-  final fetchMetadataUsecase = await ref.watch(
-    fetchBookMetadataByIsbnUsecaseProvider.future,
+) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
+  final fetchBookMetadataByIsbnUsecase = ref.watch(
+    fetchBookMetadataByIsbnUsecaseProvider,
   );
-  final addBookUsecase = await ref.watch(addBookUsecaseProvider.future);
-  final getByIdPairUsecase = await ref.watch(
-    getBookByIdPairUsecaseProvider.future,
+  final imageService = ref.watch(imageServiceProvider);
+  return RefetchBookCoversUsecase(
+    bookRepository: bookRepository,
+    fetchBookMetadataByIsbnUsecase: fetchBookMetadataByIsbnUsecase,
+    imageService: imageService,
   );
+});
+
+final scanAndAddBookUsecaseProvider = Provider<ScanAndAddBookUsecase>((ref) {
+  final fetchMetadataUsecase = ref.watch(
+    fetchBookMetadataByIsbnUsecaseProvider,
+  );
+  final addBookUsecase = ref.watch(addBookUsecaseProvider);
+  final getByIdPairUsecase = ref.watch(getBookByIdPairUsecaseProvider);
   return ScanAndAddBookUsecase(
     fetchMetadataUsecase: fetchMetadataUsecase,
     addBookUsecase: addBookUsecase,
@@ -354,41 +326,33 @@ final validateBookUsecaseProvider = Provider<ValidateBookUsecase>((ref) {
 });
 
 // Update usecases
-final updateAuthorUsecaseProvider = FutureProvider<UpdateAuthorUsecase>((
-  ref,
-) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
+final updateAuthorUsecaseProvider = Provider<UpdateAuthorUsecase>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
   return UpdateAuthorUsecase(authorRepository: authorRepository);
 });
 
-final updateBookUsecaseProvider = FutureProvider<UpdateBookUsecase>((
-  ref,
-) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+final updateBookUsecaseProvider = Provider<UpdateBookUsecase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   return UpdateBookUsecase(bookRepository: bookRepository);
 });
 
-final updateTagUsecaseProvider = FutureProvider<UpdateTagUsecase>((ref) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final updateTagUsecaseProvider = Provider<UpdateTagUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return UpdateTagUsecase(tagRepository: tagRepository);
 });
 
 // Delete usecases
-final deleteAuthorUsecaseProvider = FutureProvider<DeleteAuthorUsecase>((
-  ref,
-) async {
-  final authorRepository = await ref.watch(authorRepositoryProvider.future);
+final deleteAuthorUsecaseProvider = Provider<DeleteAuthorUsecase>((ref) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
   return DeleteAuthorUsecase(authorRepository: authorRepository);
 });
 
-final deleteBookUsecaseProvider = FutureProvider<DeleteBookUsecase>((
-  ref,
-) async {
-  final bookRepository = await ref.watch(bookRepositoryProvider.future);
+final deleteBookUsecaseProvider = Provider<DeleteBookUsecase>((ref) {
+  final bookRepository = ref.watch(bookRepositoryProvider);
   return DeleteBookUsecase(bookRepository: bookRepository);
 });
 
-final deleteTagUsecaseProvider = FutureProvider<DeleteTagUsecase>((ref) async {
-  final tagRepository = await ref.watch(tagRepositoryProvider.future);
+final deleteTagUsecaseProvider = Provider<DeleteTagUsecase>((ref) {
+  final tagRepository = ref.watch(tagRepositoryProvider);
   return DeleteTagUsecase(tagRepository: tagRepository);
 });

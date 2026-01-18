@@ -101,33 +101,26 @@ void main() {
       expect(datasource, isNotNull);
     });
 
-    test(
-      'authorRepositoryProvider provides AuthorRepository instance',
-      () async {
-        final repository = await container.read(
-          authorRepositoryProvider.future,
-        );
-        expect(repository, isA<AuthorRepository>());
-      },
-    );
+    test('authorRepositoryProvider provides AuthorRepository instance', () {
+      final repository = container.read(authorRepositoryProvider);
+      expect(repository, isA<AuthorRepository>());
+    });
 
-    test('bookRepositoryProvider provides BookRepository instance', () async {
-      final repository = await container.read(bookRepositoryProvider.future);
+    test('bookRepositoryProvider provides BookRepository instance', () {
+      final repository = container.read(bookRepositoryProvider);
       expect(repository, isA<BookRepository>());
     });
 
     test(
       'bookMetadataRepositoryProvider provides BookMetadataRepository instance',
-      () async {
-        final repository = await container.read(
-          bookMetadataRepositoryProvider.future,
-        );
+      () {
+        final repository = container.read(bookMetadataRepositoryProvider);
         expect(repository, isA<BookMetadataRepository>());
       },
     );
 
-    test('tagRepositoryProvider provides TagRepository instance', () async {
-      final repository = await container.read(tagRepositoryProvider.future);
+    test('tagRepositoryProvider provides TagRepository instance', () {
+      final repository = container.read(tagRepositoryProvider);
       expect(repository, isA<TagRepository>());
     });
 
@@ -176,32 +169,21 @@ void main() {
       },
     );
 
-    test(
-      'libraryDataAccessProvider provides LibraryDataAccess instance',
-      () async {
-        final dataAccess = await container.read(
-          libraryDataAccessProvider.future,
-        );
-        expect(dataAccess, isA<LibraryDataAccess>());
-      },
-    );
+    test('libraryDataAccessProvider provides LibraryDataAccess instance', () {
+      final dataAccess = container.read(libraryDataAccessProvider);
+      expect(dataAccess, isA<LibraryDataAccess>());
+    });
 
     // Test a few usecase providers
-    test(
-      'addAuthorUsecaseProvider provides AddAuthorUsecase instance',
-      () async {
-        final usecase = await container.read(addAuthorUsecaseProvider.future);
-        expect(usecase, isA<AddAuthorUsecase>());
-      },
-    );
+    test('addAuthorUsecaseProvider provides AddAuthorUsecase instance', () {
+      final usecase = container.read(addAuthorUsecaseProvider);
+      expect(usecase, isA<AddAuthorUsecase>());
+    });
 
-    test(
-      'getAuthorsUsecaseProvider provides GetAuthorsUsecase instance',
-      () async {
-        final usecase = await container.read(getAuthorsUsecaseProvider.future);
-        expect(usecase, isA<GetAuthorsUsecase>());
-      },
-    );
+    test('getAuthorsUsecaseProvider provides GetAuthorsUsecase instance', () {
+      final usecase = container.read(getAuthorsUsecaseProvider);
+      expect(usecase, isA<GetAuthorsUsecase>());
+    });
 
     test(
       'filterAuthorsUsecaseProvider provides FilterAuthorsUsecase instance',

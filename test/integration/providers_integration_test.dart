@@ -44,18 +44,10 @@ void main() {
   group('Providers Integration Tests', () {
     test('End-to-end author management through providers', () async {
       // Get usecases from providers
-      final addAuthorUsecase = await container.read(
-        addAuthorUsecaseProvider.future,
-      );
-      final getAuthorsUsecase = await container.read(
-        getAuthorsUsecaseProvider.future,
-      );
-      final updateAuthorUsecase = await container.read(
-        updateAuthorUsecaseProvider.future,
-      );
-      final deleteAuthorUsecase = await container.read(
-        deleteAuthorUsecaseProvider.future,
-      );
+      final addAuthorUsecase = container.read(addAuthorUsecaseProvider);
+      final getAuthorsUsecase = container.read(getAuthorsUsecaseProvider);
+      final updateAuthorUsecase = container.read(updateAuthorUsecaseProvider);
+      final deleteAuthorUsecase = container.read(deleteAuthorUsecaseProvider);
 
       // Initially no authors
       var authorsResult = await getAuthorsUsecase();
@@ -103,37 +95,23 @@ void main() {
 
     test('End-to-end book management through providers', () async {
       // Get usecases from providers
-      final addAuthorUsecase = await container.read(
-        addAuthorUsecaseProvider.future,
-      );
-      final addTagUsecase = await container.read(addTagUsecaseProvider.future);
-      final addBookUsecase = await container.read(
-        addBookUsecaseProvider.future,
-      );
-      final getBooksUsecase = await container.read(
-        getBooksUsecaseProvider.future,
-      );
-      final updateBookUsecase = await container.read(
-        updateBookUsecaseProvider.future,
-      );
-      final deleteBookUsecase = await container.read(
-        deleteBookUsecaseProvider.future,
-      );
+      final addAuthorUsecase = container.read(addAuthorUsecaseProvider);
+      final addTagUsecase = container.read(addTagUsecaseProvider);
+      final addBookUsecase = container.read(addBookUsecaseProvider);
+      final getBooksUsecase = container.read(getBooksUsecaseProvider);
+      final updateBookUsecase = container.read(updateBookUsecaseProvider);
+      final deleteBookUsecase = container.read(deleteBookUsecaseProvider);
 
       // Add prerequisite author and tag
       await addAuthorUsecase(name: 'Book Integration Author');
-      final authorsResult = await container
-          .read(getAuthorsUsecaseProvider.future)
-          .then((usecase) => usecase());
+      final authorsResult = await container.read(getAuthorsUsecaseProvider)();
       expect(authorsResult.isRight(), true);
       final Author author = authorsResult
           .fold<List<Author>>((l) => [], (r) => r)
           .first;
 
       await addTagUsecase(name: 'Book Integration Tag');
-      final tagsResult = await container
-          .read(tagRepositoryProvider.future)
-          .then((repo) => repo.getTags());
+      final tagsResult = await container.read(tagRepositoryProvider).getTags();
       expect(tagsResult.isRight(), true);
       final Tag tag = tagsResult
           .fold<List<Tag>>((l) => [], (r) => r)
@@ -198,8 +176,8 @@ void main() {
     });
 
     test('Library stats through providers', () async {
-      final getLibraryStatsUsecase = await container.read(
-        getLibraryStatsUsecaseProvider.future,
+      final getLibraryStatsUsecase = container.read(
+        getLibraryStatsUsecaseProvider,
       );
 
       // Initially empty
