@@ -19,15 +19,19 @@ import 'src/data/id_registry/services/author_id_registry_service.dart';
 import 'src/domain/domain.dart';
 
 // External dependencies providers (to be overridden by users)
+// These provide external services that the domain layer depends on
 final dioProvider = Provider<Dio>(
   (ref) => throw UnimplementedError('Provide Dio instance'),
 );
 final databaseServiceProvider = Provider<DatabaseService>(
   (ref) => throw UnimplementedError('Provide DatabaseService instance'),
 );
-final unitOfWorkProvider = Provider<UnitOfWork>(
+// Transaction manager for coordinating database operations
+final transactionProvider = Provider<UnitOfWork>(
   (ref) => throw UnimplementedError('Provide UnitOfWork instance'),
 );
+// Legacy alias for backwards compatibility
+final unitOfWorkProvider = transactionProvider;
 final imageServiceProvider = Provider<ImageService>(
   (ref) => throw UnimplementedError('Provide ImageService instance'),
 );
@@ -65,10 +69,12 @@ final tagDatasourceProvider = Provider<TagDatasource>((ref) {
 // Repositories
 final authorRepositoryProvider = Provider<AuthorRepository>((ref) {
   final datasource = ref.watch(authorDatasourceProvider);
-  final unitOfWork = ref.watch(unitOfWorkProvider);
+  final unitOfWork = ref.watch(transactionProvider);
+  final idRegistryService = ref.watch(authorIdRegistryServiceProvider);
   return AuthorRepositoryImpl(
     authorDatasource: datasource,
     unitOfWork: unitOfWork,
+    idRegistryService: idRegistryService,
   );
 });
 
@@ -77,7 +83,7 @@ final bookRepositoryProvider = Provider<BookRepository>((ref) {
   final authorDatasource = ref.watch(authorDatasourceProvider);
   final tagDatasource = ref.watch(tagDatasourceProvider);
   final idRegistryService = ref.watch(bookIdRegistryServiceProvider);
-  final unitOfWork = ref.watch(unitOfWorkProvider);
+  final unitOfWork = ref.watch(transactionProvider);
   return BookRepositoryImpl(
     bookDatasource: bookDatasource,
     authorDatasource: authorDatasource,
@@ -98,7 +104,7 @@ final bookMetadataRepositoryProvider = Provider<BookMetadataRepository>((ref) {
 
 final tagRepositoryProvider = Provider<TagRepository>((ref) {
   final tagDatasource = ref.watch(tagDatasourceProvider);
-  final unitOfWork = ref.watch(unitOfWorkProvider);
+  final unitOfWork = ref.watch(transactionProvider);
   return TagRepositoryImpl(
     tagDatasource: tagDatasource,
     unitOfWork: unitOfWork,
@@ -134,12 +140,12 @@ final bookValidationServiceProvider = Provider<BookValidationService>((ref) {
   return BookValidationServiceImpl(idRegistryService: idRegistryService);
 });
 
-// LibraryDataAccess
-final libraryDataAccessProvider = Provider<LibraryDataAccess>((ref) {
+// Data access service - provides bundled access to all repositories and services
+final dataAccessProvider = Provider<LibraryDataAccess>((ref) {
   final authorRepository = ref.watch(authorRepositoryProvider);
   final bookRepository = ref.watch(bookRepositoryProvider);
   final tagRepository = ref.watch(tagRepositoryProvider);
-  final unitOfWork = ref.watch(unitOfWorkProvider);
+  final unitOfWork = ref.watch(transactionProvider);
   final dbService = ref.watch(databaseServiceProvider);
   final authorIdRegistryService = ref.watch(authorIdRegistryServiceProvider);
   final bookIdRegistryService = ref.watch(bookIdRegistryServiceProvider);
@@ -153,6 +159,9 @@ final libraryDataAccessProvider = Provider<LibraryDataAccess>((ref) {
     bookIdRegistryService: bookIdRegistryService,
   );
 });
+
+// Legacy alias for backwards compatibility
+final libraryDataAccessProvider = dataAccessProvider;
 
 // Usecases
 final addAuthorUsecaseProvider = Provider<AddAuthorUsecase>((ref) {

@@ -61,6 +61,7 @@ void main() {
         final authorRepository = AuthorRepositoryImpl(
           authorDatasource: authorDatasource,
           unitOfWork: unitOfWork,
+          idRegistryService: authorIdRegistryService,
         );
         final addAuthorUsecase = AddAuthorUsecase(
           authorRepository: authorRepository,

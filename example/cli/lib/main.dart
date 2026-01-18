@@ -21,7 +21,7 @@ void main() async {
     overrides: [
       dioProvider.overrideWithValue(dio),
       databaseServiceProvider.overrideWithValue(dbService),
-      unitOfWorkProvider.overrideWithValue(unitOfWork),
+      transactionProvider.overrideWithValue(unitOfWork),
       imageServiceProvider.overrideWithValue(imageService),
     ],
   );
@@ -50,9 +50,9 @@ void main() async {
   );
   final bookValidationService = container.read(bookValidationServiceProvider);
 
-  // Read LibraryDataAccess
+  // Read LibraryDataAccess (or use dataAccessProvider alias)
   final libraryDataAccess = await container.read(
-    libraryDataAccessProvider.future,
+    dataAccessProvider.future, // or libraryDataAccessProvider
   );
 
   // Example: Read usecases

@@ -197,5 +197,22 @@ void main() {
       expect(stats.totalAuthors, 0);
       expect(stats.totalTags, 0);
     });
+
+    group('transactionProvider Integration Tests', () {
+      test('transactionProvider provides UnitOfWork instance', () {
+        final unitOfWork = container.read(transactionProvider);
+        expect(unitOfWork, isA<UnitOfWork>());
+        expect(unitOfWork, isA<SembastUnitOfWork>());
+      });
+
+      test(
+        'transactionProvider and unitOfWorkProvider provide the same instance',
+        () {
+          final transactionUnitOfWork = container.read(transactionProvider);
+          final unitOfWork = container.read(unitOfWorkProvider);
+          expect(transactionUnitOfWork, equals(unitOfWork));
+        },
+      );
+    });
   }, timeout: Timeout(Duration(seconds: 60)));
 }

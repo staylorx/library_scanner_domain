@@ -37,6 +37,7 @@ void main() {
         final authorRepository = AuthorRepositoryImpl(
           authorDatasource: authorDatasource,
           unitOfWork: unitOfWork,
+          idRegistryService: authorIdRegistryService,
         );
         final bookRepository = BookRepositoryImpl(
           authorDatasource: authorDatasource,

@@ -157,39 +157,61 @@ final factory = LibraryFactory(
 );
 ```
 
-## Wiring Up Factories and Providers
+## Provider Setup and Data Access
 
-To integrate with dependency injection frameworks like Riverpod, create providers that instantiate the factory and its dependencies.
+The library provides Riverpod providers for dependency injection. The providers are organized by responsibility:
 
-### Example with Riverpod
+### External Dependencies (Override These)
+- `dioProvider`: HTTP client for API calls
+- `databaseServiceProvider`: Database service implementation
+- `transactionProvider`: Transaction management (Unit of Work pattern)
+- `imageServiceProvider`: Image processing service
+
+### Data Access Providers
+- `dataAccessProvider`: **Main data access point** - provides `LibraryDataAccess` with all repositories and services
+- `libraryDataAccessProvider`: Legacy alias for `dataAccessProvider`
+- Individual repository providers: `bookRepositoryProvider`, `authorRepositoryProvider`, etc.
+
+### Usage Patterns
+
+**Recommended: Use Usecases** (Business logic layer)
+```dart
+final booksProvider = FutureProvider<List<Book>>((ref) async {
+  final usecase = await ref.watch(getBooksUsecaseProvider.future);
+  final result = await usecase();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (books) => books,
+  );
+});
+```
+
+**Alternative: Direct Data Access**
+```dart
+final dataAccess = ref.watch(dataAccessProvider);
+// Access repositories directly
+final books = await dataAccess.bookRepository.getAll();
+final authors = await dataAccess.authorRepository.getAll();
+```
+
+### Provider Setup Example
 
 See `example/flutter/lib/providers.dart` for a complete example.
 
 Key points:
-- Create providers for external dependencies (e.g., Dio, database path).
-- Create a `LibraryFactory` provider using your database implementations.
-- Create repository providers by calling factory methods.
-- Create usecase providers injecting the repositories.
+- Override external providers with your implementations
+- Use `dataAccessProvider` for bundled data access
+- Use individual usecase providers for business operations
 
 ```dart
-// Example provider setup
-final libraryFactoryProvider = Provider<LibraryFactory>((ref) {
-  final dbService = MyDatabaseService();
-  final unitOfWork = MyUnitOfWork();
-  final apiService = ref.watch(bookApiServiceProvider);
-  final imageService = ref.watch(imageServiceProvider);
-  return LibraryFactory(
-    dbService: dbService,
-    unitOfWork: unitOfWork,
-    apiService: apiService,
-    imageService: imageService,
-  );
+// Override external providers
+final transactionProviderOverride = transactionProvider.overrideWith((ref) {
+  final dbService = ref.watch(databaseServiceProvider);
+  return SembastUnitOfWork(dbService: dbService);
 });
 
-final bookRepositoryProvider = FutureProvider<BookRepository>((ref) async {
-  final factory = ref.watch(libraryFactoryProvider);
-  return factory.createBookRepository();
-});
+// Use data access
+final dataAccess = ref.watch(dataAccessProvider);
 ```
 
 This approach ensures that repositories are created once and reused, while allowing easy testing and dependency swapping.

@@ -201,4 +201,33 @@ void main() {
       },
     );
   });
+
+  group('transactionProvider Tests', () {
+    test(
+      'transactionProvider throws UnimplementedError when not overridden',
+      () {
+        final container = ProviderContainer(); // no overrides
+        expect(
+          () => container.read(transactionProvider),
+          throwsA(
+            predicate((e) => e.toString().contains('UnimplementedError')),
+          ),
+        );
+        container.dispose();
+      },
+    );
+
+    test(
+      'transactionProvider provides UnitOfWork instance when overridden',
+      () {
+        final container = ProviderContainer(
+          overrides: [transactionProvider.overrideWithValue(mockUnitOfWork)],
+        );
+        final unitOfWork = container.read(transactionProvider);
+        expect(unitOfWork, isA<UnitOfWork>());
+        expect(unitOfWork, equals(mockUnitOfWork));
+        container.dispose();
+      },
+    );
+  });
 }

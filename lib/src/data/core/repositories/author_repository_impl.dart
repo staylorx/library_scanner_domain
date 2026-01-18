@@ -8,14 +8,17 @@ import 'package:uuid/uuid.dart';
 class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   final AuthorDatasource _authorDatasource;
   final UnitOfWork _unitOfWork;
+  final AuthorIdRegistryService _idRegistryService;
 
   /// Creates an AuthorRepositoryImpl instance.
   AuthorRepositoryImpl({
     required AuthorDatasource authorDatasource,
     required UnitOfWork unitOfWork,
+    required AuthorIdRegistryService idRegistryService,
     Logger? logger,
   }) : _authorDatasource = authorDatasource,
-       _unitOfWork = unitOfWork;
+       _unitOfWork = unitOfWork,
+       _idRegistryService = idRegistryService;
 
   /// Retrieves all authors from the database.
   @override
@@ -89,6 +92,18 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     final id = const Uuid().v4();
     final authorWithId = author.copyWith(id: id);
     final model = AuthorModel.fromEntity(authorWithId);
+    final idPairs = AuthorIdPairs(pairs: authorWithId.businessIds);
+    final registerResult = _idRegistryService.registerAuthorIdPairs(idPairs);
+    if (registerResult.isLeft()) {
+      logger?.warning(
+        'Failed to register author ID pairs: ${registerResult.getLeft().getOrElse(() => RegistryFailure('Register failed')).message}',
+      );
+      return Either.left(
+        registerResult.getLeft().getOrElse(
+          () => RegistryFailure('Register failed'),
+        ),
+      );
+    }
     if (txn != null) {
       logger?.info('Using provided transaction for addAuthor');
       final saveResult = await _authorDatasource.saveAuthor(model, txn: txn);
@@ -120,6 +135,46 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     logger?.info(
       'Entering updateAuthor with id: ${author.id} and author: ${author.name}',
     );
+    final oldAuthorResult = await getAuthorById(id: author.id);
+    if (oldAuthorResult.isLeft()) {
+      logger?.warning(
+        'Failed to get old author for update: ${oldAuthorResult.getLeft().getOrElse(() => NotFoundFailure('Old author not found')).message}',
+      );
+      return Either.left(
+        oldAuthorResult.getLeft().getOrElse(
+          () => NotFoundFailure('Old author not found'),
+        ),
+      );
+    }
+    final oldAuthor = oldAuthorResult.getRight().getOrElse(
+      () => throw 'Should not happen',
+    );
+    final oldIdPairs = AuthorIdPairs(pairs: oldAuthor.businessIds);
+    final newIdPairs = AuthorIdPairs(pairs: author.businessIds);
+    final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
+      oldIdPairs,
+    );
+    if (unregisterResult.isLeft()) {
+      logger?.warning(
+        'Failed to unregister old author ID pairs: ${unregisterResult.getLeft().getOrElse(() => RegistryFailure('Unregister failed')).message}',
+      );
+      return Either.left(
+        unregisterResult.getLeft().getOrElse(
+          () => RegistryFailure('Unregister failed'),
+        ),
+      );
+    }
+    final registerResult = _idRegistryService.registerAuthorIdPairs(newIdPairs);
+    if (registerResult.isLeft()) {
+      logger?.warning(
+        'Failed to register new author ID pairs: ${registerResult.getLeft().getOrElse(() => RegistryFailure('Register failed')).message}',
+      );
+      return Either.left(
+        registerResult.getLeft().getOrElse(
+          () => RegistryFailure('Register failed'),
+        ),
+      );
+    }
     final model = AuthorModel.fromEntity(author);
     if (txn != null) {
       logger?.info('Using provided transaction for updateAuthor');
@@ -150,6 +205,20 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     Transaction? txn,
   }) async {
     logger?.info('Entering deleteAuthor with id: ${author.id}');
+    final idPairs = AuthorIdPairs(pairs: author.businessIds);
+    final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
+      idPairs,
+    );
+    if (unregisterResult.isLeft()) {
+      logger?.warning(
+        'Failed to unregister author ID pairs: ${unregisterResult.getLeft().getOrElse(() => RegistryFailure('Unregister failed')).message}',
+      );
+      return Either.left(
+        unregisterResult.getLeft().getOrElse(
+          () => RegistryFailure('Unregister failed'),
+        ),
+      );
+    }
     if (txn != null) {
       logger?.info('Using provided transaction for deleteAuthor');
       final result = await _authorDatasource.deleteAuthorWithCascade(

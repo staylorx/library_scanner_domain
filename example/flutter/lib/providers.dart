@@ -21,7 +21,7 @@ final databaseServiceProviderOverride = databaseServiceProvider.overrideWith((
   return SembastDatabase(testDbPath: dbPath);
 });
 
-final unitOfWorkProviderOverride = unitOfWorkProvider.overrideWith((ref) {
+final transactionProviderOverride = transactionProvider.overrideWith((ref) {
   final dbService = ref.watch(databaseServiceProvider);
   return SembastUnitOfWork(dbService: dbService);
 });
@@ -32,6 +32,8 @@ final imageServiceProviderOverride = imageServiceProvider.overrideWith((ref) {
 });
 
 // State providers for UI
+// Recommended: Use usecases for business logic (as shown)
+// Alternative: Use dataAccessProvider for direct data access
 final authorsProvider = FutureProvider<List<Author>>((ref) async {
   final usecase = await ref.watch(getAuthorsUsecaseProvider.future);
   final result = await usecase();
@@ -49,3 +51,7 @@ final booksProvider = FutureProvider<List<Book>>((ref) async {
     (books) => books,
   );
 });
+
+// Example of direct data access (alternative to usecases):
+// final dataAccess = ref.watch(dataAccessProvider);
+// final authors = await dataAccess.authorRepository.getAll();
