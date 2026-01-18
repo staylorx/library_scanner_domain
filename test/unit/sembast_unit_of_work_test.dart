@@ -1,11 +1,9 @@
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:test/test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_transaction.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
-import 'package:library_scanner_domain/src/domain/services/database_service.dart';
-import 'package:library_scanner_domain/src/utils/failure.dart';
 
 class MockDatabaseService extends Mock implements DatabaseService {}
 

@@ -27,6 +27,6 @@ The example shows how to:
 
 ## Configuration
 
-The example uses an in-memory Sembast database for simplicity. To use a persistent database, pass a file path to `LibraryFactory.sembast()`.
+The example uses an in-memory Sembast database for simplicity. To use a persistent database, pass a file path to `SembastDatabase(testDbPath: path)`.
 
 For production use, you would implement proper error handling, logging, and possibly use a DI container like `get_it`.

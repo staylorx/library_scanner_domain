@@ -1,7 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import '../../utils/failure.dart';
-import '../entities/author.dart';
-import 'unit_of_work.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 abstract class AuthorRepository {
   Future<Either<Failure, List<Author>>> getAuthors();

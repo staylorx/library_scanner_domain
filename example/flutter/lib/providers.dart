@@ -32,8 +32,13 @@ final libraryFactoryProvider = FutureProvider<LibraryFactory>((ref) async {
   final imageService = ref.watch(imageServiceProvider);
   final dbPath = await ref.watch(databasePathProvider.future);
 
-  return LibraryFactory.sembast(
-    dbPath,
+  // Create Sembast database and unit of work
+  final dbService = SembastDatabase(testDbPath: dbPath);
+  final unitOfWork = SembastUnitOfWork(dbService: dbService);
+
+  return LibraryFactory(
+    dbService: dbService,
+    unitOfWork: unitOfWork,
     apiService: apiService,
     imageService: imageService,
   );

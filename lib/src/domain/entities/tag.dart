@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../utils/slug_utils.dart';
 
 /// Represents a tag.
 class Tag with EquatableMixin {
@@ -15,7 +16,7 @@ class Tag with EquatableMixin {
   final String color;
 
   /// Slug version of the name.
-  String get slug => _sluggify(name);
+  String get slug => computeSlug(name);
 
   /// Creates Tag.
   Tag({
@@ -35,22 +36,6 @@ class Tag with EquatableMixin {
       description: description ?? this.description,
       color: color ?? this.color,
     );
-  }
-
-  /// Converts string to slug.
-  String _sluggify(String input) {
-    var slug = input
-        .toLowerCase()
-        .replaceAll(
-          RegExp(r'[^a-z0-9\s-]'),
-          '',
-        ) // Remove special chars except spaces and hyphens
-        .replaceAll(RegExp(r'\s+'), '-') // Replace spaces with hyphens
-        .replaceAll(RegExp(r'-+'), '-') // Replace multiple hyphens with single
-        .trim();
-    if (slug.startsWith('-')) slug = slug.substring(1);
-    if (slug.endsWith('-')) slug = slug.substring(0, slug.length - 1);
-    return slug;
   }
 
   @override

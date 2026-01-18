@@ -155,9 +155,13 @@ class BookDatasource {
   }
 
   /// Saves a book to the store.
-  Future<Either<Failure, Unit>> saveBook(BookModel book, {dynamic db}) async {
+  Future<Either<Failure, Unit>> saveBook(
+    BookModel book, {
+    Transaction? txn,
+  }) async {
     try {
       final data = book.toMap();
+      final db = txn?.db;
       final result = await _dbService.save(
         collection: 'books',
         id: book.id,
@@ -174,8 +178,12 @@ class BookDatasource {
   }
 
   /// Deletes a book by ID.
-  Future<Either<Failure, Unit>> deleteBook(String id, {dynamic db}) async {
+  Future<Either<Failure, Unit>> deleteBook(
+    String id, {
+    Transaction? txn,
+  }) async {
     try {
+      final db = txn?.db;
       final result = await _dbService.delete(
         collection: 'books',
         id: id,
@@ -193,9 +201,10 @@ class BookDatasource {
   /// Removes author from books.
   Future<Either<Failure, Unit>> removeAuthorFromBooks(
     String name, {
-    dynamic db,
+    Transaction? txn,
   }) async {
     try {
+      final db = txn?.db;
       final result = await _dbService.getAll(collection: 'books', db: db);
       return result.match((failure) => Either.left(failure), (records) async {
         for (final record in records) {
@@ -212,7 +221,7 @@ class BookDatasource {
               tagIds: model.tagIds,
               publishedDate: model.publishedDate,
             );
-            final saveResult = await saveBook(updatedModel, db: db);
+            final saveResult = await saveBook(updatedModel, txn: txn);
             if (saveResult.isLeft()) {
               return saveResult;
             }

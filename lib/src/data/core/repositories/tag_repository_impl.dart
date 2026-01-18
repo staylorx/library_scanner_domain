@@ -88,8 +88,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     final model = TagModel.fromEntity(tagWithId);
     if (txn != null) {
       logger?.info('Using provided transaction for addTag');
-      final db = (txn as SembastTransaction).db;
-      final saveResult = await _tagDatasource.saveTag(model, db: db);
+      final saveResult = await _tagDatasource.saveTag(model, txn: txn);
       return saveResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(tagWithId),
@@ -97,8 +96,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for addTag');
-        final db = (txn as SembastTransaction).db;
-        final saveResult = await _tagDatasource.saveTag(model, db: db);
+        final saveResult = await _tagDatasource.saveTag(model, txn: txn);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
@@ -119,10 +117,9 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     logger?.info('Entering updateTag with tag: ${tag.name}');
     if (txn != null) {
       logger?.info('Using provided transaction for updateTag');
-      final db = (txn as SembastTransaction).db;
       final model = TagModel.fromEntity(tag);
       logger?.info('Saving updated tag ${tag.name}');
-      final saveResult = await _tagDatasource.saveTag(model, db: db);
+      final saveResult = await _tagDatasource.saveTag(model, txn: txn);
       return saveResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(unit),
@@ -130,10 +127,9 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for updateTag');
-        final db = (txn as SembastTransaction).db;
         final model = TagModel.fromEntity(tag);
         logger?.info('Saving updated tag ${tag.name}');
-        final saveResult = await _tagDatasource.saveTag(model, db: db);
+        final saveResult = await _tagDatasource.saveTag(model, txn: txn);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
@@ -154,8 +150,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     logger?.info('Entering deleteTag with tag: ${tag.name}');
     if (txn != null) {
       logger?.info('Using provided transaction for deleteTag');
-      final db = (txn as SembastTransaction).db;
-      final deleteResult = await _tagDatasource.deleteTag(tag.id, db: db);
+      final deleteResult = await _tagDatasource.deleteTag(tag.id, txn: txn);
       return deleteResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(unit),
@@ -163,8 +158,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for deleteTag');
-        final db = (txn as SembastTransaction).db;
-        final deleteResult = await _tagDatasource.deleteTag(tag.id, db: db);
+        final deleteResult = await _tagDatasource.deleteTag(tag.id, txn: txn);
         if (deleteResult.isLeft()) {
           throw deleteResult.getLeft().getOrElse(
             () => DatabaseFailure('Delete failed'),

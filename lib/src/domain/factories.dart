@@ -4,15 +4,13 @@ import 'package:fpdart/fpdart.dart';
 import '../data/book_api/datasources/book_api_service.dart';
 import '../utils/failure.dart';
 import '../data/id_registry/services/book_id_registry_service.dart';
-import '../data/sembast/datasources/sembast_database.dart';
-import '../data/sembast/repositories/author_repository_impl.dart';
-import '../data/sembast/repositories/book_metadata_repository_impl.dart';
-import '../data/sembast/repositories/book_repository_impl.dart';
-import '../data/sembast/repositories/tag_repository_impl.dart';
-import '../data/sembast/unit_of_work/sembast_unit_of_work.dart';
-import '../data/storage/author_datasource.dart';
-import '../data/storage/book_datasource.dart';
-import '../data/storage/tag_datasource.dart';
+import '../data/core/repositories/author_repository_impl.dart';
+import '../data/core/repositories/book_metadata_repository_impl.dart';
+import '../data/core/repositories/book_repository_impl.dart';
+import '../data/core/repositories/tag_repository_impl.dart';
+import '../data/sembast/datasources/author_datasource.dart';
+import '../data/sembast/datasources/book_datasource.dart';
+import '../data/sembast/datasources/tag_datasource.dart';
 import '../data/core/services/author_filtering_service.dart';
 import '../data/core/services/author_sorting_service.dart';
 import '../data/core/services/book_sorting_service.dart';
@@ -47,41 +45,35 @@ class LibraryFactory {
     _bookIdRegistry = BookIdRegistryServiceImpl();
   }
 
-  /// Convenience factory for Sembast database.
-  /// If dbPath is null, uses in-memory database.
-  factory LibraryFactory.sembast(
-    String? dbPath, {
-    required BookApiService apiService,
-    required ImageService imageService,
-  }) {
-    final database = SembastDatabase(testDbPath: dbPath);
-    final unitOfWork = SembastUnitOfWork(dbService: database);
-    return LibraryFactory(
-      dbService: database,
-      unitOfWork: unitOfWork,
-      apiService: apiService,
-      imageService: imageService,
-    );
-  }
+  /// Creates an AuthorDatasource instance.
+  AuthorDatasource createAuthorDatasource() =>
+      AuthorDatasource(dbService: _dbService);
+
+  /// Creates a BookDatasource instance.
+  BookDatasource createBookDatasource() =>
+      BookDatasource(dbService: _dbService);
+
+  /// Creates a TagDatasource instance.
+  TagDatasource createTagDatasource() => TagDatasource(dbService: _dbService);
 
   Future<AuthorDatasource> getAuthorDatasource() async {
-    authorDatasource = AuthorDatasource(dbService: _dbService);
+    authorDatasource = createAuthorDatasource();
     return authorDatasource;
   }
 
   Future<BookDatasource> getBookDatasource() async {
-    bookDatasource = BookDatasource(dbService: _dbService);
+    bookDatasource = createBookDatasource();
     return bookDatasource;
   }
 
   Future<TagDatasource> getTagDatasource() async {
-    tagDatasource = TagDatasource(dbService: _dbService);
+    tagDatasource = createTagDatasource();
     return tagDatasource;
   }
 
   /// Creates an AuthorRepository instance.
   Future<AuthorRepository> createAuthorRepository() async {
-    final authorDatasource = AuthorDatasource(dbService: _dbService);
+    final authorDatasource = createAuthorDatasource();
     return AuthorRepositoryImpl(
       authorDatasource: authorDatasource,
       unitOfWork: _unitOfWork,
@@ -90,9 +82,9 @@ class LibraryFactory {
 
   /// Creates a BookRepository instance.
   Future<BookRepository> createBookRepository() async {
-    final bookDatasource = BookDatasource(dbService: _dbService);
-    final authorDatasource = AuthorDatasource(dbService: _dbService);
-    final tagDatasource = TagDatasource(dbService: _dbService);
+    final bookDatasource = createBookDatasource();
+    final authorDatasource = createAuthorDatasource();
+    final tagDatasource = createTagDatasource();
     return BookRepositoryImpl(
       bookDatasource: bookDatasource,
       authorDatasource: authorDatasource,
@@ -112,7 +104,7 @@ class LibraryFactory {
 
   /// Creates a TagRepository instance.
   Future<TagRepository> createTagRepository() async {
-    final tagDatasource = TagDatasource(dbService: _dbService);
+    final tagDatasource = createTagDatasource();
     return TagRepositoryImpl(
       tagDatasource: tagDatasource,
       unitOfWork: _unitOfWork,

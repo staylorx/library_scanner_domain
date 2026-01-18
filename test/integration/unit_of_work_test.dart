@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import 'package:library_scanner_domain/src/data/sembast/datasources/sembast_database.dart';
-import 'package:library_scanner_domain/src/data/storage/tag_datasource.dart';
+import 'package:library_scanner_domain/src/data/sembast/datasources/tag_datasource.dart';
 import 'package:library_scanner_domain/src/data/core/models/tag_model.dart';
 import 'package:library_scanner_domain/src/domain/services/database_service.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
@@ -48,10 +48,7 @@ void main() {
           slug: 'test-tag',
           bookIdPairs: [],
         );
-        final saveResult = await tagDatasource.saveTag(
-          tagModel,
-          db: (txn as dynamic).db,
-        );
+        final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
         expect(saveResult.isRight(), true);
         return 'success';
       });
@@ -85,10 +82,7 @@ void main() {
           slug: 'test-tag',
           bookIdPairs: [],
         );
-        final saveResult = await tagDatasource.saveTag(
-          tagModel,
-          db: (txn as dynamic).db,
-        );
+        final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
         expect(saveResult.isRight(), true);
 
         // Simulate failure after save
@@ -115,7 +109,7 @@ void main() {
           slug: 'tag-1',
           bookIdPairs: [],
         );
-        await tagDatasource.saveTag(tagModel1, db: (txn as dynamic).db);
+        await tagDatasource.saveTag(tagModel1, txn: txn);
 
         // Save second tag
         final tagModel2 = TagModel(
@@ -124,7 +118,7 @@ void main() {
           slug: 'tag-2',
           bookIdPairs: [],
         );
-        await tagDatasource.saveTag(tagModel2, db: (txn as dynamic).db);
+        await tagDatasource.saveTag(tagModel2, txn: txn);
 
         return 'success';
       });
@@ -149,7 +143,7 @@ void main() {
           slug: 'tag-1',
           bookIdPairs: [],
         );
-        await tagDatasource.saveTag(tagModel1, db: (txn as dynamic).db);
+        await tagDatasource.saveTag(tagModel1, txn: txn);
 
         // Save second tag
         final tagModel2 = TagModel(
@@ -158,7 +152,7 @@ void main() {
           slug: 'tag-2',
           bookIdPairs: [],
         );
-        await tagDatasource.saveTag(tagModel2, db: (txn as dynamic).db);
+        await tagDatasource.saveTag(tagModel2, txn: txn);
 
         // Fail after both saves
         throw Exception('Transaction failure');

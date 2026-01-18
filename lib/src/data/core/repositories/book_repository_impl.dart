@@ -136,8 +136,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final model = BookModel.fromEntity(bookWithId);
     if (txn != null) {
       logger?.info('Using provided transaction for addBook');
-      final db = (txn as SembastTransaction).db;
-      final saveResult = await _bookDatasource.saveBook(model, db: db);
+      final saveResult = await _bookDatasource.saveBook(model, txn: txn);
       if (saveResult.isLeft()) {
         return Either.left(
           saveResult.getLeft().getOrElse(() => DatabaseFailure('Save failed')),
@@ -159,7 +158,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final updateResult = await _tagDatasource.addBookToTags(
         bookWithId.id,
         tagNames,
-        db: db,
+        txn: txn,
       );
       return updateResult.fold(
         (failure) => Either.left(failure),
@@ -168,8 +167,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for addBook');
-        final db = (txn as SembastTransaction).db;
-        final saveResult = await _bookDatasource.saveBook(model, db: db);
+        final saveResult = await _bookDatasource.saveBook(model, txn: txn);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
@@ -189,7 +187,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         final updateResult = await _tagDatasource.addBookToTags(
           bookWithId.id,
           tagNames,
-          db: db,
+          txn: txn,
         );
         if (updateResult.isLeft()) {
           throw updateResult.getLeft().getOrElse(
@@ -212,8 +210,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final model = BookModel.fromEntity(book);
     if (txn != null) {
       logger?.info('Using provided transaction for updateBook');
-      final db = (txn as SembastTransaction).db;
-      final saveResult = await _bookDatasource.saveBook(model, db: db);
+      final saveResult = await _bookDatasource.saveBook(model, txn: txn);
       return saveResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(unit),
@@ -221,8 +218,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for updateBook');
-        final db = (txn as SembastTransaction).db;
-        final saveResult = await _bookDatasource.saveBook(model, db: db);
+        final saveResult = await _bookDatasource.saveBook(model, txn: txn);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
@@ -244,7 +240,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
     if (txn != null) {
       logger?.info('Using provided transaction for deleteBook');
-      final db = (txn as SembastTransaction).db;
       logger?.info('Unregistering book ID pairs');
       final unregisterResult = _idRegistryService.unregisterBookIdPairs(
         BookIdPairs(pairs: book.businessIds),
@@ -257,7 +252,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         );
       }
       logger?.info('Deleting book record');
-      final deleteResult = await _bookDatasource.deleteBook(book.id, db: db);
+      final deleteResult = await _bookDatasource.deleteBook(book.id, txn: txn);
       if (deleteResult.isLeft()) {
         return Either.left(
           deleteResult.getLeft().getOrElse(
@@ -270,7 +265,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final updateResult = await _tagDatasource.removeBookFromTags(
         book.id,
         tagNames,
-        db: db,
+        txn: txn,
       );
       return updateResult.fold(
         (failure) => Either.left(failure),
@@ -279,7 +274,6 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for deleteBook');
-        final db = (txn as SembastTransaction).db;
         logger?.info('Unregistering book ID pairs');
         final unregisterResult = _idRegistryService.unregisterBookIdPairs(
           BookIdPairs(pairs: book.businessIds),
@@ -290,7 +284,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           );
         }
         logger?.info('Deleting book record');
-        final deleteResult = await _bookDatasource.deleteBook(book.id, db: db);
+        final deleteResult = await _bookDatasource.deleteBook(
+          book.id,
+          txn: txn,
+        );
         if (deleteResult.isLeft()) {
           throw deleteResult.getLeft().getOrElse(
             () => DatabaseFailure('Delete failed'),
@@ -301,7 +298,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         final updateResult = await _tagDatasource.removeBookFromTags(
           book.id,
           tagNames,
-          db: db,
+          txn: txn,
         );
         if (updateResult.isLeft()) {
           throw updateResult.getLeft().getOrElse(

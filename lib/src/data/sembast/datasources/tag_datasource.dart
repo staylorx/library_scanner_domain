@@ -82,9 +82,13 @@ class TagDatasource {
   }
 
   /// Saves a tag to the store.
-  Future<Either<Failure, Unit>> saveTag(TagModel tag, {dynamic db}) async {
+  Future<Either<Failure, Unit>> saveTag(
+    TagModel tag, {
+    Transaction? txn,
+  }) async {
     try {
       final data = tag.toMap();
+      final db = txn?.db;
       final result = await _dbService.save(
         collection: 'tags',
         id: tag.id,
@@ -101,8 +105,9 @@ class TagDatasource {
   }
 
   /// Deletes a tag by ID.
-  Future<Either<Failure, Unit>> deleteTag(String id, {dynamic db}) async {
+  Future<Either<Failure, Unit>> deleteTag(String id, {Transaction? txn}) async {
     try {
+      final db = txn?.db;
       final result = await _dbService.delete(
         collection: 'tags',
         id: id,
@@ -121,7 +126,7 @@ class TagDatasource {
   Future<Either<Failure, Unit>> addBookToTags(
     String bookId,
     List<String> tagNames, {
-    dynamic db,
+    Transaction? txn,
   }) async {
     try {
       for (final tagName in tagNames) {
@@ -141,7 +146,7 @@ class TagDatasource {
               slug: tag.slug,
               bookIdPairs: updatedBookIds,
             );
-            final saveResult = await saveTag(updatedTag, db: db);
+            final saveResult = await saveTag(updatedTag, txn: txn);
             if (saveResult.isLeft()) {
               return saveResult;
             }
@@ -158,7 +163,7 @@ class TagDatasource {
   Future<Either<Failure, Unit>> removeBookFromTags(
     String bookId,
     List<String> tagNames, {
-    dynamic db,
+    Transaction? txn,
   }) async {
     try {
       for (final tagName in tagNames) {
@@ -176,7 +181,7 @@ class TagDatasource {
               slug: tag.slug,
               bookIdPairs: updatedBookIds,
             );
-            final saveResult = await saveTag(updatedTag, db: db);
+            final saveResult = await saveTag(updatedTag, txn: txn);
             if (saveResult.isLeft()) {
               return saveResult;
             }

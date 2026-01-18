@@ -1,6 +1,6 @@
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:test/test.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_transaction.dart';
-import 'package:library_scanner_domain/src/domain/repositories/unit_of_work.dart';
 
 void main() {
   group('SembastTransaction', () {

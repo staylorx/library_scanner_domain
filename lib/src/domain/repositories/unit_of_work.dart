@@ -1,8 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import '../../utils/failure.dart';
-
-/// Abstract transaction interface for database operations.
-abstract class Transaction {}
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 /// Abstract Unit of Work for managing transactions across repositories.
 abstract class UnitOfWork {

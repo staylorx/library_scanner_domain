@@ -15,6 +15,7 @@ export 'repositories/book_metadata_repository.dart';
 export 'repositories/book_repository.dart';
 export 'repositories/tag_repository.dart';
 export 'repositories/unit_of_work.dart';
+export 'repositories/transaction.dart';
 
 // Usecases
 export 'usecases/add_author_usecase.dart';

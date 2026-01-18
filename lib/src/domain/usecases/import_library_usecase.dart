@@ -2,9 +2,25 @@ import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/data/sembast/utils/yaml_parsing_utils.dart';
+import 'package:library_scanner_domain/src/domain/utils/slug_utils.dart';
 import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
+
+class _BookParseParams {
+  final dynamic yamlBooks;
+  final Map<String, Author> authorMap;
+  final List<Tag> tags;
+
+  _BookParseParams(this.yamlBooks, this.authorMap, this.tags);
+}
+
+class _BookParseResult {
+  final List<Book> books;
+  final List<String> errors;
+  final List<String> missingAuthors;
+
+  _BookParseResult(this.books, this.errors, this.missingAuthors);
+}
 
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase with Loggable {
@@ -17,6 +33,147 @@ class ImportLibraryUsecase with Loggable {
     required this.isBookDuplicateUsecase,
   });
 
+  /// Parses authors from YAML data.
+  Future<Either<Failure, Map<String, Author>>> _parseAuthors(
+    dynamic yamlAuthors,
+  ) async {
+    return TaskEither.tryCatch(
+      () async {
+        final list = yamlAuthors as YamlList;
+        final authors = <String, Author>{};
+        for (final yamlAuthor in list) {
+          final name = yamlAuthor['name'] as String;
+          final idPairs = <AuthorIdPair>[];
+          if (yamlAuthor['id_pairs'] != null) {
+            final yamlIdPairs = yamlAuthor['id_pairs'] as List;
+            for (final yamlId in yamlIdPairs) {
+              final idType = AuthorIdType.values.firstWhere(
+                (e) => e.name == yamlId['id_type'],
+              );
+              idPairs.add(
+                AuthorIdPair(
+                  idType: idType,
+                  idCode: yamlId['id_code'] as String,
+                ),
+              );
+            }
+          }
+          if (idPairs.isEmpty) {
+            idPairs.add(AuthorIdPair(idType: AuthorIdType.local, idCode: name));
+          }
+          authors[name] = Author(
+            id: const Uuid().v4(),
+            businessIds: idPairs,
+            name: name,
+            biography: yamlAuthor['biography'] as String?,
+          );
+        }
+        return authors;
+      },
+      (error, stackTrace) => ParsingFailure('Failed to parse authors: $error'),
+    ).run();
+  }
+
+  /// Parses tags from YAML data.
+  Future<Either<Failure, List<Tag>>> _parseTags(dynamic yamlTags) async {
+    return TaskEither.tryCatch(
+      () async {
+        final list = yamlTags as YamlList;
+        final tagMap = <String, Tag>{};
+        for (final yamlTag in list) {
+          final name = yamlTag['name'] as String;
+          // Compute slug for uniqueness check
+          final slug = computeSlug(name);
+          // Skip if already exists (slug-based duplicate)
+          if (!tagMap.containsKey(slug)) {
+            tagMap[slug] = Tag(
+              id: const Uuid().v4(),
+              name: name,
+              color: yamlTag['color'] as String,
+            );
+          }
+        }
+        return tagMap.values.toList();
+      },
+      (error, stackTrace) => ParsingFailure('Failed to parse tags: $error'),
+    ).run();
+  }
+
+  /// Parses books from YAML data with parameters.
+  Future<Either<Failure, _BookParseResult>> _parseBooks(
+    _BookParseParams params,
+  ) async {
+    return TaskEither.tryCatch(
+      () async {
+        final list = params.yamlBooks as YamlList;
+        final books = <Book>[];
+        final errors = <String>[];
+        final missingAuthors = <String>{}; // Use set to avoid duplicates
+        for (int i = 0; i < list.length; i++) {
+          final yamlBook = list[i];
+          final authorNames = (yamlBook['authors'] as List)
+              .map((a) => a['name'] as String)
+              .toList();
+          final tagNames = yamlBook['tags'] != null
+              ? (yamlBook['tags'] as List)
+                    .map((t) => t['name'] as String)
+                    .toList()
+              : <String>[];
+          final bookAuthors = <Author>[];
+          for (final name in authorNames) {
+            final author = params.authorMap[name];
+            if (author != null) {
+              bookAuthors.add(author);
+            } else {
+              missingAuthors.add(name);
+            }
+          }
+          // Match tags by slug
+          final tagSlugs = tagNames.map(computeSlug).toSet();
+          final bookTags = params.tags
+              .where((t) => tagSlugs.contains(t.slug))
+              .toList();
+          final idPairs = <BookIdPair>[];
+          if (yamlBook['id_pairs'] != null) {
+            final yamlIdPairs = yamlBook['id_pairs'] as List;
+            for (final yamlId in yamlIdPairs) {
+              final idType = BookIdType.values.firstWhere(
+                (e) => e.name == yamlId['id_type'],
+              );
+              idPairs.add(
+                BookIdPair(idType: idType, idCode: yamlId['id_code'] as String),
+              );
+            }
+          }
+          if (idPairs.isEmpty) {
+            // Ensure every book has at least one local ID to prevent crashes
+            // when accessing book.idPairs.first in BookListScreen.
+            idPairs.add(
+              BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
+            );
+          }
+          final originalTitle = yamlBook['title'] as String;
+          final publishedDate = yamlBook['published_date'] != null
+              ? DateTime.parse(yamlBook['published_date'] as String)
+              : null;
+          books.add(
+            Book(
+              id: const Uuid().v4(),
+              businessIds: idPairs,
+              title: cleanBookTitle(title: originalTitle),
+              originalTitle: originalTitle,
+              authors: bookAuthors,
+              tags: bookTags,
+              publishedDate: publishedDate,
+            ),
+          );
+        }
+        return _BookParseResult(books, errors, missingAuthors.toList());
+      },
+      (error, stackTrace) => ParsingFailure('Failed to parse books: $error'),
+    ).run();
+  }
+
   /// Imports a library from the specified file path.
   Future<Either<Failure, ImportResult>> call({
     required String filePath,
@@ -28,7 +185,7 @@ class ImportLibraryUsecase with Loggable {
     try {
       final file = File(filePath);
       final yamlString = await file.readAsString();
-      final yamlData = await parseYamlData(yamlString);
+      final yamlData = loadYaml(yamlString);
       logger?.info('Parsed YAML data, keys: ${yamlData.keys}');
       logger?.info(
         'authors present: ${yamlData.containsKey('authors')}, value: ${yamlData['authors']}',
@@ -70,7 +227,7 @@ class ImportLibraryUsecase with Loggable {
       // Parse authors (optional, default empty)
       final Either<Failure, Map<String, Author>> authorMapEither =
           yamlData['authors'] != null
-          ? await parseAuthors(yamlData['authors'])
+          ? await _parseAuthors(yamlData['authors'])
           : Right(<String, Author>{});
       final authorMap = authorMapEither.match(
         (failure) => throw ServiceFailure(
@@ -83,7 +240,7 @@ class ImportLibraryUsecase with Loggable {
 
       // Parse tags (optional, default empty)
       final Either<Failure, List<Tag>> tagsEither = yamlData['tags'] != null
-          ? await parseTags(yamlData['tags'])
+          ? await _parseTags(yamlData['tags'])
           : Right(<Tag>[]);
       final tags = tagsEither.match(
         (failure) => throw ServiceFailure('Parse error'),
@@ -149,13 +306,13 @@ class ImportLibraryUsecase with Loggable {
       }
 
       // Parse books
-      final bookParseParams = BookParseParams(
+      final bookParseParams = _BookParseParams(
         yamlData['books'],
         authorMap,
         tags,
       );
-      final Either<Failure, BookParseResult> bookResultEither =
-          await parseBooks(bookParseParams);
+      final Either<Failure, _BookParseResult> bookResultEither =
+          await _parseBooks(bookParseParams);
       final bookResult = bookResultEither.match(
         (failure) => throw ServiceFailure('Parse error'),
         (result) => result,

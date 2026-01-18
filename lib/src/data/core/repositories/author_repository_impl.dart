@@ -91,8 +91,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     final model = AuthorModel.fromEntity(authorWithId);
     if (txn != null) {
       logger?.info('Using provided transaction for addAuthor');
-      final db = (txn as SembastTransaction).db;
-      final saveResult = await _authorDatasource.saveAuthor(model, db: db);
+      final saveResult = await _authorDatasource.saveAuthor(model, txn: txn);
       return saveResult.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(authorWithId),
@@ -100,8 +99,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for addAuthor');
-        final db = (txn as SembastTransaction).db;
-        final saveResult = await _authorDatasource.saveAuthor(model, db: db);
+        final saveResult = await _authorDatasource.saveAuthor(model, txn: txn);
         if (saveResult.isLeft()) {
           throw saveResult.getLeft().getOrElse(
             () => DatabaseFailure('Save failed'),
@@ -125,8 +123,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     final model = AuthorModel.fromEntity(author);
     if (txn != null) {
       logger?.info('Using provided transaction for updateAuthor');
-      final db = (txn as SembastTransaction).db;
-      final result = await _authorDatasource.saveAuthor(model, db: db);
+      final result = await _authorDatasource.saveAuthor(model, txn: txn);
       return result.fold(
         (failure) => Either.left(failure),
         (_) => Either.right(unit),
@@ -134,8 +131,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for updateAuthor');
-        final db = (txn as SembastTransaction).db;
-        final result = await _authorDatasource.saveAuthor(model, db: db);
+        final result = await _authorDatasource.saveAuthor(model, txn: txn);
         if (result.isLeft()) {
           throw result.getLeft().getOrElse(
             () => DatabaseFailure('Update failed'),
@@ -156,10 +152,9 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     logger?.info('Entering deleteAuthor with id: ${author.id}');
     if (txn != null) {
       logger?.info('Using provided transaction for deleteAuthor');
-      final db = (txn as SembastTransaction).db;
       final result = await _authorDatasource.deleteAuthorWithCascade(
         author.id,
-        db: db,
+        txn: txn,
       );
       return result.fold(
         (failure) => Either.left(failure),
@@ -168,10 +163,9 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     } else {
       return _unitOfWork.run((Transaction txn) async {
         logger?.info('Transaction started for deleteAuthor');
-        final db = (txn as SembastTransaction).db;
         final result = await _authorDatasource.deleteAuthorWithCascade(
           author.id,
-          db: db,
+          txn: txn,
         );
         if (result.isLeft()) {
           throw result.getLeft().getOrElse(

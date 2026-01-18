@@ -15,9 +15,14 @@ void main() async {
   // Create ImageService implementation for CLI
   final imageService = CliImageService(dio);
 
-  // Create LibraryFactory using Sembast (in-memory for demo)
-  final libraryFactory = LibraryFactory.sembast(
-    null, // null for in-memory database
+  // Create Sembast database and unit of work (in-memory for demo)
+  final dbService = SembastDatabase(testDbPath: null);
+  final unitOfWork = SembastUnitOfWork(dbService: dbService);
+
+  // Create LibraryFactory
+  final libraryFactory = LibraryFactory(
+    dbService: dbService,
+    unitOfWork: unitOfWork,
     apiService: bookApiService,
     imageService: imageService,
   );

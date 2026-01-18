@@ -1,11 +1,5 @@
 import 'package:fpdart/fpdart.dart';
-import '../entities/book.dart';
-import '../entities/author.dart';
-import '../entities/tag.dart';
-import '../../utils/failure.dart';
-import '../value_objects/book_id_pairs.dart';
-import '../value_objects/book_id_pair.dart';
-import 'unit_of_work.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 abstract class BookRepository {
   Future<Either<Failure, List<Book>>> getBooks({int? limit, int? offset});

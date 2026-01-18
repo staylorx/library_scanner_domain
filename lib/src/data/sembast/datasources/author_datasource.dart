@@ -83,10 +83,11 @@ class AuthorDatasource {
   /// Saves an author to the store.
   Future<Either<Failure, Unit>> saveAuthor(
     AuthorModel author, {
-    dynamic db,
+    Transaction? txn,
   }) async {
     try {
       final data = author.toMap();
+      final db = txn?.db;
       final result = await _dbService.save(
         collection: 'authors',
         id: author.id,
@@ -103,8 +104,12 @@ class AuthorDatasource {
   }
 
   /// Deletes an author by ID.
-  Future<Either<Failure, Unit>> deleteAuthor(String id, {dynamic db}) async {
+  Future<Either<Failure, Unit>> deleteAuthor(
+    String id, {
+    Transaction? txn,
+  }) async {
     try {
+      final db = txn?.db;
       final result = await _dbService.delete(
         collection: 'authors',
         id: id,
@@ -122,11 +127,11 @@ class AuthorDatasource {
   /// Deletes an author.
   Future<Either<Failure, Unit>> deleteAuthorWithCascade(
     String authorName, {
-    dynamic db,
+    Transaction? txn,
   }) async {
     try {
       // Delete the author
-      final deleteAuthorResult = await deleteAuthor(authorName, db: db);
+      final deleteAuthorResult = await deleteAuthor(authorName, txn: txn);
       return deleteAuthorResult;
     } catch (e) {
       return Either.left(
