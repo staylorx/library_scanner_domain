@@ -37,14 +37,10 @@ This file documents recurring architectural and implementation patterns used thr
 
 ## Dependency Injection Patterns
 
-### Factory Pattern
-- `LibraryFactory` class provides factory methods for all domain services and repositories.
-- Ensures consistent dependency injection and Clean Architecture compliance.
-- Used in Riverpod providers for object creation.
-
 ### Provider Pattern
-- Riverpod `Provider` used for factory objects (repositories, services).
-- `FutureProvider` used for data fetching operations.
+- Riverpod `Provider` used for all dependency injection.
+- External providers throw `UnimplementedError` and must be overridden by consumers.
+- Internal providers automatically wire domain layer once external dependencies are provided.
 - Providers defined in `lib/providers.dart`.
 
 ## ID Management Patterns

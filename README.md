@@ -61,7 +61,7 @@ To integrate with a different database (e.g., SQLite, Firebase, etc.):
    - The library provides `AuthorDatasource`, `BookDatasource`, and `TagDatasource` for Sembast.
    - If your database requires different datasources, implement them using your `DatabaseService`.
 
-4. **Use `LibraryFactory`**:
+4. **Override External Providers**:
    - Instantiate `LibraryFactory` with your custom `DatabaseService` and `UnitOfWork`.
    - The factory will create all repositories and services using your implementations.
 
@@ -157,24 +157,108 @@ final factory = LibraryFactory(
 );
 ```
 
-## Provider Setup and Data Access
+## Provider Setup and Dependency Injection
 
-The library provides Riverpod providers for dependency injection. The providers are organized by responsibility:
+The library uses Riverpod for dependency injection. All providers are defined in `lib/providers.dart`. The library provides external dependency providers that **must be overridden** by consumers, and internal providers that wire up the domain layer automatically.
 
-### External Dependencies (Override These)
-- `dioProvider`: HTTP client for API calls
-- `databaseServiceProvider`: Database service implementation
-- `transactionProvider`: Transaction management (Unit of Work pattern)
-- `imageServiceProvider`: Image processing service
+### External Dependencies (Must Override)
 
-### Data Access Providers
-- `dataAccessProvider`: **Main data access point** - provides `LibraryDataAccess` with all repositories and services
-- `libraryDataAccessProvider`: Legacy alias for `dataAccessProvider`
-- Individual repository providers: `bookRepositoryProvider`, `authorRepositoryProvider`, etc.
+These providers throw `UnimplementedError` and must be overridden with your implementations:
+
+- `dioProvider`: HTTP client for API calls (provide `Dio` instance)
+- `databaseServiceProvider`: Database service implementation (provide `DatabaseService` instance)
+- `transactionProvider`: Transaction management (Unit of Work pattern, provide `UnitOfWork` instance)
+- `imageServiceProvider`: Image processing service (provide `ImageService` instance)
+
+### Internal Providers (Automatic)
+
+These providers are wired automatically once external dependencies are provided:
+
+- **Data Access**: `dataAccessProvider` - Main entry point providing `LibraryDataAccess` with all repositories and services
+- **Repositories**: `bookRepositoryProvider`, `authorRepositoryProvider`, `tagRepositoryProvider`, `bookMetadataRepositoryProvider`
+- **Services**: Filtering, sorting, validation, and ID registry services
+- **Usecases**: All business logic operations (add, update, delete, query operations)
+
+### Provider Override Examples
+
+#### Flutter App (using overrideWith)
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:path_provider/path_provider.dart';
+
+final dioProvider = Provider<Dio>((ref) => Dio());
+
+final databasePathProvider = FutureProvider<String?>((ref) async {
+  final directory = await getApplicationDocumentsDirectory();
+  return '${directory.path}/library.db';
+});
+
+// Override external providers
+final databaseServiceProviderOverride = databaseServiceProvider.overrideWith(
+  (ref) async {
+    final dbPath = await ref.watch(databasePathProvider.future);
+    return SembastDatabase(testDbPath: dbPath);
+  },
+);
+
+final transactionProviderOverride = transactionProvider.overrideWith((ref) {
+  final dbService = ref.watch(databaseServiceProvider);
+  return SembastUnitOfWork(dbService: dbService);
+});
+
+final imageServiceProviderOverride = imageServiceProvider.overrideWith((ref) {
+  final dio = ref.watch(dioProvider);
+  return FlutterImageService(dio); // Your ImageService implementation
+});
+
+// Use in ProviderScope
+void main() {
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseServiceProviderOverride,
+        transactionProviderOverride,
+        imageServiceProviderOverride,
+      ],
+      child: MyApp(),
+    ),
+  );
+}
+```
+
+#### CLI App (using ProviderContainer)
+
+```dart
+import 'package:riverpod/riverpod.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+
+void main() async {
+  final dio = Dio();
+  final dbService = SembastDatabase(testDbPath: null); // In-memory
+  final unitOfWork = SembastUnitOfWork(dbService: dbService);
+  final imageService = CliImageService(dio); // Your ImageService implementation
+
+  final container = ProviderContainer(
+    overrides: [
+      dioProvider.overrideWithValue(dio),
+      databaseServiceProvider.overrideWithValue(dbService),
+      transactionProvider.overrideWithValue(unitOfWork),
+      imageServiceProvider.overrideWithValue(imageService),
+    ],
+  );
+
+  // Now use the container to access providers
+  final dataAccess = await container.read(dataAccessProvider.future);
+  final getBooksUsecase = await container.read(getBooksUsecaseProvider.future);
+}
+```
 
 ### Usage Patterns
 
-**Recommended: Use Usecases** (Business logic layer)
+#### Recommended: Use Usecases (Business Logic Layer)
+
 ```dart
 final booksProvider = FutureProvider<List<Book>>((ref) async {
   final usecase = await ref.watch(getBooksUsecaseProvider.future);
@@ -186,7 +270,8 @@ final booksProvider = FutureProvider<List<Book>>((ref) async {
 });
 ```
 
-**Alternative: Direct Data Access**
+#### Alternative: Direct Repository Access
+
 ```dart
 final dataAccess = ref.watch(dataAccessProvider);
 // Access repositories directly
@@ -194,25 +279,11 @@ final books = await dataAccess.bookRepository.getAll();
 final authors = await dataAccess.authorRepository.getAll();
 ```
 
-### Provider Setup Example
+### Complete Examples
 
-See `example/flutter/lib/providers.dart` for a complete example.
-
-Key points:
-- Override external providers with your implementations
-- Use `dataAccessProvider` for bundled data access
-- Use individual usecase providers for business operations
-
-```dart
-// Override external providers
-final transactionProviderOverride = transactionProvider.overrideWith((ref) {
-  final dbService = ref.watch(databaseServiceProvider);
-  return SembastUnitOfWork(dbService: dbService);
-});
-
-// Use data access
-final dataAccess = ref.watch(dataAccessProvider);
-```
+See the example applications for full implementations:
+- **Flutter**: `example/flutter/lib/providers.dart` and `example/flutter/lib/main.dart`
+- **CLI**: `example/cli/lib/main.dart`
 
 This approach ensures that repositories are created once and reused, while allowing easy testing and dependency swapping.
 

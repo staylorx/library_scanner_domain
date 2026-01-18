@@ -6,12 +6,12 @@ This example demonstrates how to configure and use the `library_scanner_domain` 
 
 The example shows how to:
 
-1. Set up Riverpod providers for all domain layer dependencies
-2. Configure Dio for HTTP requests
-3. Implement ImageService using Flutter's image_picker
-4. Use Sembast for persistent database storage
-5. Create providers for repositories, services, and usecases
-6. Consume the data in a Flutter UI
+1. Override the library's external providers with Flutter-specific implementations
+2. Set up persistent database storage using Sembast
+3. Configure HTTP client and image services for Flutter
+4. Use provider overrides in `ProviderScope` for the entire app
+5. Access repositories, services, and usecases through Riverpod providers
+6. Consume data in Flutter UI components
 
 ## Running the Example
 
@@ -21,22 +21,42 @@ The example shows how to:
 
 ## Key Components
 
-- **Riverpod**: Used for dependency injection and state management
+- **Riverpod ProviderScope**: Global provider container with overrides
+- **Provider Overrides**: Override external providers with Flutter implementations
 - **Dio**: HTTP client for API calls
 - **Sembast**: Embedded database stored in the app's documents directory
 - **FlutterImageService**: Flutter-specific implementation using image_picker for gallery/camera access
-- **Providers**: Organized providers for factories, repositories, services, and usecases
+- **FutureProvider**: For data fetching and UI state management
+
+## Provider Setup
+
+The library requires overriding four external providers in your `ProviderScope`:
+
+```dart
+void main() {
+  runApp(
+    ProviderScope(
+      overrides: [
+        databaseServiceProviderOverride,
+        transactionProviderOverride,
+        imageServiceProviderOverride,
+      ],
+      child: MyApp(),
+    ),
+  );
+}
+```
+
+See `lib/providers.dart` for the complete override implementations.
 
 ## Architecture
 
 The providers are structured in layers:
 
-1. **Infrastructure**: Dio, database path
-2. **Factories**: LibraryFactory for creating domain instances
-3. **Repositories**: Data access layer
-4. **Services**: Business logic services
-5. **Usecases**: Application logic
-6. **UI State**: Providers that combine usecases for UI consumption
+1. **External Overrides**: Override library's external providers with Flutter implementations
+2. **Infrastructure**: Dio, database path, image service
+3. **Domain Providers**: Automatic wiring of repositories, services, and usecases
+4. **UI State**: FutureProvider instances that consume usecases for UI consumption
 
 ## Permissions
 

@@ -1,15 +1,15 @@
 # CLI Example for Library Scanner Domain
 
-This example demonstrates how to configure and use the `library_scanner_domain` package in a CLI (Command Line Interface) application.
+This example demonstrates how to configure and use the `library_scanner_domain` package in a CLI (Command Line Interface) application using Riverpod for dependency injection.
 
 ## Overview
 
 The example shows how to:
 
-1. Set up the necessary dependencies (Dio for HTTP, etc.)
-2. Create implementations for required services (ImageService)
-3. Initialize the LibraryFactory with Sembast database
-4. Create repositories and services
+1. Set up Riverpod `ProviderContainer` with provider overrides
+2. Configure external dependencies (Dio, database, image service)
+3. Override the library's external providers with your implementations
+4. Access repositories, services, and usecases through the provider container
 5. Use usecases to interact with the domain layer
 
 ## Running the Example
@@ -20,10 +20,26 @@ The example shows how to:
 
 ## Key Components
 
-- **Dio**: Used for HTTP requests to external APIs
-- **Sembast**: Embedded database for data persistence
-- **CliImageService**: A CLI-specific implementation of ImageService that handles image operations (downloads only, since CLI can't pick from gallery/camera)
-- **LibraryFactory**: Central factory for creating all domain layer instances
+- **Riverpod ProviderContainer**: Manages dependency injection and provider overrides
+- **Dio**: HTTP client for API requests to external services
+- **Sembast**: Embedded database for data persistence (in-memory for this example)
+- **CliImageService**: CLI-specific implementation of ImageService for image operations
+- **Provider Overrides**: Override external providers with concrete implementations
+
+## Provider Setup
+
+The library requires overriding four external providers:
+
+```dart
+final container = ProviderContainer(
+  overrides: [
+    dioProvider.overrideWithValue(Dio()),
+    databaseServiceProvider.overrideWithValue(SembastDatabase(testDbPath: null)),
+    transactionProvider.overrideWithValue(SembastUnitOfWork(dbService: dbService)),
+    imageServiceProvider.overrideWithValue(CliImageService(dio)),
+  ],
+);
+```
 
 ## Configuration
 
