@@ -74,5 +74,3 @@ export 'services/book_validation_service.dart';
 export 'services/database_service.dart';
 export 'services/image_service.dart';
 export 'services/library_data_access.dart';
-
-export 'factories.dart';

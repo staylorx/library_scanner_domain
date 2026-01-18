@@ -1,6 +1,6 @@
 name: library_scanner_domain
 description: The domain layer for the library scanner app.
-version: 1.1.5
+version: 1.2.0
 # repository: https://github.com/my_org/my_repo
 publish_to: none
 
@@ -14,8 +14,7 @@ dependencies:
   equatable: ^2.0.7
   fpdart: ^1.2.0
   http: ^1.2.1
-  logging: ^1.2.0
-
+  riverpod: ^3.0.0
   yaml: ^3.1.2
   yaml_writer: ^2.1.0
   uuid: ^4.5.2

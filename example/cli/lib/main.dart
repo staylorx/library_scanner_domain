@@ -1,16 +1,13 @@
 // ignore_for_file: avoid_print, unused_local_variable
 
 import 'package:dio/dio.dart';
+import 'package:riverpod/riverpod.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'image_service_impl.dart';
 
 void main() async {
   // Initialize Dio for API calls
   final dio = Dio();
-
-  // Create BookApiService
-  final bookApiServiceFactory = BookApiServiceFactory();
-  final bookApiService = bookApiServiceFactory.createBookApiService(dio);
 
   // Create ImageService implementation for CLI
   final imageService = CliImageService(dio);
@@ -19,41 +16,50 @@ void main() async {
   final dbService = SembastDatabase(testDbPath: null);
   final unitOfWork = SembastUnitOfWork(dbService: dbService);
 
-  // Create LibraryFactory
-  final libraryFactory = LibraryFactory(
-    dbService: dbService,
-    unitOfWork: unitOfWork,
-    apiService: bookApiService,
-    imageService: imageService,
+  // Create ProviderContainer with overrides
+  final container = ProviderContainer(
+    overrides: [
+      dioProvider.overrideWithValue(dio),
+      databaseServiceProvider.overrideWithValue(dbService),
+      unitOfWorkProvider.overrideWithValue(unitOfWork),
+      imageServiceProvider.overrideWithValue(imageService),
+    ],
   );
 
-  // Create repositories
-  final authorRepository = await libraryFactory.createAuthorRepository();
-  final bookRepository = await libraryFactory.createBookRepository();
-  final tagRepository = await libraryFactory.createTagRepository();
-  final bookMetadataRepository = await libraryFactory
-      .createBookMetadataRepository();
-
-  // Create services
-  final authorFilteringService = libraryFactory.createAuthorFilteringService();
-  final authorSortingService = libraryFactory.createAuthorSortingService();
-  final bookFilteringService = libraryFactory.createBookFilteringService();
-  final bookSortingService = libraryFactory.createBookSortingService();
-  final authorIdRegistryService = libraryFactory
-      .createAuthorIdRegistryService();
-  final bookIdRegistryService = libraryFactory.createBookIdRegistryService();
-  final authorValidationService = libraryFactory
-      .createAuthorValidationService();
-  final bookValidationService = libraryFactory.createBookValidationService();
-
-  // Create LibraryDataAccess
-  final libraryDataAccess = await libraryFactory.createLibraryDataAccess();
-
-  // Example: Create usecases
-  final getAuthorsUsecase = GetAuthorsUsecase(
-    authorRepository: authorRepository,
+  // Read repositories
+  final authorRepository = await container.read(
+    authorRepositoryProvider.future,
   );
-  final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
+  final bookRepository = await container.read(bookRepositoryProvider.future);
+  final tagRepository = await container.read(tagRepositoryProvider.future);
+  final bookMetadataRepository = await container.read(
+    bookMetadataRepositoryProvider.future,
+  );
+
+  // Read services
+  final authorFilteringService = container.read(authorFilteringServiceProvider);
+  final authorSortingService = container.read(authorSortingServiceProvider);
+  final bookFilteringService = container.read(bookFilteringServiceProvider);
+  final bookSortingService = container.read(bookSortingServiceProvider);
+  final authorIdRegistryService = container.read(
+    authorIdRegistryServiceProvider,
+  );
+  final bookIdRegistryService = container.read(bookIdRegistryServiceProvider);
+  final authorValidationService = container.read(
+    authorValidationServiceProvider,
+  );
+  final bookValidationService = container.read(bookValidationServiceProvider);
+
+  // Read LibraryDataAccess
+  final libraryDataAccess = await container.read(
+    libraryDataAccessProvider.future,
+  );
+
+  // Example: Read usecases
+  final getAuthorsUsecase = await container.read(
+    getAuthorsUsecaseProvider.future,
+  );
+  final getBooksUsecase = await container.read(getBooksUsecaseProvider.future);
 
   // Example usage: Get all authors
   final authorsResult = await getAuthorsUsecase();
@@ -72,5 +78,5 @@ void main() async {
   );
 
   // Close the database
-  await libraryFactory.close();
+  await dbService.close();
 }

@@ -7,107 +7,33 @@ import 'flutter_image_service.dart';
 // Dio provider
 final dioProvider = Provider<Dio>((ref) => Dio());
 
-// BookApiService provider
-final bookApiServiceProvider = Provider<BookApiService>((ref) {
-  final dio = ref.watch(dioProvider);
-  final factory = BookApiServiceFactory();
-  return factory.createBookApiService(dio);
-});
-
-// ImageService provider (using Flutter's image_picker)
-final imageServiceProvider = Provider<ImageService>((ref) {
-  final dio = ref.watch(dioProvider);
-  return FlutterImageService(dio);
-});
-
 // Database path provider
 final databasePathProvider = FutureProvider<String?>((ref) async {
   final directory = await getApplicationDocumentsDirectory();
   return '${directory.path}/library.db';
 });
 
-// LibraryFactory provider
-final libraryFactoryProvider = FutureProvider<LibraryFactory>((ref) async {
-  final apiService = ref.watch(bookApiServiceProvider);
-  final imageService = ref.watch(imageServiceProvider);
-  final dbPath = await ref.watch(databasePathProvider.future);
-
-  // Create Sembast database and unit of work
-  final dbService = SembastDatabase(testDbPath: dbPath);
-  final unitOfWork = SembastUnitOfWork(dbService: dbService);
-
-  return LibraryFactory(
-    dbService: dbService,
-    unitOfWork: unitOfWork,
-    apiService: apiService,
-    imageService: imageService,
-  );
-});
-
-// Repositories
-final authorRepositoryProvider = FutureProvider<AuthorRepository>((ref) async {
-  final factory = await ref.watch(libraryFactoryProvider.future);
-  return factory.createAuthorRepository();
-});
-
-final bookRepositoryProvider = FutureProvider<BookRepository>((ref) async {
-  final factory = await ref.watch(libraryFactoryProvider.future);
-  return factory.createBookRepository();
-});
-
-final tagRepositoryProvider = FutureProvider<TagRepository>((ref) async {
-  final factory = await ref.watch(libraryFactoryProvider.future);
-  return factory.createTagRepository();
-});
-
-final bookMetadataRepositoryProvider = FutureProvider<BookMetadataRepository>((
+// Override library's external providers
+final databaseServiceProviderOverride = databaseServiceProvider.overrideWith((
   ref,
 ) async {
-  final factory = await ref.watch(libraryFactoryProvider.future);
-  return factory.createBookMetadataRepository();
+  final dbPath = await ref.watch(databasePathProvider.future);
+  return SembastDatabase(testDbPath: dbPath);
 });
 
-// Services
-final authorFilteringServiceProvider = Provider<AuthorFilteringService>((ref) {
-  final factory = ref.watch(libraryFactoryProvider).valueOrNull;
-  if (factory == null) throw StateError('LibraryFactory not initialized');
-  return factory.createAuthorFilteringService();
+final unitOfWorkProviderOverride = unitOfWorkProvider.overrideWith((ref) {
+  final dbService = ref.watch(databaseServiceProvider);
+  return SembastUnitOfWork(dbService: dbService);
 });
 
-final authorSortingServiceProvider = Provider<AuthorSortingService>((ref) {
-  final factory = ref.watch(libraryFactoryProvider).valueOrNull;
-  if (factory == null) throw StateError('LibraryFactory not initialized');
-  return factory.createAuthorSortingService();
-});
-
-final bookFilteringServiceProvider = Provider<BookFilteringService>((ref) {
-  final factory = ref.watch(libraryFactoryProvider).valueOrNull;
-  if (factory == null) throw StateError('LibraryFactory not initialized');
-  return factory.createBookFilteringService();
-});
-
-final bookSortingServiceProvider = Provider<BookSortingService>((ref) {
-  final factory = ref.watch(libraryFactoryProvider).valueOrNull;
-  if (factory == null) throw StateError('LibraryFactory not initialized');
-  return factory.createBookSortingService();
-});
-
-// Usecases
-final getAuthorsUsecaseProvider = Provider<GetAuthorsUsecase>((ref) {
-  final repository = ref.watch(authorRepositoryProvider).valueOrNull;
-  if (repository == null) throw StateError('AuthorRepository not initialized');
-  return GetAuthorsUsecase(authorRepository: repository);
-});
-
-final getBooksUsecaseProvider = Provider<GetBooksUsecase>((ref) {
-  final repository = ref.watch(bookRepositoryProvider).valueOrNull;
-  if (repository == null) throw StateError('BookRepository not initialized');
-  return GetBooksUsecase(bookRepository: repository);
+final imageServiceProviderOverride = imageServiceProvider.overrideWith((ref) {
+  final dio = ref.watch(dioProvider);
+  return FlutterImageService(dio);
 });
 
 // State providers for UI
 final authorsProvider = FutureProvider<List<Author>>((ref) async {
-  final usecase = ref.watch(getAuthorsUsecaseProvider);
+  final usecase = await ref.watch(getAuthorsUsecaseProvider.future);
   final result = await usecase();
   return result.fold(
     (failure) => throw Exception(failure.message),
@@ -116,7 +42,7 @@ final authorsProvider = FutureProvider<List<Author>>((ref) async {
 });
 
 final booksProvider = FutureProvider<List<Book>>((ref) async {
-  final usecase = ref.watch(getBooksUsecaseProvider);
+  final usecase = await ref.watch(getBooksUsecaseProvider.future);
   final result = await usecase();
   return result.fold(
     (failure) => throw Exception(failure.message),
