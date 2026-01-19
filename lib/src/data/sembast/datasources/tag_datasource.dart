@@ -134,7 +134,7 @@ class TagDatasource {
         if (tagResult.isRight()) {
           final tag = tagResult.getRight().getOrElse(() => null);
           if (tag != null) {
-            final updatedBookIds = List<String>.from(tag.bookIdPairs);
+            final updatedBookIds = List<String>.from(tag.bookIds);
             if (!updatedBookIds.contains(bookId)) {
               updatedBookIds.add(bookId);
             }
@@ -144,7 +144,7 @@ class TagDatasource {
               description: tag.description,
               color: tag.color,
               slug: tag.slug,
-              bookIdPairs: updatedBookIds,
+              bookIds: updatedBookIds,
             );
             final saveResult = await saveTag(updatedTag, txn: txn);
             if (saveResult.isLeft()) {
@@ -171,7 +171,7 @@ class TagDatasource {
         if (tagResult.isRight()) {
           final tag = tagResult.getRight().getOrElse(() => null);
           if (tag != null) {
-            final updatedBookIds = List<String>.from(tag.bookIdPairs)
+            final updatedBookIds = List<String>.from(tag.bookIds)
               ..remove(bookId);
             final updatedTag = TagModel(
               id: tag.id,
@@ -179,7 +179,7 @@ class TagDatasource {
               description: tag.description,
               color: tag.color,
               slug: tag.slug,
-              bookIdPairs: updatedBookIds,
+              bookIds: updatedBookIds,
             );
             final saveResult = await saveTag(updatedTag, txn: txn);
             if (saveResult.isLeft()) {

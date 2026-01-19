@@ -333,16 +333,30 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   @override
   Future<Either<Failure, List<Book>>> getBooksByTag({required Tag tag}) async {
     logger?.info('Entering getBooksByTag with tag: ${tag.name}');
-    final result = await _bookDatasource.getBooksByTagId(tag.id);
-    return result.fold((failure) => Either.left(failure), (models) async {
-      final books = <Book>[];
-      for (final model in models) {
-        final book = await _loadBookWithRelations(model);
-        books.add(book);
-      }
-      logger?.info('Found ${books.length} books for tag ${tag.name}');
-      return Either.right(books);
-    });
+    final tagResult = await _tagDatasource.getTagById(tag.id);
+    if (tagResult.isLeft()) {
+      final failure = tagResult.getLeft().getOrElse(
+        () => DatabaseFailure('Failed to get tag'),
+      );
+      logger?.warning('Failed to get tag: ${failure.message}');
+      return Either.left(failure);
+    }
+    final tagModel = tagResult.getRight().getOrElse(() => null);
+    if (tagModel == null) {
+      logger?.info('Tag not found');
+      return Either.left(NotFoundFailure('Tag not found'));
+    }
+    final bookIds = tagModel.bookIds;
+    final books = <Book>[];
+    for (final bookId in bookIds) {
+      final bookResult = await getBookById(id: bookId);
+      bookResult.fold(
+        (l) => null, // ignore failure
+        (book) => books.add(book),
+      );
+    }
+    logger?.info('Found ${books.length} books for tag ${tag.name}');
+    return Either.right(books);
   }
 
   /// Retrieves a book by its business ID pairs.

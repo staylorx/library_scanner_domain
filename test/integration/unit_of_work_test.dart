@@ -46,7 +46,7 @@ void main() {
           id: 'test-tag',
           name: 'Test Tag',
           slug: 'test-tag',
-          bookIdPairs: [],
+          bookIds: [],
         );
         final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
         expect(saveResult.isRight(), true);
@@ -80,7 +80,7 @@ void main() {
           id: 'test-tag',
           name: 'Test Tag',
           slug: 'test-tag',
-          bookIdPairs: [],
+          bookIds: [],
         );
         final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
         expect(saveResult.isRight(), true);
@@ -107,7 +107,7 @@ void main() {
           id: 'tag-1',
           name: 'Tag 1',
           slug: 'tag-1',
-          bookIdPairs: [],
+          bookIds: [],
         );
         await tagDatasource.saveTag(tagModel1, txn: txn);
 
@@ -116,7 +116,7 @@ void main() {
           id: 'tag-2',
           name: 'Tag 2',
           slug: 'tag-2',
-          bookIdPairs: [],
+          bookIds: [],
         );
         await tagDatasource.saveTag(tagModel2, txn: txn);
 
@@ -141,7 +141,7 @@ void main() {
           id: 'tag-1',
           name: 'Tag 1',
           slug: 'tag-1',
-          bookIdPairs: [],
+          bookIds: [],
         );
         await tagDatasource.saveTag(tagModel1, txn: txn);
 
@@ -150,7 +150,7 @@ void main() {
           id: 'tag-2',
           name: 'Tag 2',
           slug: 'tag-2',
-          bookIdPairs: [],
+          bookIds: [],
         );
         await tagDatasource.saveTag(tagModel2, txn: txn);
 

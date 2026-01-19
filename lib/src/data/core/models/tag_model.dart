@@ -18,7 +18,7 @@ class TagModel {
   final String slug;
 
   /// Associated book identifiers.
-  final List<String> bookIdPairs;
+  final List<String> bookIds;
 
   /// Creates a TagModel.
   const TagModel({
@@ -27,7 +27,7 @@ class TagModel {
     this.description,
     this.color = '#FF0000',
     required this.slug,
-    required this.bookIdPairs,
+    required this.bookIds,
   });
 
   /// Creates from map.
@@ -38,7 +38,7 @@ class TagModel {
       description: map['description'] as String?,
       color: map['color'] as String? ?? '#FF0000',
       slug: map['slug'] as String? ?? '',
-      bookIdPairs: (map['bookIdPairs'] as List<dynamic>?)?.cast<String>() ?? [],
+      bookIds: (map['bookIds'] as List<dynamic>?)?.cast<String>() ?? [],
     );
   }
 
@@ -50,7 +50,7 @@ class TagModel {
       'description': description,
       'color': color,
       'slug': slug,
-      'bookIdPairs': bookIdPairs,
+      'bookIds': bookIds,
     };
   }
 
@@ -67,7 +67,7 @@ class TagModel {
       description: tag.description,
       color: tag.color,
       slug: tag.slug,
-      bookIdPairs: [],
+      bookIds: [],
     );
   }
 }

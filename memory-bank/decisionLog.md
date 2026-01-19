@@ -16,3 +16,7 @@ This file records architectural and implementation decisions...
 [2026-01-17 19:43:58] - 2026-01-17 - Fixed book integration test issues: Similar to tag issue, addBook and addTag methods were generating new IDs instead of using provided IDs, causing update operations to create duplicates. Fixed addBook and addTag to use provided IDs when available.
 
 [2026-01-18 17:57:05] - Confirmed strict adherence to Clean Architecture principles: domain and data layers contain no state management or dependency injection frameworks. Riverpod is used exclusively in the presentation layer for provider definitions. Fpdart is used consistently across all layers for functional programming constructs (Either, TaskEither, etc.). Mocktail chosen over Mockito for testing due to alignment with project package preferences. No build_runner or code generation tools used, maintaining manual control over generated code. Unit of work pattern implemented with Sembast for transaction management and atomicity.
+
+## Refactoring Decisions
+
+[2026-01-19 00:22:12] - Refactored TagModel field name from 'bookIdPairs' to 'bookIds' for clarity, as it represents a List<String> of book IDs, not pairs. Updated all references in TagModel, tag_datasource.dart, book_repository_impl.dart, and test files. Serialization key changed from 'bookIdPairs' to 'bookIds'. Audited other models (AuthorModel, BookModel) and found no similar naming issues. All tests pass.
