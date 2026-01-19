@@ -1,0 +1,124 @@
+import 'package:test/test.dart';
+import 'package:library_scanner_domain/src/data/data.dart';
+import 'package:id_logging/id_logging.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+
+void main() {
+  late DatabaseService database;
+  late AuthorDatasource authorDatasource;
+
+  setUpAll(() async {
+    database = SembastDatabase(
+      testDbPath: p.join(
+        'build',
+        'author_repository_test_${const Uuid().v4()}',
+      ),
+    );
+    authorDatasource = AuthorDatasource(dbService: database);
+  });
+
+  group('AuthorRepository Integration Tests', () {
+    test('AuthorRepository CRUD operations', () async {
+      final logger = SimpleLoggerImpl(name: 'AuthorRepositoryTest');
+      logger.info('Starting AuthorRepository test');
+
+      logger.info('Database instance created');
+      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      logger.info('Database cleared');
+
+      final authorIdRegistryService = AuthorIdRegistryServiceImpl();
+      final unitOfWork = SembastUnitOfWork(dbService: database);
+      final authorRepository = AuthorRepositoryImpl(
+        authorDatasource: authorDatasource,
+        unitOfWork: unitOfWork,
+        idRegistryService: authorIdRegistryService,
+      );
+
+      // Check for zero authors
+      var authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      var authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.isEmpty, true);
+
+      // Add one author
+      final newAuthor = Author(
+        id: const Uuid().v4(),
+        businessIds: [
+          AuthorIdPair(idType: AuthorIdType.local, idCode: "author1"),
+        ],
+        name: 'Test Author',
+        biography: 'Test bio',
+      );
+      await authorRepository.addAuthor(author: newAuthor);
+
+      // Verify count
+      authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.length, 1);
+      expect(authors.first.name, 'Test Author');
+
+      // Update the author
+      final updatedAuthor = authors.first.copyWith(name: 'Updated Test Author');
+      await authorRepository.updateAuthor(author: updatedAuthor);
+
+      // Verify update
+      authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.length, 1);
+      expect(authors.first.name, 'Updated Test Author');
+
+      // Get author by name
+      var authorResult = await authorRepository.getAuthorByName(
+        name: 'Updated Test Author',
+      );
+      expect(authorResult.isRight(), true);
+      var author = authorResult.fold((l) => null, (r) => r);
+      expect(author, isNotNull);
+      expect(author!.name, 'Updated Test Author');
+
+      // Add another author
+      final secondAuthor = Author(
+        id: const Uuid().v4(),
+        businessIds: [
+          AuthorIdPair(idType: AuthorIdType.local, idCode: "author2"),
+        ],
+        name: 'Second Author',
+      );
+      await authorRepository.addAuthor(author: secondAuthor);
+
+      // Verify count increases
+      authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.length, 2);
+
+      // Delete one author
+      await authorRepository.deleteAuthor(author: updatedAuthor);
+
+      // Verify count decreases
+      authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.length, 1);
+      expect(authors.first.name, 'Second Author');
+
+      // Delete the last author
+      await authorRepository.deleteAuthor(author: secondAuthor);
+
+      // Verify zero authors
+      authorsEither = await authorRepository.getAuthors();
+      expect(authorsEither.isRight(), true);
+      authors = authorsEither.fold((l) => <Author>[], (r) => r);
+      expect(authors.isEmpty, true);
+
+      // Close database
+      logger.info('Closing database');
+      await database.close();
+      logger.info('Test completed');
+    }, timeout: Timeout(Duration(seconds: 60)));
+  });
+}

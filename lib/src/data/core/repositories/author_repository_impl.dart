@@ -89,8 +89,9 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     Transaction? txn,
   }) async {
     logger?.info('Entering addAuthor with author: ${author.name}');
-    final id = const Uuid().v4();
-    final authorWithId = author.copyWith(id: id);
+    final authorWithId = author.id.isNotEmpty
+        ? author
+        : author.copyWith(id: const Uuid().v4());
     final model = AuthorModel.fromEntity(authorWithId);
     final idPairs = AuthorIdPairs(pairs: authorWithId.businessIds);
     final registerResult = _idRegistryService.registerAuthorIdPairs(idPairs);
@@ -205,6 +206,9 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     Transaction? txn,
   }) async {
     logger?.info('Entering deleteAuthor with id: ${author.id}');
+    // Check if author exists before deletion
+    final existsResult = await getAuthorById(id: author.id);
+    logger?.info('Author exists before deletion: ${existsResult.isRight()}');
     final idPairs = AuthorIdPairs(pairs: author.businessIds);
     final unregisterResult = _idRegistryService.unregisterAuthorIdPairs(
       idPairs,
@@ -241,7 +245,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
             () => DatabaseFailure('Delete failed'),
           );
         }
-        logger?.info('Delete author completed');
+        logger?.info('Delete author completed successfully');
         return unit;
       });
     }

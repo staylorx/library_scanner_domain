@@ -81,7 +81,8 @@ class BookDatasource {
         collection: 'books',
         filter: {
           '\$custom': (record) {
-            final authorIds = record.value['authorIds'] as List<String>? ?? [];
+            final authorIds =
+                (record['authorIds'] as List<dynamic>?)?.cast<String>() ?? [];
             return authorIds.contains(authorId);
           },
         },
@@ -105,7 +106,8 @@ class BookDatasource {
         collection: 'books',
         filter: {
           '\$custom': (record) {
-            final tagIds = record.value['tagIds'] as List<String>? ?? [];
+            final tagIds =
+                (record['tagIds'] as List<dynamic>?)?.cast<String>() ?? [];
             return tagIds.contains(tagId);
           },
         },

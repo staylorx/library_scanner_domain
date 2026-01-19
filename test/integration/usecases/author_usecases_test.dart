@@ -12,15 +12,17 @@ void main() {
   late AuthorDatasource authorDatasource;
 
   setUpAll(() async {
-    database = SembastDatabase(testDbPath: p.join('build', 'author_test'));
+    database = SembastDatabase(
+      testDbPath: p.join('build', 'author_usecases_test'),
+    );
     tagDatasource = TagDatasource(dbService: database);
     bookDatasource = BookDatasource(dbService: database);
     authorDatasource = AuthorDatasource(dbService: database);
   });
 
-  group('Author Integration Tests', () {
+  group('Author UseCases Integration Tests', () {
     test(
-      'Comprehensive Author Integration Test',
+      'Comprehensive Author UseCases Integration Test',
       () async {
         final logger = SimpleLoggerImpl(name: 'AuthorTest');
         logger.logLevel = null;
