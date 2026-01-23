@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:test/test.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
@@ -22,13 +21,8 @@ void main() {
 
     container = ProviderContainer(
       overrides: [
-        dioProvider.overrideWithValue(Dio()),
         databaseServiceProvider.overrideWithValue(database),
         unitOfWorkProvider.overrideWithValue(unitOfWork),
-        imageServiceProvider.overrideWith(
-          (ref) =>
-              throw UnimplementedError('ImageService not needed for this test'),
-        ),
       ],
     );
 

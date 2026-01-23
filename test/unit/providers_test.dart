@@ -1,37 +1,26 @@
-import 'package:dio/dio.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:test/test.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 // Mocks for external dependencies
-class MockDio extends Mock implements Dio {}
-
 class MockDatabaseService extends Mock implements DatabaseService {}
 
 class MockUnitOfWork extends Mock implements UnitOfWork {}
 
-class MockImageService extends Mock implements ImageService {}
-
 void main() {
   late ProviderContainer container;
-  late MockDio mockDio;
   late MockDatabaseService mockDatabaseService;
   late MockUnitOfWork mockUnitOfWork;
-  late MockImageService mockImageService;
 
   setUp(() {
-    mockDio = MockDio();
     mockDatabaseService = MockDatabaseService();
     mockUnitOfWork = MockUnitOfWork();
-    mockImageService = MockImageService();
 
     container = ProviderContainer(
       overrides: [
-        dioProvider.overrideWithValue(mockDio),
         databaseServiceProvider.overrideWithValue(mockDatabaseService),
         unitOfWorkProvider.overrideWithValue(mockUnitOfWork),
-        imageServiceProvider.overrideWithValue(mockImageService),
       ],
     );
   });
@@ -41,12 +30,6 @@ void main() {
   });
 
   group('Providers Setup Tests', () {
-    test('dioProvider provides Dio instance', () {
-      final dio = container.read(dioProvider);
-      expect(dio, isA<Dio>());
-      expect(dio, equals(mockDio));
-    });
-
     test('databaseServiceProvider provides DatabaseService instance', () {
       final dbService = container.read(databaseServiceProvider);
       expect(dbService, isA<DatabaseService>());
@@ -57,17 +40,6 @@ void main() {
       final unitOfWork = container.read(unitOfWorkProvider);
       expect(unitOfWork, isA<UnitOfWork>());
       expect(unitOfWork, equals(mockUnitOfWork));
-    });
-
-    test('imageServiceProvider provides ImageService instance', () {
-      final imageService = container.read(imageServiceProvider);
-      expect(imageService, isA<ImageService>());
-      expect(imageService, equals(mockImageService));
-    });
-
-    test('bookApiServiceProvider provides BookApiService instance', () {
-      final apiService = container.read(bookApiServiceProvider);
-      expect(apiService, isA<BookApiService>());
     });
 
     test(
@@ -110,14 +82,6 @@ void main() {
       final repository = container.read(bookRepositoryProvider);
       expect(repository, isA<BookRepository>());
     });
-
-    test(
-      'bookMetadataRepositoryProvider provides BookMetadataRepository instance',
-      () {
-        final repository = container.read(bookMetadataRepositoryProvider);
-        expect(repository, isA<BookMetadataRepository>());
-      },
-    );
 
     test('tagRepositoryProvider provides TagRepository instance', () {
       final repository = container.read(tagRepositoryProvider);

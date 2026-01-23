@@ -186,17 +186,4 @@ class BookModel {
       notes: notes ?? this.notes,
     );
   }
-
-  /// Converts to BookMetadata.
-  BookMetadata toBookMetadata() {
-    return BookMetadata(
-      title: title,
-      description: description,
-      authors: authorIds,
-      publishedDate: publishedDate,
-      coverImageUrl: coverImageUrl,
-      coverImage: coverImage,
-      notes: notes,
-    );
-  }
 }

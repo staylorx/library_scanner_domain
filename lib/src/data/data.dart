@@ -1,6 +1,5 @@
 // Datasources
 export 'sembast/datasources/sembast_database.dart';
-export 'book_api/datasources/book_api_service.dart';
 
 // Models
 export 'core/models/author_model.dart';
@@ -9,7 +8,6 @@ export 'core/models/tag_model.dart';
 
 // Repositories
 export 'core/repositories/author_repository_impl.dart';
-export 'core/repositories/book_metadata_repository_impl.dart';
 export 'core/repositories/book_repository_impl.dart';
 export 'core/repositories/tag_repository_impl.dart';
 

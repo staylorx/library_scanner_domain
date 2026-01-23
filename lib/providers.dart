@@ -1,9 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:riverpod/riverpod.dart';
-import 'src/data/book_api/datasources/book_api_service.dart';
 import 'src/data/id_registry/services/book_id_registry_service.dart';
 import 'src/data/core/repositories/author_repository_impl.dart';
-import 'src/data/core/repositories/book_metadata_repository_impl.dart';
 import 'src/data/core/repositories/book_repository_impl.dart';
 import 'src/data/core/repositories/tag_repository_impl.dart';
 import 'src/data/sembast/datasources/author_datasource.dart';
@@ -20,9 +17,6 @@ import 'src/domain/domain.dart';
 
 // External dependencies providers (to be overridden by users)
 // These provide external services that the domain layer depends on
-final dioProvider = Provider<Dio>(
-  (ref) => throw UnimplementedError('Provide Dio instance'),
-);
 final databaseServiceProvider = Provider<DatabaseService>(
   (ref) => throw UnimplementedError('Provide DatabaseService instance'),
 );
@@ -32,15 +26,6 @@ final transactionProvider = Provider<UnitOfWork>(
 );
 // Legacy alias for backwards compatibility
 final unitOfWorkProvider = transactionProvider;
-final imageServiceProvider = Provider<ImageService>(
-  (ref) => throw UnimplementedError('Provide ImageService instance'),
-);
-
-// BookApiService provider
-final bookApiServiceProvider = Provider<BookApiService>((ref) {
-  final dio = ref.watch(dioProvider);
-  return BookApiServiceImpl(dio: dio);
-});
 
 // ID Registry Services
 final authorIdRegistryServiceProvider = Provider<AuthorIdRegistryService>(
@@ -90,15 +75,6 @@ final bookRepositoryProvider = Provider<BookRepository>((ref) {
     tagDatasource: tagDatasource,
     idRegistryService: idRegistryService,
     unitOfWork: unitOfWork,
-  );
-});
-
-final bookMetadataRepositoryProvider = Provider<BookMetadataRepository>((ref) {
-  final apiService = ref.watch(bookApiServiceProvider);
-  final imageService = ref.watch(imageServiceProvider);
-  return BookMetadataRepositoryImpl(
-    apiService: apiService,
-    imageService: imageService,
   );
 });
 
@@ -198,14 +174,6 @@ final exportLibraryUsecaseProvider = Provider<ExportLibraryUsecase>((ref) {
   final dataAccess = ref.watch(libraryDataAccessProvider);
   return ExportLibraryUsecase(dataAccess: dataAccess);
 });
-
-final fetchBookMetadataByIsbnUsecaseProvider =
-    Provider<FetchBookMetadataByIsbnUsecase>((ref) {
-      final bookMetadataRepository = ref.watch(bookMetadataRepositoryProvider);
-      return FetchBookMetadataByIsbnUsecase(
-        bookMetadataRepository: bookMetadataRepository,
-      );
-    });
 
 final filterAuthorsUsecaseProvider = Provider<FilterAuthorsUsecase>((ref) {
   final authorFilteringService = ref.watch(authorFilteringServiceProvider);
@@ -312,34 +280,6 @@ final isAuthorDuplicateUsecaseProvider = Provider<IsAuthorDuplicateUsecase>((
 
 final isBookDuplicateUsecaseProvider = Provider<IsBookDuplicateUsecase>((ref) {
   return IsBookDuplicateUsecase();
-});
-
-final refetchBookCoversUsecaseProvider = Provider<RefetchBookCoversUsecase>((
-  ref,
-) {
-  final bookRepository = ref.watch(bookRepositoryProvider);
-  final fetchBookMetadataByIsbnUsecase = ref.watch(
-    fetchBookMetadataByIsbnUsecaseProvider,
-  );
-  final imageService = ref.watch(imageServiceProvider);
-  return RefetchBookCoversUsecase(
-    bookRepository: bookRepository,
-    fetchBookMetadataByIsbnUsecase: fetchBookMetadataByIsbnUsecase,
-    imageService: imageService,
-  );
-});
-
-final scanAndAddBookUsecaseProvider = Provider<ScanAndAddBookUsecase>((ref) {
-  final fetchMetadataUsecase = ref.watch(
-    fetchBookMetadataByIsbnUsecaseProvider,
-  );
-  final addBookUsecase = ref.watch(addBookUsecaseProvider);
-  final getByIdPairUsecase = ref.watch(getBookByIdPairUsecaseProvider);
-  return ScanAndAddBookUsecase(
-    fetchMetadataUsecase: fetchMetadataUsecase,
-    addBookUsecase: addBookUsecase,
-    getByIdPairUsecase: getByIdPairUsecase,
-  );
 });
 
 final validateBookUsecaseProvider = Provider<ValidateBookUsecase>((ref) {

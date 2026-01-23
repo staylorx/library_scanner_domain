@@ -1,6 +1,6 @@
 name: library_scanner_domain
 description: The domain layer for the library scanner app.
-version: 1.2.3
+version: 1.3.0
 # repository: https://github.com/my_org/my_repo
 publish_to: none
 
@@ -9,11 +9,8 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  path: ^1.9.1
-  dio: ^5.4.0
   equatable: ^2.0.7
   fpdart: ^1.2.0
-  http: ^1.2.1
   riverpod: ^3.0.0
   yaml: ^3.1.2
   yaml_writer: ^2.1.0
@@ -31,3 +28,4 @@ dev_dependencies:
   mocktail: ^1.0.4
   matcher: ^0.12.18
   benchmark_harness: ^2.3.0
+  path: ^1.9.1
