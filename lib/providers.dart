@@ -234,6 +234,13 @@ final getAuthorsUsecaseProvider = Provider<GetAuthorsUsecase>((ref) {
   return GetAuthorsUsecase(authorRepository: authorRepository);
 });
 
+final getAuthorByIdPairUsecaseProvider = Provider<GetAuthorByIdPairUsecase>((
+  ref,
+) {
+  final authorRepository = ref.watch(authorRepositoryProvider);
+  return GetAuthorByIdPairUsecase(authorRepository: authorRepository);
+});
+
 final getBookByIdPairUsecaseProvider = Provider<GetBookByIdPairUsecase>((ref) {
   final bookRepository = ref.watch(bookRepositoryProvider);
   return GetBookByIdPairUsecase(bookRepository: bookRepository);
