@@ -59,7 +59,9 @@ class ImportLibraryUsecase with Loggable {
             }
           }
           if (idPairs.isEmpty) {
-            idPairs.add(AuthorIdPair(idType: AuthorIdType.local, idCode: name));
+            idPairs.add(
+              AuthorIdPair(idType: AuthorIdType.local, idCode: slugify(name)),
+            );
           }
           authors[name] = Author(
             id: const Uuid().v4(),
@@ -287,7 +289,10 @@ class ImportLibraryUsecase with Loggable {
         final author = Author(
           id: const Uuid().v4(),
           businessIds: [
-            AuthorIdPair(idType: AuthorIdType.local, idCode: authorName),
+            AuthorIdPair(
+              idType: AuthorIdType.local,
+              idCode: slugify(authorName),
+            ),
           ],
           name: authorName,
           biography: null,

@@ -44,6 +44,7 @@ export 'usecases/get_tag_by_name_usecase.dart';
 export 'usecases/get_tags_by_names_usecase.dart';
 export 'usecases/get_tags_usecase.dart';
 export 'usecases/import_library_usecase.dart';
+export 'usecases/is_author_duplicate_usecase.dart';
 export 'usecases/is_book_duplicate_usecase.dart';
 export 'usecases/refetch_book_covers_usecase.dart';
 export 'usecases/scan_and_add_book_usecase.dart';

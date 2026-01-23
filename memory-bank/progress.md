@@ -41,3 +41,9 @@ This file tracks the project's progress...
 [2026-01-23 03:27:39] - Modified update_author_usecase.dart to ensure the local slugified idpair is always present in businessIds, even when businessIds is provided as an empty list or with other ids. This prevents accidental removal of the required local identifier.
 
 [2026-01-23 03:31:39] - Updated author_usecases_test.dart to include tests for the new slug functionality. Added assertions to verify that when authors are added or updated, a slug-based AuthorIdPair is correctly added to businessIds. Tests now check that the slug is generated from the author name and updated when the name changes.
+
+[2026-01-23 03:52:26] - Created IsAuthorDuplicateUsecase by cribbing from IsBookDuplicateUsecase. The new usecase checks for author duplicates based on name matching and overlapping non-local AuthorIdPairs (ISNI, ORCID, VIAF).
+
+[2026-01-23 03:53:46] - Added isAuthorDuplicateUsecaseProvider to providers.dart for Riverpod dependency injection.
+
+[2026-01-23 03:56:32] - Modified import_library_usecase.dart to ensure slugified local idpairs are created for authors when not included in id_pairs, matching the behavior of update_author_usecase. Changed both the _parseAuthors method and the missing authors creation to use slugify(name) instead of name for the local idCode.

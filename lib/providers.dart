@@ -304,6 +304,12 @@ final importLibraryUsecaseProvider = Provider<ImportLibraryUsecase>((ref) {
   );
 });
 
+final isAuthorDuplicateUsecaseProvider = Provider<IsAuthorDuplicateUsecase>((
+  ref,
+) {
+  return IsAuthorDuplicateUsecase();
+});
+
 final isBookDuplicateUsecaseProvider = Provider<IsBookDuplicateUsecase>((ref) {
   return IsBookDuplicateUsecase();
 });
