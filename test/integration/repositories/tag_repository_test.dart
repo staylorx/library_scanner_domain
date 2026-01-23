@@ -22,7 +22,7 @@ void main() {
       logger.info('Starting TagRepository test');
 
       logger.info('Database instance created');
-      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      (await database.clearAll().run()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
       final unitOfWork = SembastUnitOfWork(dbService: database);
@@ -32,7 +32,7 @@ void main() {
       );
 
       // Check for zero tags
-      var tagsEither = await tagRepository.getTags();
+      var tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       var tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.isEmpty, true);
@@ -44,10 +44,10 @@ void main() {
         description: 'Test description',
         color: '#FF0000',
       );
-      await tagRepository.addTag(tag: newTag);
+      await tagRepository.addTag(tag: newTag).run();
 
       // Verify count
-      tagsEither = await tagRepository.getTags();
+      tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
@@ -58,10 +58,10 @@ void main() {
         name: 'Updated Test Tag',
         description: 'Updated description',
       );
-      await tagRepository.updateTag(tag: updatedTag);
+      await tagRepository.updateTag(tag: updatedTag).run();
 
       // Verify update
-      tagsEither = await tagRepository.getTags();
+      tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
@@ -69,9 +69,9 @@ void main() {
       expect(tags.first.description, 'Updated description');
 
       // Get tag by name
-      var tagResult = await tagRepository.getTagByName(
-        name: 'Updated Test Tag',
-      );
+      var tagResult = await tagRepository
+          .getTagByName(name: 'Updated Test Tag')
+          .run();
       expect(tagResult.isRight(), true);
       var tag = tagResult.fold((l) => null, (r) => r);
       expect(tag, isNotNull);
@@ -83,36 +83,36 @@ void main() {
         name: 'Second Tag',
         color: '#00FF00',
       );
-      await tagRepository.addTag(tag: secondTag);
+      await tagRepository.addTag(tag: secondTag).run();
 
       // Verify count increases
-      tagsEither = await tagRepository.getTags();
+      tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 2);
 
       // Delete one tag
-      await tagRepository.deleteTag(tag: updatedTag);
+      await tagRepository.deleteTag(tag: updatedTag).run();
 
       // Verify count decreases
-      tagsEither = await tagRepository.getTags();
+      tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
       expect(tags.first.name, 'Second Tag');
 
       // Delete the last tag
-      await tagRepository.deleteTag(tag: secondTag);
+      await tagRepository.deleteTag(tag: secondTag).run();
 
       // Verify zero tags
-      tagsEither = await tagRepository.getTags();
+      tagsEither = await tagRepository.getTags().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.isEmpty, true);
 
       // Close database
       logger.info('Closing database');
-      await database.close();
+      database.close();
       logger.info('Test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
   });

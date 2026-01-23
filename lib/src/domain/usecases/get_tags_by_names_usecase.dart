@@ -9,15 +9,13 @@ class GetTagsByNamesUsecase with Loggable {
   GetTagsByNamesUsecase({Logger? logger, required this.tagRepository});
 
   /// Retrieves multiple tags by names.
-  Future<Either<Failure, List<Tag>>> call({required List<String> names}) async {
+  TaskEither<Failure, List<Tag>> call({required List<String> names}) {
     logger?.info('getTagsByNamesUsecase: Entering call with ids: $names');
-    final result = await tagRepository.getTagsByNames(names: names);
-    logger?.info('getTagsByNamesUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (tags) {
+    return tagRepository.getTagsByNames(names: names).map((tags) {
       logger?.info(
         'getTagsByNamesUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );
-      return Right(tags);
+      return tags;
     });
   }
 }

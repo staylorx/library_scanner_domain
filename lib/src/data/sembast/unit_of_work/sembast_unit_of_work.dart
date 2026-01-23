@@ -4,38 +4,46 @@ import 'package:library_scanner_domain/src/data/data.dart';
 
 /// Sembast implementation of UnitOfWork.
 class SembastUnitOfWork implements UnitOfWork {
-  final DatabaseService _dbService;
+  final DatabaseService dbService;
 
   /// Creates a SembastUnitOfWork with the required DatabaseService.
-  SembastUnitOfWork({required DatabaseService dbService})
-    : _dbService = dbService;
+  SembastUnitOfWork({required this.dbService});
 
   @override
-  Future<Either<Failure, T>> run<T>(
-    Future<T> Function(Transaction txn) operation,
-  ) async {
-    T? result;
-    final txnResult = await _dbService.transaction(
-      operation: (txn) async {
-        result = await operation(SembastTransaction(txn));
-        return unit;
+  TaskEither<Failure, T> run<T>(
+    TaskEither<Failure, T> Function(Transaction txn) operation,
+  ) {
+    return TaskEither.tryCatch(
+      () async {
+        T? result;
+        final txnResult = await dbService
+            .transaction(
+              operation: (txn) async {
+                final opResult = await operation(SembastTransaction(txn)).run();
+                result = opResult.fold((l) => throw l, (r) => r);
+                return unit;
+              },
+            )
+            .run();
+        return txnResult.match((failure) => throw failure, (_) => result as T);
       },
+      (error, stackTrace) =>
+          error is Failure ? error : ServiceFailure(error.toString()),
     );
-    return txnResult.map((_) => result as T);
   }
 
   @override
-  Future<Either<Failure, Unit>> commit() async {
+  TaskEither<Failure, Unit> commit() {
     // Sembast transactions are auto-committed; manual commit not supported
-    return Left(
+    return TaskEither.left(
       ServiceFailure('Manual commit not supported in SembastUnitOfWork'),
     );
   }
 
   @override
-  Future<Either<Failure, Unit>> rollback() async {
+  TaskEither<Failure, Unit> rollback() {
     // Sembast transactions are auto-rolled back on failure; manual rollback not supported
-    return Left(
+    return TaskEither.left(
       ServiceFailure('Manual rollback not supported in SembastUnitOfWork'),
     );
   }

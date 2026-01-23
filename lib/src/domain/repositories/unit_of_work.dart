@@ -4,15 +4,15 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 /// Abstract Unit of Work for managing transactions across repositories.
 abstract class UnitOfWork {
   /// Runs an operation within a transaction.
-  /// The operation receives a Transaction handle and returns a `Future<T>`.
+  /// The operation receives a Transaction handle and returns a `TaskEither<Failure, T>`.
   /// The transaction is committed if the operation succeeds, rolled back on failure.
-  Future<Either<Failure, T>> run<T>(
-    Future<T> Function(Transaction txn) operation,
+  TaskEither<Failure, T> run<T>(
+    TaskEither<Failure, T> Function(Transaction txn) operation,
   );
 
   /// Manually commits the current transaction.
-  Future<Either<Failure, Unit>> commit();
+  TaskEither<Failure, Unit> commit();
 
   /// Manually rolls back the current transaction.
-  Future<Either<Failure, Unit>> rollback();
+  TaskEither<Failure, Unit> rollback();
 }

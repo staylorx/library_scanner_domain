@@ -162,7 +162,11 @@ final addBookUsecaseProvider = Provider<AddBookUsecase>((ref) {
 
 final addTagUsecaseProvider = Provider<AddTagUsecase>((ref) {
   final tagRepository = ref.watch(tagRepositoryProvider);
-  return AddTagUsecase(tagRepository: tagRepository);
+  final getTagByNameUsecase = ref.watch(getTagByNameUsecaseProvider);
+  return AddTagUsecase(
+    tagRepository: tagRepository,
+    getTagByNameUsecase: getTagByNameUsecase,
+  );
 });
 
 final clearLibraryUsecaseProvider = Provider<ClearLibraryUsecase>((ref) {

@@ -16,7 +16,7 @@ class IsBookDuplicateUsecase with Loggable {
 
     if (bookA.title != bookB.title) {
       logger?.info('IsBookDuplicateUsecase: Titles do not match');
-      return Right(false);
+      return Either.of(false);
     }
 
     // Compare authors as sets
@@ -24,7 +24,7 @@ class IsBookDuplicateUsecase with Loggable {
     final bAuthors = bookB.authors.map((author) => author.name).toSet();
     if (aAuthors.length != bAuthors.length || !aAuthors.containsAll(bAuthors)) {
       logger?.info('IsBookDuplicateUsecase: Authors do not match');
-      return Right(false);
+      return Either.of(false);
     }
 
     // Check if any non-local BookIdPair matches
@@ -38,13 +38,13 @@ class IsBookDuplicateUsecase with Loggable {
     // If there's any overlapping BookIdPair, they are duplicates
     if (aNonLocal.idPairs.any((id) => bNonLocal.idPairs.contains(id))) {
       logger?.info('IsBookDuplicateUsecase: Non-local IDs overlap');
-      return Right(true);
+      return Either.of(true);
     }
 
     // If no overlapping non-local ids, but title and authors match, they are duplicates
     logger?.info(
       'IsBookDuplicateUsecase: Books are duplicates based on title and authors',
     );
-    return Right(true);
+    return Either.of(true);
   }
 }

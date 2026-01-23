@@ -46,3 +46,108 @@ This file tracks the project's progress...
 [2026-01-23 03:53:46] - Added isAuthorDuplicateUsecaseProvider to providers.dart for Riverpod dependency injection.
 
 [2026-01-23 03:56:32] - Modified import_library_usecase.dart to ensure slugified local idpairs are created for authors when not included in id_pairs, matching the behavior of update_author_usecase. Changed both the \_parseAuthors method and the missing authors creation to use Slugify(name).toString() instead of name for the local idCode.
+[2026-01-23 20:01:49] - Fixed the "Duplicate Tag Name Test" by implementing duplicate name validation in AddTagUsecase. Modified TagRepository.getTagByName to return Tag? instead of failing on not found, allowing the usecase to check for existence before adding. Updated GetTagByNameUsecase to handle null returns. Test now passes correctly.
+
+## 2026-01-23 TaskEither Migration
+
+[2026-01-23 16:43:15] - Started TaskEither migration from Future<Either<Failure, T>>. Updated TagRepository and BookRepository interfaces to TaskEither. Migrated TagDatasource to TaskEither. Partial migration of BookDatasource. Repository implementations and use cases need updates to handle TaskEither chaining and .run() calls.
+
+[2026-01-23 16:49:10] - ## 2026-01-23 TaskEither Migration Continuation
+
+- Updated UnitOfWork interface and SembastUnitOfWork implementation to take TaskEither<Failure, T> Function(Transaction txn) operation instead of Future<T> Function(Transaction txn), allowing functional chaining without .run() in domain layer.
+- Completed TaskEither migration for author_repository_impl.dart: all methods now return TaskEither, use .map()/.flatMap() for chaining, removed try-catch blocks.
+- Started migration for book_repository_impl.dart: updated getBookById to TaskEither.
+- Identified need to update all use case call() methods to return TaskEither<Failure, T> instead of Future<Either<Failure, T>>, using .match() for handling TaskEither in complex operations.
+- Providers will need to use .run() on TaskEither for FutureProvider compatibility.
+- Tests will need to use .run() on TaskEither and adjust assertions to work with Either methods.
+
+[2026-01-23 17:03:31] - Started TaskEither migration for library_scanner_domain. Updated _loadBookWithRelations in BookRepositoryImpl to use TaskEither with traverseList for loading authors and tags. Migrated getBooks, getBookById, getBookByIdPair, getBooksByAuthor, getBooksByTag to use TaskEither with functional chaining. Updated some use cases (get_book_by_idpair_usecase, get_books_by_author_usecase, get_books_by_tag_usecase) to return TaskEither. Remaining work: Complete remaining methods in BookRepositoryImpl (addBook, updateBook, deleteBook, getBookByBusinessIds), migrate TagRepositoryImpl, update all remaining use cases, update providers to use .run(), update tests.
+
+2026-01-23 TaskEither Migration Update
+
+[2026-01-23 17:08:34] - Completed TaskEither migration for data layer: BookRepositoryImpl and TagRepositoryImpl all methods now return TaskEither with functional chaining. UnitOfWork updated to handle TaskEither operations. Some use cases updated (getBooksUsecase, getTagsUsecase, getTagByNameUsecase). Remaining: Update all remaining use cases to return TaskEither, update tests to use .run() on usecase calls.
+
+[2026-01-23 17:15:19] - 2026-01-23 TaskEither Migration Update - Use Cases Partially Migrated
+
+Migrated the following use cases to TaskEither with functional chaining:
+- get_author_by_idpair_usecase
+- get_author_by_name_usecase
+- get_authors_by_names_usecase
+- get_tags_by_names_usecase
+- add_author_usecase
+- update_author_usecase
+- add_book_usecase
+
+Migrated BookIdRegistryService to TaskEither.
+
+Remaining use cases need migration. Tests need updates to use .run() on TaskEither usecase calls and adjust assertions to work with Either methods.
+
+[2026-01-23 17:24:41] - 2026-01-23 TaskEither Migration Update - Significant Progress Made
+
+Migrated the following additional use cases to TaskEither with functional chaining:
+- get_sorted_authors_usecase
+- get_sorted_books_usecase
+- filter_authors_usecase
+- filter_books_usecase
+- is_author_duplicate_usecase
+- is_book_duplicate_usecase
+- validate_book_usecase
+- clear_library_usecase
+- delete_book_usecase
+- delete_tag_usecase
+- add_tag_usecase
+- update_book_usecase
+- update_tag_usecase
+- export_library_usecase
+
+Remaining use cases to migrate:
+- get_library_stats_usecase (partially migrated)
+- import_library_usecase (partially migrated)
+
+Data layer fully migrated. Domain services checked - no changes needed as they return Either.
+
+Tests and repositories need updates to use .run() on TaskEither calls and adjust assertions from .fold to .match or chaining.
+
+Providers are fine as they are Provider, not FutureProvider.
+
+[2026-01-23 17:50:09] - Updated author_id_registry_service.dart to use TaskEither instead of Either/Future<Either>, using TaskEither.tryCatch for exception handling and TaskEither.traverse with orElse for chaining in initializeWithExistingData.
+
+[2026-01-23 17:54:43] - Updated author_id_registry_service.dart to use more functional chaining with TaskEither. Refactored generateLocalId to chain from generateId using map, and initializeWithExistingData to use traverseList with map instead of await run. This improves functional programming style and reduces redundant tryCatch blocks.
+
+## Bug Fixes
+
+[2026-01-23 19:56:01] - Fixed bug in deleteAuthorWithCascade method: renamed parameter from authorName to authorId and changed query filter from {'name': authorName} to {'id': authorId}. This resolves the failing "End-to-end author management through providers" test.
+
+## TaskEither Fixes
+
+[2026-01-23 20:10:54] - Fixed failing usecases by properly implementing TaskEither usage. Corrected AddTagUsecase to handle TaskEither chaining with proper async branching using TaskEither.fromTask and fold on Either. Added missing getTagByNameUsecase dependency in providers and tests. Fixed logger field in ImportLibraryUsecase. All integration usecase tests now pass.
+
+[2026-01-23 20:12:26] - Fixed null check issue in get_tag_by_name_usecase.dart: removed unnecessary null check on non-nullable Tag type, changed flatMap to map for consistency with other usecases.
+
+## Code Review: TaskEither Chaining
+
+[2026-01-23 20:18:57] - Code review completed for TaskEither chaining smoothness and elegance. Key findings:
+
+**Strengths:**
+- Datasources use TaskEither consistently with proper chaining (map, flatMap)
+- Most usecases follow functional patterns correctly
+- AuthorDatasource.deleteAuthorWithCascade shows excellent sequential chaining with fold/flatMap
+- BookDatasource.removeAuthorFromBooks demonstrates parallel operations with TaskEither.traverseList
+
+**Issues Found & Fixed:**
+- ImportLibraryUsecase was mixing try-catch with async/await and TaskEither.run(), violating FP principles
+- Refactored to use pure TaskEither chaining throughout
+- Added helper methods (_processBooks, _filterDuplicates, _saveToDatabase) for better separation of concerns
+
+**Demonstration of Smooth Chaining:**
+The refactored ImportLibraryUsecase now shows smooth TaskEither chaining:
+1. File reading with TaskEither.tryCatch
+2. YAML parsing validation
+3. Conditional database clearing
+4. Sequential parsing (authors → tags → books processing)
+5. Duplicate filtering with database queries
+6. Transactional database saving with fold/flatMap chains
+
+This demonstrates how complex async operations can be composed elegantly using TaskEither's chaining operators without mixing paradigms.
+
+[2026-01-23 20:44:43] - Completed data layer code review for TaskEither.tryCatch opportunities. No refactoring needed as the codebase already adheres to best practices for functional error handling with TaskEither.tryCatch in all relevant places.

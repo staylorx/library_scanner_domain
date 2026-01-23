@@ -10,17 +10,16 @@ class UpdateAuthorUsecase with Loggable {
   UpdateAuthorUsecase({Logger? logger, required this.authorRepository});
 
   /// Updates an existing author.
-  Future<Either<Failure, Unit>> call({
+  TaskEither<Failure, Unit> call({
     required String id,
     required String name,
     String? biography,
     List<AuthorIdPair>? businessIds,
-  }) async {
+  }) {
     logger?.info(
       'UpdateAuthorUsecase: Entering call with id: $id, name: $name',
     );
-    final getEither = await authorRepository.getAuthorById(id: id);
-    return getEither.fold((failure) => Left(failure), (existingAuthor) async {
+    return authorRepository.getAuthorById(id: id).flatMap((existingAuthor) {
       final slugId = AuthorIdPair(
         idType: AuthorIdType.local,
         idCode: Slugify(name).toString(),
@@ -37,13 +36,9 @@ class UpdateAuthorUsecase with Loggable {
         biography: biography,
         businessIds: updatedBusinessIds,
       );
-      final updateEither = await authorRepository.updateAuthor(
-        author: updatedAuthor,
-      );
-      logger?.info('UpdateAuthorUsecase: Success in call');
-      return updateEither.fold((failure) => Left(failure), (_) {
-        return Right(unit);
-      });
+      return authorRepository
+          .updateAuthor(author: updatedAuthor)
+          .map((_) => unit);
     });
   }
 }

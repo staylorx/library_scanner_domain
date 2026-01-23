@@ -9,19 +9,11 @@ class GetAuthorByNameUsecase with Loggable {
   GetAuthorByNameUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves an author by name.
-  Future<Either<Failure, Author>> call({required String name}) async {
+  TaskEither<Failure, Author> call({required String name}) {
     logger?.info('getByNameUsecase: Entering call with name: $name');
-    final result = await authorRepository.getAuthorByName(name: name);
-    logger?.info('getByNameUsecase: Success in call');
-    return result.match(
-      (failure) {
-        logger?.info('getByNameUsecase: Failure: $failure');
-        return Left(failure);
-      },
-      (author) {
-        logger?.info('getByNameUsecase: Output: ${author.name}');
-        return Right(author);
-      },
-    );
+    return authorRepository.getAuthorByName(name: name).map((author) {
+      logger?.info('getByNameUsecase: Output: ${author.name}');
+      return author;
+    });
   }
 }

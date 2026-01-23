@@ -4,38 +4,27 @@ import 'package:id_logging/id_logging.dart';
 
 /// Usecase for getting library statistics
 class GetLibraryStatsUsecase with Loggable {
-  final LibraryDataAccess _dataAccess;
+  final LibraryDataAccess dataAccess;
 
-  GetLibraryStatsUsecase({
-    Logger? logger,
-    required LibraryDataAccess dataAccess,
-  }) : _dataAccess = dataAccess;
+  GetLibraryStatsUsecase({Logger? logger, required this.dataAccess});
+
+  // TODO: better to chain?
 
   /// Gets comprehensive library statistics.
-  Future<Either<Failure, LibraryStats>> call() async {
-    final booksResult = await _dataAccess.bookRepository.getBooks();
-    return booksResult.fold((failure) => Future.value(Left(failure)), (
-      books,
-    ) async {
-      final authorsResult = await _dataAccess.authorRepository.getAuthors();
-      return authorsResult.fold((failure) => Future.value(Left(failure)), (
-        authors,
-      ) async {
-        final tagsResult = await _dataAccess.tagRepository.getTags();
-        return tagsResult.fold(
-          (failure) => Future.value(Left(failure)),
-          (tags) => Right(
-            LibraryStats(
-              totalBooks: books.length,
-              totalAuthors: authors.length,
-              totalTags: tags.length,
-              booksWithCovers: books
-                  .where((book) => book.coverImage != null)
-                  .length,
-              booksByTag: _calculateBooksByTag(books, tags),
-            ),
-          ),
-        );
+  TaskEither<Failure, LibraryStats> call() {
+    return dataAccess.bookRepository.getBooks().flatMap((books) {
+      return dataAccess.authorRepository.getAuthors().flatMap((authors) {
+        return dataAccess.tagRepository.getTags().map((tags) {
+          return LibraryStats(
+            totalBooks: books.length,
+            totalAuthors: authors.length,
+            totalTags: tags.length,
+            booksWithCovers: books
+                .where((book) => book.coverImage != null)
+                .length,
+            booksByTag: _calculateBooksByTag(books, tags),
+          );
+        });
       });
     });
   }

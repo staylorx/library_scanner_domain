@@ -18,7 +18,7 @@ class AddBookUsecase with Loggable {
   });
 
   /// Adds a new book and returns the updated list of books.
-  Future<Either<Failure, List<Book>>> call({
+  TaskEither<Failure, List<Book>> call({
     required String title,
     required List<Author> authors,
     List<Tag> tags = const [],
@@ -27,24 +27,53 @@ class AddBookUsecase with Loggable {
     Uint8List? coverImage,
     String? notes,
     List<BookIdPair>? businessIds,
-  }) async {
+  }) {
     final id = const Uuid().v4();
     List<BookIdPair> finalBusinessIds = businessIds ?? [];
     if (finalBusinessIds.isEmpty) {
       // Generate a unique local ID
-      final localIdEither = await bookIdRegistryService.generateLocalId();
-      if (localIdEither.isLeft()) {
-        return Left(
-          localIdEither.getLeft().getOrElse(
-            () => DatabaseFailure('Failed to generate local ID'),
-          ),
+      return bookIdRegistryService.generateLocalId().flatMap((localId) {
+        finalBusinessIds = [
+          BookIdPair(idType: BookIdType.local, idCode: localId),
+        ];
+        return _createBookAndAdd(
+          id: id,
+          title: title,
+          authors: authors,
+          tags: tags,
+          description: description,
+          publishedDate: publishedDate,
+          coverImage: coverImage,
+          notes: notes,
+          finalBusinessIds: finalBusinessIds,
         );
-      }
-      final localId = localIdEither.getRight().getOrElse(() => '');
-      finalBusinessIds = [
-        BookIdPair(idType: BookIdType.local, idCode: localId),
-      ];
+      });
+    } else {
+      return _createBookAndAdd(
+        id: id,
+        title: title,
+        authors: authors,
+        tags: tags,
+        description: description,
+        publishedDate: publishedDate,
+        coverImage: coverImage,
+        notes: notes,
+        finalBusinessIds: finalBusinessIds,
+      );
     }
+  }
+
+  TaskEither<Failure, List<Book>> _createBookAndAdd({
+    required String id,
+    required String title,
+    required List<Author> authors,
+    required List<Tag> tags,
+    required String? description,
+    required DateTime? publishedDate,
+    required Uint8List? coverImage,
+    required String? notes,
+    required List<BookIdPair> finalBusinessIds,
+  }) {
     final book = Book(
       id: id,
       businessIds: finalBusinessIds,
@@ -63,41 +92,31 @@ class AddBookUsecase with Loggable {
     );
 
     // Check for duplicates
-    final existingBooksEither = await bookRepository.getBooks();
-    if (existingBooksEither.isLeft()) {
-      return Left(
-        existingBooksEither.getLeft().getOrElse(
-          () => DatabaseFailure('Failed to check existing books'),
-        ),
+    return bookRepository.getBooks().flatMap((existingBooks) {
+      final isDuplicate = existingBooks.any(
+        (existing) => isBookDuplicateUsecase(
+          bookA: cleanedBook,
+          bookB: existing,
+        ).fold((failure) => false, (isDup) => isDup),
       );
-    }
-    final existingBooks = existingBooksEither.getRight().getOrElse(() => []);
-    final isDuplicate = existingBooks.any(
-      (existing) => isBookDuplicateUsecase(
-        bookA: cleanedBook,
-        bookB: existing,
-      ).getRight().getOrElse(() => false),
-    );
-    if (isDuplicate) {
-      logger?.warning(
-        'AddBookUsecase: Duplicate book detected: ${cleanedBook.title}',
-      );
-      return Left(
-        ValidationFailure(
-          'A book with the same title, authors, and ID pairs already exists',
-        ),
-      );
-    }
-
-    final addEither = await bookRepository.addBook(book: cleanedBook);
-    return addEither.fold((failure) => Future.value(Left(failure)), (_) async {
-      final getEither = await bookRepository.getBooks();
-      logger?.info('AddBookUsecase: Success in call');
-      return getEither.fold((failure) => Left(failure), (books) {
-        logger?.info(
-          'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
+      if (isDuplicate) {
+        logger?.warning(
+          'AddBookUsecase: Duplicate book detected: ${cleanedBook.title}',
         );
-        return Right(books);
+        return TaskEither.left(
+          ValidationFailure(
+            'A book with the same title, authors, and ID pairs already exists',
+          ),
+        );
+      }
+
+      return bookRepository.addBook(book: cleanedBook).flatMap((_) {
+        return bookRepository.getBooks().map((books) {
+          logger?.info(
+            'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
+          );
+          return books;
+        });
       });
     });
   }

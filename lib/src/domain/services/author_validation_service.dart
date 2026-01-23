@@ -4,5 +4,5 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 /// Service for validating author data
 abstract class AuthorValidationService {
   /// Validates an author entity
-  Future<Either<Failure, Author>> validate(Author author);
+  TaskEither<Failure, Author> validate(Author author);
 }

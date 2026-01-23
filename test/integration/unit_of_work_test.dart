@@ -1,9 +1,9 @@
 import 'package:test/test.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import 'package:library_scanner_domain/src/data/sembast/datasources/sembast_database.dart';
 import 'package:library_scanner_domain/src/data/sembast/datasources/tag_datasource.dart';
 import 'package:library_scanner_domain/src/data/core/models/tag_model.dart';
-import 'package:library_scanner_domain/src/domain/services/database_service.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path/path.dart' as p;
 
@@ -19,21 +19,21 @@ void main() {
       );
       tagDatasource = TagDatasource(dbService: database);
       unitOfWork = SembastUnitOfWork(dbService: database);
-      await database.clearAll();
+      await database.clearAll().run();
     });
 
     tearDownAll(() async {
-      await database.close();
+      database.close();
     });
 
     setUp(() async {
       // Clear database before each test
-      await database.clearAll();
+      await database.clearAll().run();
     });
 
     test('Successful transaction commits database changes', () async {
       // Verify no tags initially
-      final initialResult = await tagDatasource.getAllTags();
+      final initialResult = await tagDatasource.getAllTags().run();
       expect(initialResult.isRight(), true);
       initialResult.fold(
         (l) => fail('Expected right'),
@@ -41,23 +41,27 @@ void main() {
       );
 
       // Run transaction that saves a tag
-      final result = await unitOfWork.run((txn) async {
-        final tagModel = TagModel(
-          id: 'test-tag',
-          name: 'Test Tag',
-          slug: 'test-tag',
-          bookIds: [],
-        );
-        final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
-        expect(saveResult.isRight(), true);
-        return 'success';
-      });
+      final result = await unitOfWork.run((txn) {
+        return TaskEither.tryCatch(() async {
+          final tagModel = TagModel(
+            id: 'test-tag',
+            name: 'Test Tag',
+            slug: 'test-tag',
+            bookIds: [],
+          );
+          final saveResult = await tagDatasource
+              .saveTag(tagModel, txn: txn)
+              .run();
+          expect(saveResult.isRight(), true);
+          return 'success';
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
 
       expect(result.isRight(), true);
       result.fold((l) => fail('Expected right'), (r) => expect(r, 'success'));
 
       // Verify tag was committed
-      final verifyResult = await tagDatasource.getAllTags();
+      final verifyResult = await tagDatasource.getAllTags().run();
       expect(verifyResult.isRight(), true);
       verifyResult.fold(
         (l) => fail('Expected right'),
@@ -67,7 +71,7 @@ void main() {
 
     test('Failed transaction rolls back database changes', () async {
       // Verify no tags initially
-      final initialResult = await tagDatasource.getAllTags();
+      final initialResult = await tagDatasource.getAllTags().run();
       expect(initialResult.isRight(), true);
       initialResult.fold(
         (l) => fail('Expected right'),
@@ -75,24 +79,28 @@ void main() {
       );
 
       // Run transaction that saves tag but then fails
-      final result = await unitOfWork.run((txn) async {
-        final tagModel = TagModel(
-          id: 'test-tag',
-          name: 'Test Tag',
-          slug: 'test-tag',
-          bookIds: [],
-        );
-        final saveResult = await tagDatasource.saveTag(tagModel, txn: txn);
-        expect(saveResult.isRight(), true);
+      final result = await unitOfWork.run((txn) {
+        return TaskEither.tryCatch(() async {
+          final tagModel = TagModel(
+            id: 'test-tag',
+            name: 'Test Tag',
+            slug: 'test-tag',
+            bookIds: [],
+          );
+          final saveResult = await tagDatasource
+              .saveTag(tagModel, txn: txn)
+              .run();
+          expect(saveResult.isRight(), true);
 
-        // Simulate failure after save
-        throw Exception('Test failure');
-      });
+          // Simulate failure after save
+          throw Exception('Test failure');
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
 
       expect(result.isLeft(), true);
 
       // Verify tag was rolled back (should be empty)
-      final verifyResult = await tagDatasource.getAllTags();
+      final verifyResult = await tagDatasource.getAllTags().run();
       expect(verifyResult.isRight(), true);
       verifyResult.fold(
         (l) => fail('Expected right'),
@@ -101,32 +109,34 @@ void main() {
     });
 
     test('Multiple operations in transaction are atomic', () async {
-      final result = await unitOfWork.run((txn) async {
-        // Save first tag
-        final tagModel1 = TagModel(
-          id: 'tag-1',
-          name: 'Tag 1',
-          slug: 'tag-1',
-          bookIds: [],
-        );
-        await tagDatasource.saveTag(tagModel1, txn: txn);
+      final result = await unitOfWork.run((txn) {
+        return TaskEither.tryCatch(() async {
+          // Save first tag
+          final tagModel1 = TagModel(
+            id: 'tag-1',
+            name: 'Tag 1',
+            slug: 'tag-1',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(tagModel1, txn: txn).run();
 
-        // Save second tag
-        final tagModel2 = TagModel(
-          id: 'tag-2',
-          name: 'Tag 2',
-          slug: 'tag-2',
-          bookIds: [],
-        );
-        await tagDatasource.saveTag(tagModel2, txn: txn);
+          // Save second tag
+          final tagModel2 = TagModel(
+            id: 'tag-2',
+            name: 'Tag 2',
+            slug: 'tag-2',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(tagModel2, txn: txn).run();
 
-        return 'success';
-      });
+          return 'success';
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
 
       expect(result.isRight(), true);
 
       // Verify both tags were committed
-      final verifyResult = await tagDatasource.getAllTags();
+      final verifyResult = await tagDatasource.getAllTags().run();
       expect(verifyResult.isRight(), true);
       verifyResult.fold(
         (l) => fail('Expected right'),
@@ -135,33 +145,35 @@ void main() {
     });
 
     test('Transaction failure rolls back multiple operations', () async {
-      final result = await unitOfWork.run((txn) async {
-        // Save first tag
-        final tagModel1 = TagModel(
-          id: 'tag-1',
-          name: 'Tag 1',
-          slug: 'tag-1',
-          bookIds: [],
-        );
-        await tagDatasource.saveTag(tagModel1, txn: txn);
+      final result = await unitOfWork.run((txn) {
+        return TaskEither.tryCatch(() async {
+          // Save first tag
+          final tagModel1 = TagModel(
+            id: 'tag-1',
+            name: 'Tag 1',
+            slug: 'tag-1',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(tagModel1, txn: txn).run();
 
-        // Save second tag
-        final tagModel2 = TagModel(
-          id: 'tag-2',
-          name: 'Tag 2',
-          slug: 'tag-2',
-          bookIds: [],
-        );
-        await tagDatasource.saveTag(tagModel2, txn: txn);
+          // Save second tag
+          final tagModel2 = TagModel(
+            id: 'tag-2',
+            name: 'Tag 2',
+            slug: 'tag-2',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(tagModel2, txn: txn).run();
 
-        // Fail after both saves
-        throw Exception('Transaction failure');
-      });
+          // Fail after both saves
+          throw Exception('Transaction failure');
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
 
       expect(result.isLeft(), true);
 
       // Verify all changes were rolled back
-      final verifyResult = await tagDatasource.getAllTags();
+      final verifyResult = await tagDatasource.getAllTags().run();
       expect(verifyResult.isRight(), true);
       verifyResult.fold(
         (l) => fail('Expected right'),
@@ -170,12 +182,12 @@ void main() {
     });
 
     test('Manual commit returns failure', () async {
-      final result = await unitOfWork.commit();
+      final result = await unitOfWork.commit().run();
       expect(result.isLeft(), true);
     });
 
     test('Manual rollback returns failure', () async {
-      final result = await unitOfWork.rollback();
+      final result = await unitOfWork.rollback().run();
       expect(result.isLeft(), true);
     });
   });

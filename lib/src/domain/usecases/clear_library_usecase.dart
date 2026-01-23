@@ -9,15 +9,19 @@ class ClearLibraryUsecase with Loggable {
   ClearLibraryUsecase({Logger? logger, required this.dataAccess});
 
   /// Clears all data from the library (books, authors, tags).
-  Future<Either<Failure, Unit>> call() async {
+  TaskEither<Failure, Unit> call() {
     logger?.info('ClearLibraryUsecase: Clearing library');
-    final result = await dataAccess.databaseService.clearAll();
-    result.fold(
-      (failure) => logger?.error(
-        'ClearLibraryUsecase: Failed to clear library: ${failure.message}',
-      ),
-      (_) => logger?.info('ClearLibraryUsecase: Successfully cleared library'),
-    );
-    return result.map((_) => unit);
+    return dataAccess.databaseService
+        .clearAll()
+        .map((_) {
+          logger?.info('ClearLibraryUsecase: Successfully cleared library');
+          return unit;
+        })
+        .mapLeft((failure) {
+          logger?.error(
+            'ClearLibraryUsecase: Failed to clear library: ${failure.message}',
+          );
+          return failure;
+        });
   }
 }

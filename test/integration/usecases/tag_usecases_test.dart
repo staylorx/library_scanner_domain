@@ -24,7 +24,8 @@ void main() {
         logger.info('Starting comprehensive tag test');
 
         logger.info('Database instance created');
-        (await database.clearAll()).fold((l) => throw l, (r) => null);
+        final clearResult = await database.clearAll().run();
+        clearResult.fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
         final unitOfWork = SembastUnitOfWork(dbService: database);
@@ -34,12 +35,18 @@ void main() {
         );
 
         final getTagsUsecase = GetTagsUsecase(tagRepository: tagRepository);
-        final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
+        final getTagByNameUsecase = GetTagByNameUsecase(
+          tagRepository: tagRepository,
+        );
+        final addTagUsecase = AddTagUsecase(
+          tagRepository: tagRepository,
+          getTagByNameUsecase: getTagByNameUsecase,
+        );
         final updateTagUsecase = UpdateTagUsecase(tagRepository: tagRepository);
         final deleteTagUsecase = DeleteTagUsecase(tagRepository: tagRepository);
 
         // Check for zero records
-        var result = await getTagsUsecase();
+        var result = await getTagsUsecase().run();
         expect(result.isRight(), true);
         List<Tag> tags = result.fold((l) => <Tag>[], (r) => r);
         expect(tags.isEmpty, true);
@@ -50,10 +57,13 @@ void main() {
           name: 'Test Tag',
           description: 'A test tag',
         );
-        await addTagUsecase(name: newTag.name, description: newTag.description);
+        await addTagUsecase(
+          name: newTag.name,
+          description: newTag.description,
+        ).run();
 
         // Verify count
-        result = await getTagsUsecase();
+        result = await getTagsUsecase().run();
         expect(result.isRight(), true);
         tags = result.fold((l) => <Tag>[], (r) => r);
         expect(tags.length, 1);
@@ -70,7 +80,7 @@ void main() {
           name: updatedTag.name,
           description: updatedTag.description,
           color: updatedTag.color,
-        );
+        ).run();
         logger.info('updateTagUsecase call completed');
         expect(updateResult.isRight(), true);
         final updatedTags = updateResult.fold((l) => <Tag>[], (r) => r);
@@ -79,7 +89,7 @@ void main() {
         expect(updatedTags.first.description, 'Updated description');
 
         // Verify count remains the same
-        result = await getTagsUsecase();
+        result = await getTagsUsecase().run();
         expect(result.isRight(), true);
         tags = result.fold((l) => <Tag>[], (r) => r);
         expect(tags.length, 1);
@@ -91,19 +101,19 @@ void main() {
           name: 'Second Tag',
           color: '#00FF00',
         );
-        await addTagUsecase(name: secondTag.name, color: secondTag.color);
+        await addTagUsecase(name: secondTag.name, color: secondTag.color).run();
 
         // Verify count increases
-        result = await getTagsUsecase();
+        result = await getTagsUsecase().run();
         expect(result.isRight(), true);
         tags = result.fold((l) => <Tag>[], (r) => r);
         expect(tags.length, 2);
 
         // Delete one record
-        await deleteTagUsecase(id: updatedTag.id);
+        await deleteTagUsecase(id: updatedTag.id).run();
 
         // Verify count decreases
-        result = await getTagsUsecase();
+        result = await getTagsUsecase().run();
         expect(result.isRight(), true);
         tags = result.fold((l) => <Tag>[], (r) => r);
         expect(tags.length, 1);
@@ -111,7 +121,7 @@ void main() {
 
         // Close database
         logger.info('Closing database');
-        await database.close();
+        database.close();
         logger.info('Test completed');
       },
       timeout: Timeout(Duration(seconds: 60)),
@@ -126,7 +136,7 @@ void main() {
       );
       final tagDatasource = TagDatasource(dbService: database);
       logger.info('Database instance created');
-      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      await database.clearAll().run();
       logger.info('Database cleared');
 
       final unitOfWork = SembastUnitOfWork(dbService: database);
@@ -134,7 +144,13 @@ void main() {
         tagDatasource: tagDatasource,
         unitOfWork: unitOfWork,
       );
-      final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
+      final getTagByNameUsecase = GetTagByNameUsecase(
+        tagRepository: tagRepository,
+      );
+      final addTagUsecase = AddTagUsecase(
+        tagRepository: tagRepository,
+        getTagByNameUsecase: getTagByNameUsecase,
+      );
 
       // Add first tag
       final tag = Tag(
@@ -145,7 +161,7 @@ void main() {
       var result = await addTagUsecase(
         name: tag.name,
         description: tag.description,
-      );
+      ).run();
       expect(result.isRight(), true);
 
       // Try to add duplicate tag
@@ -154,12 +170,13 @@ void main() {
         name: 'Unique Tag',
         description: 'Another description',
       );
-      result = await addTagUsecase(
+      final taskEither = addTagUsecase(
         name: duplicateTag.name,
         description: duplicateTag.description,
       );
-      expect(result.isLeft(), true);
-      final failure = result.fold((l) => l, (r) => null);
+      final either = await taskEither.run();
+      expect(either.isLeft(), true);
+      final failure = either.fold((l) => l, (r) => null);
       expect(failure.runtimeType, ValidationFailure);
       expect(
         failure!.message,
@@ -168,7 +185,7 @@ void main() {
 
       // Close database
       logger.info('Closing database');
-      await database.close();
+      database.close();
       logger.info('Duplicate tag test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
   });

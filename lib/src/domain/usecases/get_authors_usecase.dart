@@ -11,15 +11,14 @@ class GetAuthorsUsecase with Loggable {
   GetAuthorsUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves all authors.
-  Future<Either<Failure, List<Author>>> call() async {
+  TaskEither<Failure, List<Author>> call() {
     logger?.info('GetAuthorsUsecase: Entering call');
-    final result = await authorRepository.getAuthors();
     logger?.info('GetAuthorsUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (authors) {
+    return authorRepository.getAuthors().map((authors) {
       logger?.info(
         'GetAuthorsUsecase: Output: ${authors.map((a) => a.name).toList()}',
       );
-      return Right(authors);
+      return authors;
     });
   }
 }

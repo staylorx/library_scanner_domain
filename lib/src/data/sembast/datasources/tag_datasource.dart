@@ -9,196 +9,124 @@ class TagDatasource {
   TagDatasource({required DatabaseService dbService}) : _dbService = dbService;
 
   /// Retrieves all tags from the store.
-  Future<Either<Failure, List<TagModel>>> getAllTags() async {
-    try {
-      final result = await _dbService.getAll(collection: 'tags');
-      return result.match(
-        (failure) => Either.left(failure),
-        (records) => Either.right(
-          records.map((record) => TagModel.fromMap(map: record)).toList(),
-        ),
+  TaskEither<Failure, List<TagModel>> getAllTags() => _dbService
+      .getAll(collection: 'tags')
+      .map(
+        (records) =>
+            records.map((record) => TagModel.fromMap(map: record)).toList(),
       );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get all tags: $e'));
-    }
-  }
 
   /// Retrieves a tag by name.
-  Future<Either<Failure, TagModel?>> getTagByName(String name) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'tags',
-        filter: {'name': name},
-      );
-      return result.match((failure) => Either.left(failure), (records) {
+  TaskEither<Failure, TagModel?> getTagByName(String name) => _dbService
+      .query(collection: 'tags', filter: {'name': name})
+      .map((records) {
         if (records.isEmpty) {
-          return Either.right(null);
+          return null;
         }
-        return Either.right(TagModel.fromMap(map: records.first));
+        return TagModel.fromMap(map: records.first);
       });
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get tag by name: $e'));
-    }
-  }
 
   /// Retrieves tags by a list of names.
-  Future<Either<Failure, List<TagModel>>> getTagsByNames(
-    List<String> names,
-  ) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'tags',
-        filter: {
-          'name': {'\$in': names},
-        },
-      );
-      return result.match(
-        (failure) => Either.left(failure),
-        (records) => Either.right(
-          records.map((record) => TagModel.fromMap(map: record)).toList(),
-        ),
-      );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get tags by names: $e'));
-    }
-  }
+  TaskEither<Failure, List<TagModel>> getTagsByNames(List<String> names) =>
+      _dbService
+          .query(
+            collection: 'tags',
+            filter: {
+              'name': {'\$in': names},
+            },
+          )
+          .map(
+            (records) =>
+                records.map((record) => TagModel.fromMap(map: record)).toList(),
+          );
 
   /// Retrieves a tag by ID.
-  Future<Either<Failure, TagModel?>> getTagById(String id) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'tags',
-        filter: {'id': id},
-      );
-      return result.match((failure) => Either.left(failure), (records) {
+  TaskEither<Failure, TagModel?> getTagById(String id) =>
+      _dbService.query(collection: 'tags', filter: {'id': id}).map((records) {
         if (records.isEmpty) {
-          return Either.right(null);
+          return null;
         }
-        return Either.right(TagModel.fromMap(map: records.first));
+        return TagModel.fromMap(map: records.first);
       });
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get tag by ID: $e'));
-    }
-  }
 
   /// Saves a tag to the store.
-  Future<Either<Failure, Unit>> saveTag(
-    TagModel tag, {
-    Transaction? txn,
-  }) async {
-    try {
-      final data = tag.toMap();
-      final db = txn?.db;
-      final result = await _dbService.save(
-        collection: 'tags',
-        id: tag.id,
-        data: data,
-        db: db,
-      );
-      return result.match(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to save tag: $e'));
-    }
+  TaskEither<Failure, Unit> saveTag(TagModel tag, {Transaction? txn}) {
+    final data = tag.toMap();
+    final db = txn?.db;
+    return _dbService
+        .save(collection: 'tags', id: tag.id, data: data, db: db)
+        .map((_) => unit);
   }
 
   /// Deletes a tag by ID.
-  Future<Either<Failure, Unit>> deleteTag(String id, {Transaction? txn}) async {
-    try {
-      final db = txn?.db;
-      final result = await _dbService.delete(
-        collection: 'tags',
-        id: id,
-        db: db,
-      );
-      return result.match(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to delete tag: $e'));
-    }
+  TaskEither<Failure, Unit> deleteTag(String id, {Transaction? txn}) {
+    final db = txn?.db;
+    return _dbService
+        .delete(collection: 'tags', id: id, db: db)
+        .map((_) => unit);
   }
 
   /// Adds book to tags.
-  Future<Either<Failure, Unit>> addBookToTags(
+  TaskEither<Failure, Unit> addBookToTags(
     String bookId,
     List<String> tagNames, {
     Transaction? txn,
-  }) async {
-    try {
-      for (final tagName in tagNames) {
-        final tagResult = await getTagByName(tagName);
-        if (tagResult.isRight()) {
-          final tag = tagResult.getRight().getOrElse(() => null);
-          if (tag != null) {
-            final updatedBookIds = List<String>.from(tag.bookIds);
-            if (!updatedBookIds.contains(bookId)) {
-              updatedBookIds.add(bookId);
-            }
-            final updatedTag = TagModel(
-              id: tag.id,
-              name: tag.name,
-              description: tag.description,
-              color: tag.color,
-              slug: tag.slug,
-              bookIds: updatedBookIds,
-            );
-            final saveResult = await saveTag(updatedTag, txn: txn);
-            if (saveResult.isLeft()) {
-              return saveResult;
-            }
-          }
-        }
-      }
-      return Either.right(unit);
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to add book to tags: $e'));
+  }) => TaskEither.traverseList(
+    tagNames,
+    (tagName) => _addBookToTag(bookId, tagName, txn),
+  ).map((_) => unit);
+
+  TaskEither<Failure, Unit> _addBookToTag(
+    String bookId,
+    String tagName,
+    Transaction? txn,
+  ) => getTagByName(tagName).flatMap((tag) {
+    if (tag == null) return TaskEither.right(unit);
+    final updatedBookIds = List<String>.from(tag.bookIds);
+    if (!updatedBookIds.contains(bookId)) {
+      updatedBookIds.add(bookId);
     }
-  }
+    final updatedTag = TagModel(
+      id: tag.id,
+      name: tag.name,
+      description: tag.description,
+      color: tag.color,
+      slug: tag.slug,
+      bookIds: updatedBookIds,
+    );
+    return saveTag(updatedTag, txn: txn);
+  });
 
   /// Removes book from tags.
-  Future<Either<Failure, Unit>> removeBookFromTags(
+  TaskEither<Failure, Unit> removeBookFromTags(
     String bookId,
     List<String> tagNames, {
     Transaction? txn,
-  }) async {
-    try {
-      for (final tagName in tagNames) {
-        final tagResult = await getTagByName(tagName);
-        if (tagResult.isRight()) {
-          final tag = tagResult.getRight().getOrElse(() => null);
-          if (tag != null) {
-            final updatedBookIds = List<String>.from(tag.bookIds)
-              ..remove(bookId);
-            final updatedTag = TagModel(
-              id: tag.id,
-              name: tag.name,
-              description: tag.description,
-              color: tag.color,
-              slug: tag.slug,
-              bookIds: updatedBookIds,
-            );
-            final saveResult = await saveTag(updatedTag, txn: txn);
-            if (saveResult.isLeft()) {
-              return saveResult;
-            }
-          }
-        }
-      }
-      return Either.right(unit);
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to remove book from tags: $e'));
-    }
-  }
+  }) => TaskEither.traverseList(
+    tagNames,
+    (tagName) => _removeBookFromTag(bookId, tagName, txn),
+  ).map((_) => unit);
+
+  TaskEither<Failure, Unit> _removeBookFromTag(
+    String bookId,
+    String tagName,
+    Transaction? txn,
+  ) => getTagByName(tagName).flatMap((tag) {
+    if (tag == null) return TaskEither.right(unit);
+    final updatedBookIds = List<String>.from(tag.bookIds)..remove(bookId);
+    final updatedTag = TagModel(
+      id: tag.id,
+      name: tag.name,
+      description: tag.description,
+      color: tag.color,
+      slug: tag.slug,
+      bookIds: updatedBookIds,
+    );
+    return saveTag(updatedTag, txn: txn);
+  });
 
   /// Executes a transaction with the given operation.
-  Future<Either<Failure, Unit>> transaction(
+  TaskEither<Failure, Unit> transaction(
     Future<Unit> Function(dynamic txn) operation,
-  ) async {
-    final result = await _dbService.transaction(operation: operation);
-    return result.map((_) => unit);
-  }
+  ) => _dbService.transaction(operation: operation).map((_) => unit);
 }

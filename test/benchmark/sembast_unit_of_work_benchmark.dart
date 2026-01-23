@@ -1,4 +1,5 @@
 import 'package:benchmark_harness/benchmark_harness.dart';
+import 'package:fpdart/fpdart.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
 import 'package:library_scanner_domain/src/data/sembast/datasources/sembast_database.dart';
@@ -59,33 +60,44 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Big test: Add 1000 books with authors and tags in one transaction
-    unitOfWork.run((txn) async {
-      const uuid = Uuid();
-      for (var i = 0; i < 500; i++) {
-        final author = Author(
-          id: uuid.v4(),
-          name: 'Author $i',
-          businessIds: [
-            AuthorIdPair(idType: AuthorIdType.local, idCode: 'Author $i'),
-          ],
-        );
-        await authorRepository.addAuthor(author: author, txn: txn);
+    unitOfWork.run<String>((txn) {
+      return TaskEither.tryCatch(() async {
+        final uuid = Uuid();
+        for (var i = 0; i < 500; i++) {
+          final author = Author(
+            id: uuid.v4(),
+            name: 'Author $i',
+            businessIds: [
+              AuthorIdPair(idType: AuthorIdType.local, idCode: 'Author $i'),
+            ],
+          );
+          final addAuthorResult = await authorRepository
+              .addAuthor(author: author, txn: txn)
+              .run();
+          addAuthorResult.fold((l) => throw l, (r) => null);
 
-        final tag = Tag(id: uuid.v4(), name: 'Tag $i');
-        await tagRepository.addTag(tag: tag, txn: txn);
+          final tag = Tag(id: uuid.v4(), name: 'Tag $i');
+          final addTagResult = await tagRepository
+              .addTag(tag: tag, txn: txn)
+              .run();
+          addTagResult.fold((l) => throw l, (r) => null);
 
-        final book = Book(
-          id: uuid.v4(),
-          title: 'Book $i',
-          authors: [author],
-          tags: [tag],
-          businessIds: [
-            BookIdPair(idType: BookIdType.local, idCode: 'Book $i'),
-          ],
-        );
-        await bookRepository.addBook(book: book, txn: txn);
-      }
-      return 'benchmark result';
+          final book = Book(
+            id: uuid.v4(),
+            title: 'Book $i',
+            authors: [author],
+            tags: [tag],
+            businessIds: [
+              BookIdPair(idType: BookIdType.local, idCode: 'Book $i'),
+            ],
+          );
+          final addBookResult = await bookRepository
+              .addBook(book: book, txn: txn)
+              .run();
+          addBookResult.fold((l) => throw l, (r) => null);
+        }
+        return 'benchmark result';
+      }, (error, stackTrace) => ServiceFailure(error.toString()));
     });
   }
 

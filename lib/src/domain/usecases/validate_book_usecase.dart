@@ -11,7 +11,7 @@ class ValidateBookUsecase with Loggable {
   }
 
   /// Validates a book entity
-  Future<Either<Failure, Book>> call(Book book) async {
+  TaskEither<Failure, Book> call(Book book) {
     return bookValidationService.validate(book);
   }
 }

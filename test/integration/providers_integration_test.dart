@@ -6,6 +6,11 @@ import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_uni
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
+/// This is a boundary integration test to ensure that providers are correctly
+/// set up and can be used to perform end-to-end operations.
+/// It uses real implementations of the database and repositories.
+/// It uses the runTaskEither helper to handle TaskEither results, converting them
+/// to Future for easier async/await usage as would be expected in Flutter.
 void main() {
   late ProviderContainer container;
   late DatabaseService database;
@@ -27,11 +32,11 @@ void main() {
     );
 
     // Clear database before each test
-    (await database.clearAll()).fold((l) => throw l, (r) => null);
+    await runTaskEither(database.clearAll());
   });
 
   tearDown(() async {
-    await database.close();
+    await runTaskEither(database.close());
     container.dispose();
   });
 
@@ -44,17 +49,19 @@ void main() {
       final deleteAuthorUsecase = container.read(deleteAuthorUsecaseProvider);
 
       // Initially no authors
-      var authorsResult = await getAuthorsUsecase();
+      var authorsResult = await runTaskEither(getAuthorsUsecase());
       expect(authorsResult.isRight(), true);
       var authors = authorsResult.fold<List<Author>>((l) => [], (r) => r);
       expect(authors.isEmpty, true);
 
       // Add an author
-      final addResult = await addAuthorUsecase(name: 'Integration Test Author');
+      final addResult = await runTaskEither(
+        addAuthorUsecase(name: 'Integration Test Author'),
+      );
       expect(addResult.isRight(), true);
 
       // Verify author was added
-      authorsResult = await getAuthorsUsecase();
+      authorsResult = await runTaskEither(getAuthorsUsecase());
       expect(authorsResult.isRight(), true);
       authors = authorsResult.fold<List<Author>>((l) => [], (r) => r);
       expect(authors.length, 1);
@@ -63,25 +70,29 @@ void main() {
       final author = authors.first;
 
       // Update the author
-      final updateResult = await updateAuthorUsecase(
-        id: author.id,
-        name: 'Updated Integration Test Author',
+      final updateResult = await runTaskEither(
+        updateAuthorUsecase(
+          id: author.id,
+          name: 'Updated Integration Test Author',
+        ),
       );
       expect(updateResult.isRight(), true);
 
       // Verify update
-      authorsResult = await getAuthorsUsecase();
+      authorsResult = await runTaskEither(getAuthorsUsecase());
       expect(authorsResult.isRight(), true);
       authors = authorsResult.fold<List<Author>>((l) => [], (r) => r);
       expect(authors.length, 1);
       expect(authors.first.name, 'Updated Integration Test Author');
 
       // Delete the author
-      final deleteResult = await deleteAuthorUsecase(id: author.id);
+      final deleteResult = await runTaskEither(
+        deleteAuthorUsecase(id: author.id),
+      );
       expect(deleteResult.isRight(), true);
 
       // Verify deletion
-      authorsResult = await getAuthorsUsecase();
+      authorsResult = await runTaskEither(getAuthorsUsecase());
       expect(authorsResult.isRight(), true);
       authors = authorsResult.fold<List<Author>>((l) => [], (r) => r);
       expect(authors.isEmpty, true);
@@ -97,40 +108,46 @@ void main() {
       final deleteBookUsecase = container.read(deleteBookUsecaseProvider);
 
       // Add prerequisite author and tag
-      await addAuthorUsecase(name: 'Book Integration Author');
-      final authorsResult = await container.read(getAuthorsUsecaseProvider)();
+      await runTaskEither(addAuthorUsecase(name: 'Book Integration Author'));
+      final authorsResult = await runTaskEither(
+        container.read(getAuthorsUsecaseProvider)(),
+      );
       expect(authorsResult.isRight(), true);
       final Author author = authorsResult
           .fold<List<Author>>((l) => [], (r) => r)
           .first;
 
-      await addTagUsecase(name: 'Book Integration Tag');
-      final tagsResult = await container.read(tagRepositoryProvider).getTags();
+      await runTaskEither(addTagUsecase(name: 'Book Integration Tag'));
+      final tagsResult = await runTaskEither(
+        container.read(tagRepositoryProvider).getTags(),
+      );
       expect(tagsResult.isRight(), true);
       final Tag tag = tagsResult
           .fold<List<Tag>>((l) => [], (r) => r)
           .firstWhere((t) => t.name == 'Book Integration Tag');
 
       // Initially no books
-      var booksResult = await getBooksUsecase();
+      var booksResult = await runTaskEither(getBooksUsecase());
       expect(booksResult.isRight(), true);
       var books = booksResult.fold<List<Book>>((l) => [], (r) => r);
       expect(books.isEmpty, true);
 
       // Add a book
-      final addResult = await addBookUsecase(
-        title: 'Integration Test Book',
-        authors: [author],
-        tags: [tag],
-        publishedDate: DateTime(2023, 1, 1),
-        businessIds: [
-          BookIdPair(idType: BookIdType.local, idCode: 'integration123'),
-        ],
+      final addResult = await runTaskEither(
+        addBookUsecase(
+          title: 'Integration Test Book',
+          authors: [author],
+          tags: [tag],
+          publishedDate: DateTime(2023, 1, 1),
+          businessIds: [
+            BookIdPair(idType: BookIdType.local, idCode: 'integration123'),
+          ],
+        ),
       );
       expect(addResult.isRight(), true);
 
       // Verify book was added
-      booksResult = await getBooksUsecase();
+      booksResult = await runTaskEither(getBooksUsecase());
       expect(booksResult.isRight(), true);
       books = booksResult.fold<List<Book>>((l) => [], (r) => r);
       expect(books.length, 1);
@@ -141,29 +158,31 @@ void main() {
       final Book book = books.first;
 
       // Update the book
-      final updateResult = await updateBookUsecase(
-        id: book.id,
-        title: 'Updated Integration Test Book',
-        authors: book.authors,
-        tags: book.tags,
-        publishedDate: book.publishedDate,
-        businessIds: book.businessIds,
+      final updateResult = await runTaskEither(
+        updateBookUsecase(
+          id: book.id,
+          title: 'Updated Integration Test Book',
+          authors: book.authors,
+          tags: book.tags,
+          publishedDate: book.publishedDate,
+          businessIds: book.businessIds,
+        ),
       );
       expect(updateResult.isRight(), true);
 
       // Verify update
-      booksResult = await getBooksUsecase();
+      booksResult = await runTaskEither(getBooksUsecase());
       expect(booksResult.isRight(), true);
       books = booksResult.fold((l) => [], (r) => r);
       expect(books.length, 1);
       expect(books.first.title, 'Updated Integration Test Book');
 
       // Delete the book
-      final deleteResult = await deleteBookUsecase(id: book.id);
+      final deleteResult = await runTaskEither(deleteBookUsecase(id: book.id));
       expect(deleteResult.isRight(), true);
 
       // Verify deletion
-      booksResult = await getBooksUsecase();
+      booksResult = await runTaskEither(getBooksUsecase());
       expect(booksResult.isRight(), true);
       books = booksResult.fold((l) => [], (r) => r);
       expect(books.isEmpty, true);
@@ -175,7 +194,7 @@ void main() {
       );
 
       // Initially empty
-      final statsResult = await getLibraryStatsUsecase();
+      final statsResult = await runTaskEither(getLibraryStatsUsecase());
       expect(statsResult.isRight(), true);
       final stats = statsResult.fold(
         (l) => LibraryStats(

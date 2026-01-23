@@ -30,7 +30,7 @@ void main() {
       logger.info('Starting getBooksByTag test');
 
       logger.info('Database instance created');
-      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      (await database.clearAll().run()).fold((l) => throw l, (r) => null);
       logger.info('Database cleared');
 
       final authorIdRegistryService = AuthorIdRegistryServiceImpl();
@@ -65,12 +65,15 @@ void main() {
         tagDatasource: tagDatasource,
         unitOfWork: unitOfWork,
       );
-      final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
+      final addTagUsecase = AddTagUsecase(
+        tagRepository: tagRepository,
+        getTagByNameUsecase: GetTagByNameUsecase(tagRepository: tagRepository),
+      );
 
       // Add authors
-      await addAuthorUsecase(name: 'Author One');
-      await addAuthorUsecase(name: 'Author Two');
-      final authorsResult = await authorRepository.getAuthors();
+      await addAuthorUsecase(name: 'Author One').run();
+      await addAuthorUsecase(name: 'Author Two').run();
+      final authorsResult = await authorRepository.getAuthors().run();
       expect(authorsResult.isRight(), true);
       final List<Author> authors = authorsResult.fold(
         (l) => <Author>[],
@@ -80,10 +83,10 @@ void main() {
       final authorTwo = authors.firstWhere((a) => a.name == 'Author Two');
 
       // Add tags
-      await addTagUsecase(name: 'Fiction');
-      await addTagUsecase(name: 'Sci-Fi');
-      await addTagUsecase(name: 'Mystery');
-      final tagsResult = await tagRepository.getTags();
+      await addTagUsecase(name: 'Fiction').run();
+      await addTagUsecase(name: 'Sci-Fi').run();
+      await addTagUsecase(name: 'Mystery').run();
+      final tagsResult = await tagRepository.getTags().run();
       expect(tagsResult.isRight(), true);
       final List<Tag> tags = tagsResult.fold((l) => <Tag>[], (r) => r);
       final fictionTag = tags.firstWhere((t) => t.name == 'Fiction');
@@ -97,7 +100,7 @@ void main() {
         tags: [fictionTag],
         publishedDate: DateTime(2023, 1, 1),
         businessIds: [BookIdPair(idType: BookIdType.local, idCode: "book1")],
-      );
+      ).run();
       expect(addResult1.isRight(), true);
       final booksAfterAdd1 = addResult1.getRight().getOrElse(() => []);
       expect(booksAfterAdd1.length, 1);
@@ -111,7 +114,7 @@ void main() {
         tags: [fictionTag, sciFiTag],
         publishedDate: DateTime(2023, 2, 1),
         businessIds: [BookIdPair(idType: BookIdType.local, idCode: "book2")],
-      );
+      ).run();
 
       await addBookUsecase(
         title: 'Book Three',
@@ -119,7 +122,7 @@ void main() {
         tags: [sciFiTag],
         publishedDate: DateTime(2023, 3, 1),
         businessIds: [BookIdPair(idType: BookIdType.local, idCode: "book3")],
-      );
+      ).run();
 
       await addBookUsecase(
         title: 'Book Four',
@@ -127,16 +130,16 @@ void main() {
         tags: [mysteryTag],
         publishedDate: DateTime(2023, 4, 1),
         businessIds: [BookIdPair(idType: BookIdType.local, idCode: "book4")],
-      );
+      ).run();
 
       // Check total books
-      final allBooksResult = await bookRepository.getBooks();
+      final allBooksResult = await bookRepository.getBooks().run();
       expect(allBooksResult.isRight(), true);
       final allBooks = allBooksResult.getRight().getOrElse(() => []);
       expect(allBooks.length, 4);
 
       // Test getBooksByTag for Fiction tag
-      var result = await getBooksByTagUsecase(tag: fictionTag);
+      var result = await getBooksByTagUsecase(tag: fictionTag).run();
       expect(result.isRight(), true);
       var books = result.fold((l) => <Book>[], (r) => r);
       expect(books.length, 2);
@@ -145,7 +148,7 @@ void main() {
       expect(books.every((b) => b.tags.any((t) => t.name == 'Fiction')), true);
 
       // Test getBooksByTag for Sci-Fi tag
-      result = await getBooksByTagUsecase(tag: sciFiTag);
+      result = await getBooksByTagUsecase(tag: sciFiTag).run();
       expect(result.isRight(), true);
       books = result.fold((l) => <Book>[], (r) => r);
       expect(books.length, 2);
@@ -154,7 +157,7 @@ void main() {
       expect(books.every((b) => b.tags.any((t) => t.name == 'Sci-Fi')), true);
 
       // Test getBooksByTag for Mystery tag
-      result = await getBooksByTagUsecase(tag: mysteryTag);
+      result = await getBooksByTagUsecase(tag: mysteryTag).run();
       expect(result.isRight(), true);
       books = result.fold((l) => <Book>[], (r) => r);
       expect(books.length, 1);
@@ -162,8 +165,8 @@ void main() {
       expect(books.first.tags.any((t) => t.name == 'Mystery'), true);
 
       // Test getBooksByTag for a tag with no books (create a new tag)
-      await addTagUsecase(name: 'Empty Tag');
-      final emptyTagsResult = await tagRepository.getTags();
+      await addTagUsecase(name: 'Empty Tag').run();
+      final emptyTagsResult = await tagRepository.getTags().run();
       expect(emptyTagsResult.isRight(), true);
       final List<Tag> emptyTags = emptyTagsResult.fold(
         (l) => <Tag>[],
@@ -171,14 +174,14 @@ void main() {
       );
       final emptyTag = emptyTags.firstWhere((t) => t.name == 'Empty Tag');
 
-      result = await getBooksByTagUsecase(tag: emptyTag);
+      result = await getBooksByTagUsecase(tag: emptyTag).run();
       expect(result.isRight(), true);
       books = result.fold((l) => <Book>[], (r) => r);
       expect(books.isEmpty, true);
 
       // Close database
       logger.info('Closing database');
-      await database.close();
+      database.close();
       logger.info('Test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
   });

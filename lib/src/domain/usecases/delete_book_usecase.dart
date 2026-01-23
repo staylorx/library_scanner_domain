@@ -10,23 +10,20 @@ class DeleteBookUsecase with Loggable {
   DeleteBookUsecase({Logger? logger, required this.bookRepository});
 
   /// Deletes a book by id and returns the updated list of books.
-  Future<Either<Failure, List<Book>>> call({required String id}) async {
+  TaskEither<Failure, List<Book>> call({required String id}) {
     logger?.info('DeleteBookUsecase: Entering call with id: $id');
-    final getBookEither = await bookRepository.getBookById(id: id);
-    return getBookEither.fold((failure) => Left(failure), (book) async {
+    return bookRepository.getBookById(id: id).flatMap((book) {
       logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
       );
-      final deleteEither = await bookRepository.deleteBook(book: book);
-      return deleteEither.fold((failure) => Left(failure), (_) async {
-        final getBooksEither = await bookRepository.getBooks();
-        return getBooksEither.fold((failure) => Left(failure), (books) {
+      return bookRepository.deleteBook(book: book).flatMap((_) {
+        return bookRepository.getBooks().map((books) {
           final updatedBooks = books.where((b) => b.id != id).toList();
           logger?.info('DeleteBookUsecase: Success in call');
           logger?.info(
             'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
           );
-          return Right(updatedBooks);
+          return updatedBooks;
         });
       });
     });

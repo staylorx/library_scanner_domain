@@ -11,23 +11,15 @@ class GetBookByIdPairUsecase with Loggable {
   GetBookByIdPairUsecase({Logger? logger, required this.bookRepository});
 
   /// Retrieves a book by BookIdPair.
-  Future<Either<Failure, Book>> call({required BookIdPair bookIdPair}) async {
+  TaskEither<Failure, Book> call({required BookIdPair bookIdPair}) {
     logger?.info(
       'getByIdPairpairUsecase: Entering call with bookIdPair: $bookIdPair',
     );
-    final result = await bookRepository.getBookByIdPair(bookIdPair: bookIdPair);
-    logger?.info('getByIdPairpairUsecase: Success in call');
-    return result.match(
-      (failure) {
-        logger?.info('getByIdPairpairUsecase: Failure: $failure');
-        return Left(failure);
-      },
-      (book) {
-        logger?.info(
-          'getByIdPairpairUsecase: Output: ${book.title} (businessIds: ${book.businessIds})',
-        );
-        return Right(book);
-      },
-    );
+    return bookRepository.getBookByIdPair(bookIdPair: bookIdPair).map((book) {
+      logger?.info(
+        'getByIdPairpairUsecase: Output: ${book.title} (businessIds: ${book.businessIds})',
+      );
+      return book;
+    });
   }
 }

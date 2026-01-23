@@ -25,7 +25,7 @@ void main() {
       logger.info('Starting AuthorRepository test');
 
       logger.info('Database instance created');
-      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      await database.clearAll().run();
       logger.info('Database cleared');
 
       final authorIdRegistryService = AuthorIdRegistryServiceImpl();
@@ -37,7 +37,7 @@ void main() {
       );
 
       // Check for zero authors
-      var authorsEither = await authorRepository.getAuthors();
+      var authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       var authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.isEmpty, true);
@@ -51,10 +51,10 @@ void main() {
         name: 'Test Author',
         biography: 'Test bio',
       );
-      await authorRepository.addAuthor(author: newAuthor);
+      await authorRepository.addAuthor(author: newAuthor).run();
 
       // Verify count
-      authorsEither = await authorRepository.getAuthors();
+      authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
@@ -62,19 +62,19 @@ void main() {
 
       // Update the author
       final updatedAuthor = authors.first.copyWith(name: 'Updated Test Author');
-      await authorRepository.updateAuthor(author: updatedAuthor);
+      await authorRepository.updateAuthor(author: updatedAuthor).run();
 
       // Verify update
-      authorsEither = await authorRepository.getAuthors();
+      authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
       expect(authors.first.name, 'Updated Test Author');
 
       // Get author by name
-      var authorResult = await authorRepository.getAuthorByName(
-        name: 'Updated Test Author',
-      );
+      var authorResult = await authorRepository
+          .getAuthorByName(name: 'Updated Test Author')
+          .run();
       expect(authorResult.isRight(), true);
       var author = authorResult.fold((l) => null, (r) => r);
       expect(author, isNotNull);
@@ -88,36 +88,36 @@ void main() {
         ],
         name: 'Second Author',
       );
-      await authorRepository.addAuthor(author: secondAuthor);
+      await authorRepository.addAuthor(author: secondAuthor).run();
 
       // Verify count increases
-      authorsEither = await authorRepository.getAuthors();
+      authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 2);
 
       // Delete one author
-      await authorRepository.deleteAuthor(author: updatedAuthor);
+      await authorRepository.deleteAuthor(author: updatedAuthor).run();
 
       // Verify count decreases
-      authorsEither = await authorRepository.getAuthors();
+      authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
       expect(authors.first.name, 'Second Author');
 
       // Delete the last author
-      await authorRepository.deleteAuthor(author: secondAuthor);
+      await authorRepository.deleteAuthor(author: secondAuthor).run();
 
       // Verify zero authors
-      authorsEither = await authorRepository.getAuthors();
+      authorsEither = await authorRepository.getAuthors().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.isEmpty, true);
 
       // Close database
       logger.info('Closing database');
-      await database.close();
+      database.close();
       logger.info('Test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
   });

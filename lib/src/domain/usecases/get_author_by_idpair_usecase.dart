@@ -11,27 +11,17 @@ class GetAuthorByIdPairUsecase with Loggable {
   GetAuthorByIdPairUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves an author by AuthorIdPair.
-  Future<Either<Failure, Author>> call({
-    required AuthorIdPair authorIdPair,
-  }) async {
+  TaskEither<Failure, Author> call({required AuthorIdPair authorIdPair}) {
     logger?.info(
       'getAuthorByIdPairUsecase: Entering call with authorIdPair: $authorIdPair',
     );
-    final result = await authorRepository.getAuthorByIdPair(
-      authorIdPair: authorIdPair,
-    );
-    logger?.info('getAuthorByIdPairUsecase: Success in call');
-    return result.match(
-      (failure) {
-        logger?.info('getAuthorByIdPairUsecase: Failure: $failure');
-        return Left(failure);
-      },
-      (author) {
-        logger?.info(
-          'getAuthorByIdPairUsecase: Output: ${author.name} (businessIds: ${author.businessIds})',
-        );
-        return Right(author);
-      },
-    );
+    return authorRepository.getAuthorByIdPair(authorIdPair: authorIdPair).map((
+      author,
+    ) {
+      logger?.info(
+        'getAuthorByIdPairUsecase: Output: ${author.name} (businessIds: ${author.businessIds})',
+      );
+      return author;
+    });
   }
 }

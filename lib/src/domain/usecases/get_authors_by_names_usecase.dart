@@ -9,17 +9,13 @@ class GetAuthorsByNamesUsecase with Loggable {
   GetAuthorsByNamesUsecase({Logger? logger, required this.authorRepository});
 
   /// Retrieves multiple authors by their names.
-  Future<Either<Failure, List<Author>>> call({
-    required List<String> names,
-  }) async {
+  TaskEither<Failure, List<Author>> call({required List<String> names}) {
     logger?.info('GetAuthorsByNamesUseCase: Entering call with names: $names');
-    final result = await authorRepository.getAuthorsByNames(names: names);
-    logger?.info('GetAuthorsByNamesUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (authors) {
+    return authorRepository.getAuthorsByNames(names: names).map((authors) {
       logger?.info(
         'GetAuthorsByNamesUsecase: Output: ${authors.map((a) => a.name).toList()}',
       );
-      return Right(authors);
+      return authors;
     });
   }
 }

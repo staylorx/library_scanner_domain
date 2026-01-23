@@ -14,91 +14,100 @@ class BookIdRegistryServiceImpl with Loggable implements BookIdRegistryService {
   }
 
   @override
-  Either<Failure, Unit> registerBookIdPairs(BookIdPairs idPairs) {
-    try {
-      _registry.register(idPairSet: idPairs);
-      logger?.info('Registered book ID pairs: ${idPairs.idPairs.length} pairs');
-      return Right(unit);
-    } on DuplicateIdException catch (e) {
-      logger?.warning('Failed to register book ID pairs: $e');
-      return Left(DuplicateIdFailure('Duplicate ID found in book pairs'));
-    } on ValidationException catch (e) {
-      logger?.warning('Validation failed for book ID pairs: $e');
-      return Left(ValidationFailure('Invalid ID format in book pairs'));
-    } catch (e) {
-      logger?.error('Unexpected error registering book ID pairs: $e');
-      return Left(RegistryFailure('Failed to register book ID pairs: $e'));
-    }
+  TaskEither<Failure, Unit> registerBookIdPairs(BookIdPairs idPairs) {
+    return TaskEither.tryCatch(
+      () async {
+        _registry.register(idPairSet: idPairs);
+        logger?.info('Registered book ID pairs: ${idPairs.idPairs.length} pairs');
+        return unit;
+      },
+      (error, stackTrace) {
+        if (error is DuplicateIdException) {
+          logger?.warning('Failed to register book ID pairs: $error');
+          return DuplicateIdFailure('Duplicate ID found in book pairs');
+        } else if (error is ValidationException) {
+          logger?.warning('Validation failed for book ID pairs: $error');
+          return ValidationFailure('Invalid ID format in book pairs');
+        } else {
+          logger?.error('Unexpected error registering book ID pairs: $error');
+          return RegistryFailure('Failed to register book ID pairs: $error');
+        }
+      },
+    );
   }
 
   @override
-  Either<Failure, Unit> unregisterBookIdPairs(BookIdPairs idPairs) {
-    try {
-      _registry.unregister(idPairSet: idPairs);
-      logger?.info(
-        'Unregistered book ID pairs: ${idPairs.idPairs.length} pairs',
-      );
-      return Right(unit);
-    } catch (e) {
-      logger?.error('Unexpected error unregistering book ID pairs: $e');
-      return Left(RegistryFailure('Failed to unregister book ID pairs: $e'));
-    }
+  TaskEither<Failure, Unit> unregisterBookIdPairs(BookIdPairs idPairs) {
+    return TaskEither.tryCatch(
+      () async {
+        _registry.unregister(idPairSet: idPairs);
+        logger?.info(
+          'Unregistered book ID pairs: ${idPairs.idPairs.length} pairs',
+        );
+        return unit;
+      },
+      (error, stackTrace) {
+        logger?.error('Unexpected error unregistering book ID pairs: $error');
+        return RegistryFailure('Failed to unregister book ID pairs: $error');
+      },
+    );
   }
 
   @override
-  Future<bool> isRegistered(String idType, String idCode) async {
-    return _registry.isRegistered(idType: idType, idCode: idCode);
+  TaskEither<Failure, bool> isRegistered(String idType, String idCode) {
+    return TaskEither.tryCatch(
+      () => _registry.isRegistered(idType: idType, idCode: idCode),
+      (error, stackTrace) =>
+          RegistryFailure('Failed to check registration: $error'),
+    );
   }
 
   @override
-  Future<Either<Failure, String>> generateId(String idType) async {
-    try {
+  TaskEither<Failure, String> generateId(String idType) {
+    return TaskEither.tryCatch(() async {
       final id = await _registry.generateId(idType);
       logger?.info('Generated ID for type $idType: $id');
-      return Right(id);
-    } catch (e) {
-      logger?.error('Failed to generate ID for type $idType: $e');
-      return Left(RegistryFailure('Failed to generate ID: $e'));
-    }
+      return id;
+    }, (error, stackTrace) => RegistryFailure('Failed to generate ID: $error'));
   }
 
   @override
-  Future<Either<Failure, String>> generateLocalId() async {
-    try {
-      final id = await _registry.generateId('local');
-      logger?.info('Generated local ID: $id');
-      return Right(id);
-    } catch (e) {
-      logger?.error('Failed to generate local ID: $e');
-      return Left(RegistryFailure('Failed to generate local ID: $e'));
-    }
+  TaskEither<Failure, String> generateLocalId() {
+    return TaskEither.tryCatch(
+      () async {
+        final id = await _registry.generateId('local');
+        logger?.info('Generated local ID: $id');
+        return id;
+      },
+      (error, stackTrace) =>
+          RegistryFailure('Failed to generate local ID: $error'),
+    );
   }
 
   @override
-  Future<Either<Failure, Unit>> initializeWithExistingData(
+  TaskEither<Failure, Unit> initializeWithExistingData(
     List<BookIdPairs> bookIdPairsList,
-  ) async {
-    try {
-      logger?.info('Initializing book registry with existing data...');
+  ) {
+    return TaskEither.tryCatch(
+      () async {
+        logger?.info('Initializing book registry with existing data...');
 
-      // Register all book ID pairs
-      for (final bookIdPairs in bookIdPairsList) {
-        final result = registerBookIdPairs(bookIdPairs);
-        if (result.isLeft()) {
-          // Log warning but continue - existing data might have duplicates
-          logger?.warning(
-            'Failed to register existing book ID pairs: ${result.getLeft().getOrElse(() => RegistryFailure('Unknown error'))}',
-          );
+        // Register all book ID pairs
+        for (final bookIdPairs in bookIdPairsList) {
+          final result = await registerBookIdPairs(bookIdPairs).run();
+          if (result.isLeft()) {
+            // Log warning but continue - existing data might have duplicates
+            logger?.warning(
+              'Failed to register existing book ID pairs: ${result.getLeft().getOrElse(() => RegistryFailure('Unknown error'))}',
+            );
+          }
         }
-      }
 
-      logger?.info('Book registry initialization completed');
-      return Right(unit);
-    } catch (e) {
-      logger?.error(
-        'Failed to initialize book registry with existing data: $e',
-      );
-      return Left(RegistryFailure('Failed to initialize book registry: $e'));
-    }
+        logger?.info('Book registry initialization completed');
+        return unit;
+      },
+      (error, stackTrace) =>
+          RegistryFailure('Failed to initialize book registry: $error'),
+    );
   }
 }

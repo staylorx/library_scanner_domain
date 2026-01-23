@@ -16,11 +16,11 @@ class AddAuthorUsecase with Loggable {
   });
 
   /// Adds a new author and returns the author.
-  Future<Either<Failure, Author>> call({
+  TaskEither<Failure, Author> call({
     required String name,
     String? biography,
     List<AuthorIdPair>? businessIds,
-  }) async {
+  }) {
     logger?.info('AddAuthorUsecase: Entering call with name: $name');
     final slugId = AuthorIdPair(
       idType: AuthorIdType.local,
@@ -32,11 +32,9 @@ class AddAuthorUsecase with Loggable {
       biography: biography,
       businessIds: (businessIds ?? [])..add(slugId),
     );
-    final addEither = await authorRepository.addAuthor(author: author);
-    logger?.info('AddAuthorUsecase: Success in call');
-    return addEither.fold((failure) => Left(failure), (author) {
+    return authorRepository.addAuthor(author: author).map((author) {
       logger?.info('AddAuthorUsecase: Output: $author');
-      return Right(author);
+      return author;
     });
   }
 }

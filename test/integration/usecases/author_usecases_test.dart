@@ -31,7 +31,7 @@ void main() {
         logger.info('Starting comprehensive test');
 
         logger.info('Database instance created');
-        (await database.clearAll()).fold((l) => throw l, (r) => null);
+        (await (database.clearAll()).run()).fold((l) => throw l, (r) => null);
         logger.info('Database cleared');
 
         final authorIdRegistryService = AuthorIdRegistryServiceImpl();
@@ -78,19 +78,26 @@ void main() {
 
           unitOfWork: unitOfWork,
         );
-        final addTagUsecase = AddTagUsecase(tagRepository: tagRepository);
+        final addTagUsecase = AddTagUsecase(
+          tagRepository: tagRepository,
+          getTagByNameUsecase: GetTagByNameUsecase(
+            tagRepository: tagRepository,
+          ),
+        );
 
         // Check for zero records
-        var result = await getAuthorsUsecase();
+        var result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         List<Author> authors = result.fold((l) => [], (r) => r);
         expect(authors.isEmpty, true);
 
         // Add one record
-        await addAuthorUsecase(name: 'Test Author');
+        (await addAuthorUsecase(
+          name: 'Test Author',
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify count
-        result = await getAuthorsUsecase();
+        result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
@@ -105,14 +112,14 @@ void main() {
 
         // Edit the record
         final updatedAuthor = newAuthor.copyWith(name: 'Updated Test Author');
-        await updateAuthorUsecase(
+        (await updateAuthorUsecase(
           id: newAuthor.id,
           name: updatedAuthor.name,
           biography: updatedAuthor.biography,
-        );
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify count remains the same
-        result = await getAuthorsUsecase();
+        result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
@@ -125,10 +132,12 @@ void main() {
         );
 
         // Add another record
-        await addAuthorUsecase(name: 'Second Author');
+        (await addAuthorUsecase(
+          name: 'Second Author',
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify count increases
-        result = await getAuthorsUsecase();
+        result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 2);
@@ -145,17 +154,19 @@ void main() {
         // Get author by name
         var authorResult = await getAuthorByNameUsecase(
           name: 'Updated Test Author',
-        );
+        ).run();
         expect(authorResult.isRight(), true);
         var author = authorResult.fold((l) => null, (r) => r);
         expect(author, isNotNull);
         expect(author!.name, 'Updated Test Author');
 
         // Delete one record
-        await deleteAuthorUsecase(id: newAuthor.id);
+        (await deleteAuthorUsecase(
+          id: newAuthor.id,
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify count decreases
-        result = await getAuthorsUsecase();
+        result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
@@ -163,7 +174,9 @@ void main() {
 
         // Add a book with the remaining author
         final tag = Tag(id: const Uuid().v4(), name: 'Test Tag');
-        await addTagUsecase(name: tag.name);
+        (await addTagUsecase(
+          name: tag.name,
+        ).run()).fold((l) => throw l, (r) => null);
 
         final book = Book(
           id: const Uuid().v4(),
@@ -175,7 +188,7 @@ void main() {
           tags: [tag],
           publishedDate: DateTime(2023, 1, 1),
         );
-        await addBookUsecase(
+        (await addBookUsecase(
           title: book.title,
           authors: book.authors,
           tags: book.tags,
@@ -184,10 +197,10 @@ void main() {
           coverImage: book.coverImage,
           notes: book.notes,
           businessIds: book.businessIds,
-        );
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify book has the author
-        var booksResult = await getBooksUsecase();
+        var booksResult = await getBooksUsecase().run();
         expect(booksResult.isRight(), true);
         var books = booksResult.fold((l) => [], (r) => r);
         expect(books.length, 1);
@@ -195,24 +208,26 @@ void main() {
         expect(books.first.authors.first.name, 'Second Author');
 
         // Delete the author
-        await deleteAuthorUsecase(id: secondAuthor.id);
+        (await deleteAuthorUsecase(
+          id: secondAuthor.id,
+        ).run()).fold((l) => throw l, (r) => null);
 
         // Verify author removed from book
-        booksResult = await getBooksUsecase();
+        booksResult = await getBooksUsecase().run();
         expect(booksResult.isRight(), true);
         books = booksResult.fold((l) => [], (r) => r);
         expect(books.length, 1);
         expect(books.first.authors.isEmpty, true);
 
         // Verify no authors left
-        result = await getAuthorsUsecase();
+        result = await getAuthorsUsecase().run();
         expect(result.isRight(), true);
         authors = result.fold((l) => [], (r) => r);
         expect(authors.isEmpty, true);
 
         // Close database
         logger.info('Closing database');
-        await database.close();
+        database.close();
         logger.info('Test completed');
       },
       timeout: Timeout(Duration(seconds: 60)),

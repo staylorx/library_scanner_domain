@@ -9,75 +9,59 @@ class BookDatasource {
   BookDatasource({required DatabaseService dbService}) : _dbService = dbService;
 
   /// Retrieves all books from the store.
-  Future<Either<Failure, List<BookModel>>> getAllBooks() async {
-    try {
-      final result = await _dbService.getAll(collection: 'books');
-      return result.match((failure) => Either.left(failure), (records) {
-        return Either.right(
-          records.map((record) => BookModel.fromMap(map: record)).toList(),
-        );
-      });
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get all books: $e'));
-    }
+  TaskEither<Failure, List<BookModel>> getAllBooks() {
+    return _dbService.getAll(collection: 'books').map((records) {
+      return records.map((record) => BookModel.fromMap(map: record)).toList();
+    });
   }
 
   /// Retrieves a book by ID.
-  Future<Either<Failure, BookModel?>> getBookById(String id) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'books',
-        filter: {'id': id},
-      );
-      return result.match((failure) => Either.left(failure), (records) {
-        if (records.isEmpty) {
-          return Either.right(null);
-        }
-        return Either.right(BookModel.fromMap(map: records.first));
-      });
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get book by ID: $e'));
-    }
+  TaskEither<Failure, BookModel?> getBookById(String id) {
+    return _dbService.query(collection: 'books', filter: {'id': id}).map((
+      records,
+    ) {
+      if (records.isEmpty) {
+        return null;
+      }
+      return BookModel.fromMap(map: records.first);
+    });
   }
 
   /// Retrieves books containing a specific business ID pair.
-  Future<Either<Failure, List<BookModel>>> getBooksByBusinessIdPair(
+  TaskEither<Failure, List<BookModel>> getBooksByBusinessIdPair(
     BookIdPair pair,
-  ) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'books',
-        filter: {
-          '\$custom': (record) {
-            final businessIdsRaw =
-                record.value['businessIds'] as List<dynamic>? ?? [];
-            final businessIds = businessIdsRaw.map((e) {
-              final idTypeString = e['idType'] as String;
-              final idType = BookIdType.values.byName(idTypeString);
-              return BookIdPair(idType: idType, idCode: e['idCode'] as String);
-            }).toList();
-            return businessIds.any((p) => p == pair);
+  ) {
+    return _dbService
+        .query(
+          collection: 'books',
+          filter: {
+            '\$custom': (record) {
+              final businessIdsRaw =
+                  record.value['businessIds'] as List<dynamic>? ?? [];
+              final businessIds = businessIdsRaw.map((e) {
+                final idTypeString = e['idType'] as String;
+                final idType = BookIdType.values.byName(idTypeString);
+                return BookIdPair(
+                  idType: idType,
+                  idCode: e['idCode'] as String,
+                );
+              }).toList();
+              return businessIds.any((p) => p == pair);
+            },
           },
-        },
-      );
-      return result.match((failure) => Either.left(failure), (records) {
-        return Either.right(
-          records.map((record) => BookModel.fromMap(map: record)).toList(),
-        );
-      });
-    } catch (e) {
-      return Either.left(
-        ServiceFailure('Failed to get books by business ID pair: $e'),
-      );
-    }
+        )
+        .map((records) {
+          return records
+              .map((record) => BookModel.fromMap(map: record))
+              .toList();
+        });
   }
 
   /// Retrieves books by author ID.
-  Future<Either<Failure, List<BookModel>>> getBooksByAuthorId(
+  TaskEither<Failure, List<BookModel>> getBooksByAuthorId(
     String authorId,
-  ) async {
-    try {
-      final result = await _dbService.query(
+  ) => _dbService
+      .query(
         collection: 'books',
         filter: {
           '\$custom': (record) {
@@ -86,48 +70,36 @@ class BookDatasource {
             return authorIds.contains(authorId);
           },
         },
+      )
+      .map(
+        (records) =>
+            records.map((record) => BookModel.fromMap(map: record)).toList(),
       );
-      return result.match((failure) => Either.left(failure), (records) {
-        return Either.right(
-          records.map((record) => BookModel.fromMap(map: record)).toList(),
-        );
-      });
-    } catch (e) {
-      return Either.left(
-        ServiceFailure('Failed to get books by author ID: $e'),
-      );
-    }
-  }
 
   /// Retrieves books by tag ID.
-  Future<Either<Failure, List<BookModel>>> getBooksByTagId(String tagId) async {
-    try {
-      final result = await _dbService.query(
-        collection: 'books',
-        filter: {
-          '\$custom': (record) {
-            final tagIds =
-                (record['tagIds'] as List<dynamic>?)?.cast<String>() ?? [];
-            return tagIds.contains(tagId);
-          },
-        },
-      );
-      return result.match((failure) => Either.left(failure), (records) {
-        return Either.right(
-          records.map((record) => BookModel.fromMap(map: record)).toList(),
-        );
-      });
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to get books by tag ID: $e'));
-    }
-  }
+  TaskEither<Failure, List<BookModel>> getBooksByTagId(String tagId) =>
+      _dbService
+          .query(
+            collection: 'books',
+            filter: {
+              '\$custom': (record) {
+                final tagIds =
+                    (record['tagIds'] as List<dynamic>?)?.cast<String>() ?? [];
+                return tagIds.contains(tagId);
+              },
+            },
+          )
+          .map(
+            (records) => records
+                .map((record) => BookModel.fromMap(map: record))
+                .toList(),
+          );
 
   /// Retrieves a book by exact business IDs.
-  Future<Either<Failure, BookModel?>> getBookByBusinessIds(
+  TaskEither<Failure, BookModel?> getBookByBusinessIds(
     List<BookIdPair> businessIds,
-  ) async {
-    try {
-      final result = await _dbService.query(
+  ) => _dbService
+      .query(
         collection: 'books',
         filter: {
           '\$custom': (record) {
@@ -142,107 +114,65 @@ class BookDatasource {
                 BookIdPairs(pairs: businessIds);
           },
         },
-      );
-      return result.match((failure) => Either.left(failure), (records) {
+      )
+      .map((records) {
         if (records.isEmpty) {
-          return Either.right(null);
+          return null;
         }
-        return Either.right(BookModel.fromMap(map: records.first));
+        return BookModel.fromMap(map: records.first);
       });
-    } catch (e) {
-      return Either.left(
-        ServiceFailure('Failed to get book by business IDs: $e'),
-      );
-    }
-  }
 
   /// Saves a book to the store.
-  Future<Either<Failure, Unit>> saveBook(
-    BookModel book, {
-    Transaction? txn,
-  }) async {
-    try {
-      final data = book.toMap();
-      final db = txn?.db;
-      final result = await _dbService.save(
-        collection: 'books',
-        id: book.id,
-        data: data,
-        db: db,
-      );
-      return result.match(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to save book: $e'));
-    }
+  TaskEither<Failure, Unit> saveBook(BookModel book, {Transaction? txn}) {
+    final data = book.toMap();
+    final db = txn?.db;
+    return _dbService
+        .save(collection: 'books', id: book.id, data: data, db: db)
+        .map((_) => unit);
   }
 
   /// Deletes a book by ID.
-  Future<Either<Failure, Unit>> deleteBook(
-    String id, {
-    Transaction? txn,
-  }) async {
-    try {
-      final db = txn?.db;
-      final result = await _dbService.delete(
-        collection: 'books',
-        id: id,
-        db: db,
-      );
-      return result.match(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
-    } catch (e) {
-      return Either.left(ServiceFailure('Failed to delete book: $e'));
-    }
+  TaskEither<Failure, Unit> deleteBook(String id, {Transaction? txn}) {
+    final db = txn?.db;
+    return _dbService
+        .delete(collection: 'books', id: id, db: db)
+        .map((_) => unit);
   }
 
   /// Removes author from books.
-  Future<Either<Failure, Unit>> removeAuthorFromBooks(
+  TaskEither<Failure, Unit> removeAuthorFromBooks(
     String name, {
     Transaction? txn,
-  }) async {
-    try {
-      final db = txn?.db;
-      final result = await _dbService.getAll(collection: 'books', db: db);
-      return result.match((failure) => Either.left(failure), (records) async {
-        for (final record in records) {
-          final model = BookModel.fromMap(map: record);
-          if (model.authorIds.contains(name)) {
-            final updatedAuthorIds = List<String>.from(model.authorIds)
-              ..remove(name);
-            final updatedModel = BookModel(
-              id: model.id,
-              businessIds: model.businessIds,
-              title: model.title,
-              description: model.description,
-              authorIds: updatedAuthorIds,
-              tagIds: model.tagIds,
-              publishedDate: model.publishedDate,
-            );
-            final saveResult = await saveBook(updatedModel, txn: txn);
-            if (saveResult.isLeft()) {
-              return saveResult;
+  }) {
+    final db = txn?.db;
+    return _dbService
+        .getAll(collection: 'books', db: db)
+        .flatMap(
+          (records) => TaskEither.traverseList(records, (record) {
+            final model = BookModel.fromMap(map: record);
+            if (model.authorIds.contains(name)) {
+              final updatedAuthorIds = List<String>.from(model.authorIds)
+                ..remove(name);
+              final updatedModel = BookModel(
+                id: model.id,
+                businessIds: model.businessIds,
+                title: model.title,
+                description: model.description,
+                authorIds: updatedAuthorIds,
+                tagIds: model.tagIds,
+                publishedDate: model.publishedDate,
+              );
+              return saveBook(updatedModel, txn: txn);
             }
-          }
-        }
-        return Either.right(unit);
-      });
-    } catch (e) {
-      return Either.left(
-        ServiceFailure('Failed to remove author from books: $e'),
-      );
-    }
+            return TaskEither<Failure, Unit>.right(unit);
+          }).map((_) => unit),
+        );
   }
 
   /// Executes a transaction with the given operation.
-  Future<Either<Failure, Unit>> transaction(
+  TaskEither<Failure, Unit> transaction(
     Future<Unit> Function(dynamic txn) operation,
-  ) async {
-    final result = await _dbService.transaction(operation: operation);
-    return result.map((_) => unit);
+  ) {
+    return _dbService.transaction(operation: operation);
   }
 }

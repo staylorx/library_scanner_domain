@@ -19,7 +19,7 @@ class IsAuthorDuplicateUsecase with Loggable {
 
     if (authorA.name != authorB.name) {
       logger?.info('IsAuthorDuplicateUsecase: Names do not match');
-      return Right(false);
+      return Either.of(false);
     }
 
     // Check if any non-local AuthorIdPair matches
@@ -33,13 +33,13 @@ class IsAuthorDuplicateUsecase with Loggable {
     // If there's any overlapping AuthorIdPair, they are duplicates
     if (aNonLocal.idPairs.any((id) => bNonLocal.idPairs.contains(id))) {
       logger?.info('IsAuthorDuplicateUsecase: Non-local IDs overlap');
-      return Right(true);
+      return Either.of(true);
     }
 
     // If no overlapping non-local ids, but names match, they are duplicates
     logger?.info(
       'IsAuthorDuplicateUsecase: Authors are duplicates based on name',
     );
-    return Right(true);
+    return Either.of(true);
   }
 }

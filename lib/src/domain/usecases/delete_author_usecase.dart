@@ -9,21 +9,18 @@ class DeleteAuthorUsecase with Loggable {
   DeleteAuthorUsecase({Logger? logger, required this.authorRepository});
 
   /// Deletes an author by id and returns the updated list of authors.
-  Future<Either<Failure, List<Author>>> call({required String id}) async {
+  TaskEither<Failure, List<Author>> call({required String id}) {
     logger?.info('DeleteAuthorUsecase: Entering call with id: $id');
-    final getAuthorEither = await authorRepository.getAuthorById(id: id);
-    return getAuthorEither.fold((failure) => Left(failure), (author) async {
+    return authorRepository.getAuthorById(id: id).flatMap((author) {
       logger?.info('DeleteAuthorUsecase: Deleting author: ${author.name}');
-      final deleteEither = await authorRepository.deleteAuthor(author: author);
-      return deleteEither.fold((failure) => Left(failure), (_) async {
-        final getAuthorsEither = await authorRepository.getAuthors();
-        return getAuthorsEither.fold((failure) => Left(failure), (authors) {
+      return authorRepository.deleteAuthor(author: author).flatMap((_) {
+        return authorRepository.getAuthors().map((authors) {
           final updatedAuthors = authors.where((a) => a.id != id).toList();
           logger?.info('DeleteAuthorUsecase: Success in call');
           logger?.info(
             'DeleteAuthorUsecase: Output: ${updatedAuthors.map((a) => a.name).toList()}',
           );
-          return Right(updatedAuthors);
+          return updatedAuthors;
         });
       });
     });

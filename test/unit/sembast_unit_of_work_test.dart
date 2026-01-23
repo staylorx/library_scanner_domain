@@ -25,20 +25,22 @@ void main() {
 
         when(
           () => mockDbService.transaction(operation: any(named: 'operation')),
-        ).thenAnswer((invocation) async {
-          final operation =
-              invocation.namedArguments[#operation]
-                  as Future<Unit> Function(dynamic);
-          await operation(mockTxn);
-          return Right(unit);
-        });
+        ).thenAnswer(
+          (invocation) => TaskEither(() async {
+            final operation =
+                invocation.namedArguments[#operation]
+                    as Future<Unit> Function(dynamic);
+            await operation(mockTxn);
+            return Right(unit);
+          }),
+        );
 
         // Act
-        final result = await unitOfWork.run((Transaction txn) async {
+        final result = await unitOfWork.run((Transaction txn) {
           expect(txn, isA<SembastTransaction>());
           expect((txn as SembastTransaction).db, mockTxn);
-          return expectedResult;
-        });
+          return TaskEither.right(expectedResult);
+        }).run();
 
         // Assert
         expect(result, Right(expectedResult));
@@ -53,12 +55,12 @@ void main() {
 
         when(
           () => mockDbService.transaction(operation: any(named: 'operation')),
-        ).thenAnswer((_) async => Left(expectedFailure));
+        ).thenAnswer((_) => TaskEither.left(expectedFailure));
 
         // Act
-        final result = await unitOfWork.run(
-          (Transaction txn) async => 'result',
-        );
+        final result = await unitOfWork
+            .run((Transaction txn) => TaskEither.right('result'))
+            .run();
 
         // Assert
         expect(result, Left(expectedFailure));
@@ -73,22 +75,28 @@ void main() {
 
         when(
           () => mockDbService.transaction(operation: any(named: 'operation')),
-        ).thenAnswer((invocation) async {
-          final operation =
-              invocation.namedArguments[#operation]
-                  as Future<Unit> Function(dynamic);
-          try {
-            await operation('mockTxn');
-            return Right(unit);
-          } catch (e) {
-            return Left(expectedFailure);
-          }
-        });
+        ).thenAnswer(
+          (invocation) => TaskEither(() async {
+            final operation =
+                invocation.namedArguments[#operation]
+                    as Future<Unit> Function(dynamic);
+            try {
+              await operation('mockTxn');
+              return Right(unit);
+            } catch (e) {
+              return Left(expectedFailure);
+            }
+          }),
+        );
 
         // Act
-        final result = await unitOfWork.run((Transaction txn) async {
-          throw expectedFailure;
-        });
+        final result = await unitOfWork
+            .run(
+              (Transaction txn) => TaskEither(() async {
+                throw expectedFailure;
+              }),
+            )
+            .run();
 
         // Assert
         expect(result, Left(expectedFailure));
@@ -101,7 +109,7 @@ void main() {
     group('commit', () {
       test('returns Left with ServiceFailure', () async {
         // Act
-        final result = await unitOfWork.commit();
+        final result = await unitOfWork.commit().run();
 
         // Assert
         expect(result.isLeft(), true);
@@ -118,7 +126,7 @@ void main() {
     group('rollback', () {
       test('returns Left with ServiceFailure', () async {
         // Act
-        final result = await unitOfWork.rollback();
+        final result = await unitOfWork.rollback().run();
 
         // Assert
         expect(result.isLeft(), true);

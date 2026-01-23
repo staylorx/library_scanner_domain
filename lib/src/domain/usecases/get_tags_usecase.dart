@@ -10,15 +10,13 @@ class GetTagsUsecase with Loggable {
   GetTagsUsecase({Logger? logger, required this.tagRepository});
 
   /// Retrieves all tags.
-  Future<Either<Failure, List<Tag>>> call() async {
+  TaskEither<Failure, List<Tag>> call() {
     logger?.info('GetTagsUsecase: Entering call');
-    final result = await tagRepository.getTags();
-    logger?.info('GetTagsUsecase: Success in call');
-    return result.fold((failure) => Left(failure), (tags) {
+    return tagRepository.getTags().map((tags) {
       logger?.info(
         'GetTagsUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );
-      return Right(tags);
+      return tags;
     });
   }
 }

@@ -4,17 +4,17 @@ import 'package:id_logging/id_logging.dart';
 
 /// Usecase for filtering authors based on search query
 class FilterAuthorsUsecase with Loggable {
-  final AuthorFilteringService _authorFilteringService;
+  final AuthorFilteringService authorFilteringService;
 
   /// Creates a new instance of [FilterAuthorsUsecase]
-  FilterAuthorsUsecase(this._authorFilteringService);
+  FilterAuthorsUsecase(this.authorFilteringService);
 
   /// Filters authors based on the search query
-  Either<Failure, List<Author>> call({
+  TaskEither<Failure, List<Author>> call({
     required List<Author> authors,
     required String searchQuery,
   }) {
-    return _authorFilteringService.filterAuthors(
+    return authorFilteringService.filterAuthors(
       authors: authors,
       searchQuery: searchQuery,
     );

@@ -6,129 +6,95 @@ import 'package:uuid/uuid.dart';
 
 /// Implementation of book repository using Sembast.
 class BookRepositoryImpl with Loggable implements BookRepository {
-  final BookDatasource _bookDatasource;
-  final AuthorDatasource _authorDatasource;
-  final TagDatasource _tagDatasource;
-  final BookIdRegistryService _idRegistryService;
-  final UnitOfWork _unitOfWork;
+  final BookDatasource bookDatasource;
+  final AuthorDatasource authorDatasource;
+  final TagDatasource tagDatasource;
+  final BookIdRegistryService idRegistryService;
+  final UnitOfWork unitOfWork;
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
-    required BookDatasource bookDatasource,
-    required AuthorDatasource authorDatasource,
-    required TagDatasource tagDatasource,
-    required BookIdRegistryService idRegistryService,
-    required UnitOfWork unitOfWork,
+    required this.bookDatasource,
+    required this.authorDatasource,
+    required this.tagDatasource,
+    required this.idRegistryService,
+    required this.unitOfWork,
     Logger? logger,
-  }) : _bookDatasource = bookDatasource,
-       _authorDatasource = authorDatasource,
-       _tagDatasource = tagDatasource,
-       _idRegistryService = idRegistryService,
-       _unitOfWork = unitOfWork;
+  });
 
   /// Retrieves books from the database.
   @override
-  Future<Either<Failure, List<Book>>> getBooks({
-    int? limit,
-    int? offset,
-  }) async {
+  TaskEither<Failure, List<Book>> getBooks({int? limit, int? offset}) {
     logger?.info('Entering getBooks');
-    final result = await _bookDatasource.getAllBooks();
-    if (result.isLeft()) {
-      final failure = result.getLeft().getOrElse(
-        () => DatabaseFailure('Failed to get books'),
-      );
-      logger?.warning('Failed to get books: ${failure.message}');
-      return Either.left(failure);
-    }
-    final models = result.getRight().getOrElse(() => []);
-    final books = <Book>[];
-    for (final model in models) {
-      final book = await _loadBookWithRelations(model);
-      books.add(book);
-    }
-    logger?.info('Successfully retrieved ${books.length} books');
-    return Either.right(books);
+    return bookDatasource.getAllBooks().flatMap(
+      (models) =>
+          TaskEither.traverseList(models, _loadBookWithRelations).map((books) {
+            logger?.info('Successfully retrieved ${books.length} books');
+            return books;
+          }),
+    );
   }
 
-  Future<Book> _loadBookWithRelations(BookModel model) async {
+  TaskEither<Failure, Book> _loadBookWithRelations(BookModel model) {
     // Load authors
-    final authors = <Author>[];
-    for (final authorId in model.authorIds) {
-      final authorResult = await _authorDatasource.getAuthorById(authorId);
-      authorResult.fold(
-        (f) => null, // ignore failure
-        (authorModel) {
-          if (authorModel != null) {
-            authors.add(authorModel.toEntity());
-          }
-        },
-      );
-    }
+    final loadAuthors = TaskEither.traverseList(
+      model.authorIds,
+      (authorId) => authorDatasource
+          .getAuthorById(authorId)
+          .map((authorModel) => authorModel?.toEntity()),
+    ).map((authors) => authors.whereType<Author>().toList());
+
     // Load tags
-    final tags = <Tag>[];
-    for (final tagId in model.tagIds) {
-      final tagResult = await _tagDatasource.getTagById(tagId);
-      tagResult.fold(
-        (f) => null, // ignore failure
-        (tagModel) {
-          if (tagModel != null) {
-            tags.add(tagModel.toEntity());
-          }
-        },
-      );
-    }
-    return model.toEntity(authors: authors, tags: tags);
+    final loadTags = TaskEither.traverseList(
+      model.tagIds,
+      (tagId) => tagDatasource
+          .getTagById(tagId)
+          .map((tagModel) => tagModel?.toEntity()),
+    ).map((tags) => tags.whereType<Tag>().toList());
+
+    return loadAuthors.flatMap(
+      (authors) =>
+          loadTags.map((tags) => model.toEntity(authors: authors, tags: tags)),
+    );
   }
 
   /// Retrieves a book by its id.
   @override
-  Future<Either<Failure, Book>> getBookById({required String id}) async {
+  TaskEither<Failure, Book> getBookById({required String id}) {
     logger?.info('Entering getById with id: $id');
-    final result = await _bookDatasource.getBookById(id);
-    if (result.isLeft()) {
-      final failure = result.getLeft().getOrElse(
-        () => DatabaseFailure('Failed to get book'),
-      );
-      logger?.warning(
-        'Failed to get book by id: $id, Error: ${failure.message}',
-      );
-      return Either.left(failure);
-    }
-    final model = result.getRight().getOrElse(() => null);
-    if (model == null) {
-      logger?.info('Book with id $id not found');
-      return Either.left(NotFoundFailure('Book not found'));
-    }
-    final book = await _loadBookWithRelations(model);
-    logger?.info('Output: ${book.title}');
-    return Either.right(book);
+    return bookDatasource.getBookById(id).flatMap((model) {
+      if (model == null) {
+        logger?.info('Book with id $id not found');
+        return TaskEither.left(NotFoundFailure('Book not found'));
+      }
+      return _loadBookWithRelations(model).map((book) {
+        logger?.info('Output: ${book.title}');
+        return book;
+      });
+    });
   }
 
   /// Retrieves a book by its ID pair.
   @override
-  Future<Either<Failure, Book>> getBookByIdPair({
-    required BookIdPair bookIdPair,
-  }) async {
+  TaskEither<Failure, Book> getBookByIdPair({required BookIdPair bookIdPair}) {
     logger?.info('Entering getByIdPair with bookIdPair: $bookIdPair');
-    final result = await _bookDatasource.getBooksByBusinessIdPair(bookIdPair);
-    return result.fold((failure) => Either.left(failure), (models) async {
+    return bookDatasource.getBooksByBusinessIdPair(bookIdPair).flatMap((
+      models,
+    ) {
       if (models.isEmpty) {
         logger?.debug('Book not found');
-        return Either.left(NotFoundFailure('Book not found'));
+        return TaskEither.left(NotFoundFailure('Book not found'));
       }
-      final book = await _loadBookWithRelations(models.first);
-      logger?.debug('Output: ${book.title}');
-      return Either.right(book);
+      return _loadBookWithRelations(models.first).map((book) {
+        logger?.debug('Output: ${book.title}');
+        return book;
+      });
     });
   }
 
   /// Adds a new book to the database.
   @override
-  Future<Either<Failure, Book>> addBook({
-    required Book book,
-    Transaction? txn,
-  }) async {
+  TaskEither<Failure, Book> addBook({required Book book, Transaction? txn}) {
     logger?.info('Entering addBook with book: ${book.title}, id: ${book.id}');
     final bookWithId = book.id.isNotEmpty
         ? book
@@ -136,244 +102,177 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final model = BookModel.fromEntity(bookWithId);
     if (txn != null) {
       logger?.info('Using provided transaction for addBook');
-      final saveResult = await _bookDatasource.saveBook(model, txn: txn);
-      if (saveResult.isLeft()) {
-        return Either.left(
-          saveResult.getLeft().getOrElse(() => DatabaseFailure('Save failed')),
-        );
-      }
-      logger?.info('Book saved, registering ID pairs');
-      final registerResult = _idRegistryService.registerBookIdPairs(
-        BookIdPairs(pairs: book.businessIds),
-      );
-      if (registerResult.isLeft()) {
-        return Either.left(
-          registerResult.getLeft().getOrElse(
-            () => RegistryFailure('Register ID pairs failed'),
-          ),
-        );
-      }
-      logger?.info('ID pairs registered, updating relationships');
-      final tagNames = book.tags.map((t) => t.name).toList();
-      final updateResult = await _tagDatasource.addBookToTags(
-        bookWithId.id,
-        tagNames,
-        txn: txn,
-      );
-      return updateResult.fold(
-        (failure) => Either.left(failure),
-        (_) => Either.right(bookWithId),
-      );
+      return bookDatasource.saveBook(model, txn: txn)
+          .map((_) => unit)
+          .flatMap(
+            (_) => idRegistryService.registerBookIdPairs(
+              BookIdPairs(pairs: book.businessIds),
+            ),
+          )
+          .flatMap(
+            (_) => tagDatasource
+                .addBookToTags(bookWithId.id, book.tags.map((t) => t.name).toList(), txn: txn)
+                .map((_) => bookWithId),
+          );
     } else {
-      return _unitOfWork.run((Transaction txn) async {
-        logger?.info('Transaction started for addBook');
-        final saveResult = await _bookDatasource.saveBook(model, txn: txn);
-        if (saveResult.isLeft()) {
-          throw saveResult.getLeft().getOrElse(
-            () => DatabaseFailure('Save failed'),
-          );
-        }
-        logger?.info('Book saved, registering ID pairs');
-        final registerResult = _idRegistryService.registerBookIdPairs(
-          BookIdPairs(pairs: book.businessIds),
-        );
-        if (registerResult.isLeft()) {
-          throw registerResult.getLeft().getOrElse(
-            () => RegistryFailure('Register ID pairs failed'),
-          );
-        }
-        logger?.info('ID pairs registered, updating relationships');
-        final tagNames = book.tags.map((t) => t.name).toList();
-        final updateResult = await _tagDatasource.addBookToTags(
-          bookWithId.id,
-          tagNames,
-          txn: txn,
-        );
-        if (updateResult.isLeft()) {
-          throw updateResult.getLeft().getOrElse(
-            () => DatabaseFailure('Update relationships failed'),
-          );
-        }
-        logger?.info('Transaction operation completed for addBook');
-        return bookWithId;
-      });
+      return unitOfWork.run(
+        (Transaction txn) =>
+            TaskEither.tryCatch(() async {
+                  logger?.info('Transaction started for addBook');
+                  final either = await bookDatasource
+                      .saveBook(model, txn: txn)
+                      .run();
+                  return either.fold((l) => throw l, (_) => unit);
+                }, (e, _) => e as Failure)
+                .flatMap(
+                  (_) => idRegistryService.registerBookIdPairs(
+                    BookIdPairs(pairs: book.businessIds),
+                  ),
+                )
+                .flatMap(
+                  (_) => TaskEither.tryCatch(() async {
+                    logger?.info('ID pairs registered, updating relationships');
+                    final tagNames = book.tags.map((t) => t.name).toList();
+                    final either = await tagDatasource
+                        .addBookToTags(bookWithId.id, tagNames, txn: txn)
+                        .run();
+                    return either.fold((l) => throw l, (_) => bookWithId);
+                  }, (e, _) => e as Failure),
+                ),
+      );
     }
   }
 
   /// Updates an existing book in the database.
   @override
-  Future<Either<Failure, Unit>> updateBook({
-    required Book book,
-    Transaction? txn,
-  }) async {
+  TaskEither<Failure, Unit> updateBook({required Book book, Transaction? txn}) {
     logger?.info('Entering updateBook with book: ${book.title}');
     final model = BookModel.fromEntity(book);
     if (txn != null) {
       logger?.info('Using provided transaction for updateBook');
-      final saveResult = await _bookDatasource.saveBook(model, txn: txn);
-      return saveResult.fold(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
+      return TaskEither.tryCatch(() async {
+        final either = await bookDatasource.saveBook(model, txn: txn).run();
+        return either.fold((l) => throw l, (_) => unit);
+      }, (e, _) => e as Failure);
     } else {
-      return _unitOfWork.run((Transaction txn) async {
-        logger?.info('Transaction started for updateBook');
-        final saveResult = await _bookDatasource.saveBook(model, txn: txn);
-        if (saveResult.isLeft()) {
-          throw saveResult.getLeft().getOrElse(
-            () => DatabaseFailure('Save failed'),
-          );
-        }
-        logger?.info('Transaction operation completed for updateBook');
-        return unit;
-      });
+      return unitOfWork.run(
+        (Transaction txn) => TaskEither.tryCatch(() async {
+          logger?.info('Transaction started for updateBook');
+          final either = await bookDatasource.saveBook(model, txn: txn).run();
+          return either.fold((l) => throw l, (_) => unit);
+        }, (e, _) => e as Failure),
+      );
     }
   }
 
   /// Deletes a book from the database.
   @override
-  Future<Either<Failure, Unit>> deleteBook({
-    required Book book,
-    Transaction? txn,
-  }) async {
+  TaskEither<Failure, Unit> deleteBook({required Book book, Transaction? txn}) {
     logger?.info('Entering deleteBook with book: ${book.title}');
 
     if (txn != null) {
       logger?.info('Using provided transaction for deleteBook');
-      logger?.info('Unregistering book ID pairs');
-      final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-        BookIdPairs(pairs: book.businessIds),
-      );
-      if (unregisterResult.isLeft()) {
-        return Either.left(
-          unregisterResult.getLeft().getOrElse(
-            () => RegistryFailure('Unregister ID pairs failed'),
-          ),
-        );
-      }
-      logger?.info('Deleting book record');
-      final deleteResult = await _bookDatasource.deleteBook(book.id, txn: txn);
-      if (deleteResult.isLeft()) {
-        return Either.left(
-          deleteResult.getLeft().getOrElse(
-            () => DatabaseFailure('Delete failed'),
-          ),
-        );
-      }
-      logger?.info('Removing from tags');
-      final tagNames = book.tags.map((t) => t.name).toList();
-      final updateResult = await _tagDatasource.removeBookFromTags(
-        book.id,
-        tagNames,
-        txn: txn,
-      );
-      return updateResult.fold(
-        (failure) => Either.left(failure),
-        (_) => Either.right(unit),
-      );
+      return idRegistryService
+          .unregisterBookIdPairs(BookIdPairs(pairs: book.businessIds))
+          .flatMap(
+            (_) => TaskEither.tryCatch(() async {
+              logger?.info('Deleting book record');
+              final either = await bookDatasource
+                  .deleteBook(book.id, txn: txn)
+                  .run();
+              return either.fold((l) => throw l, (_) => unit);
+            }, (e, _) => e as Failure),
+          )
+          .flatMap(
+            (_) => TaskEither.tryCatch(() async {
+              logger?.info('Removing from tags');
+              final tagNames = book.tags.map((t) => t.name).toList();
+              final either = await tagDatasource
+                  .removeBookFromTags(book.id, tagNames, txn: txn)
+                  .run();
+              return either.fold((l) => throw l, (_) => unit);
+            }, (e, _) => e as Failure),
+          );
     } else {
-      return _unitOfWork.run((Transaction txn) async {
-        logger?.info('Transaction started for deleteBook');
-        logger?.info('Unregistering book ID pairs');
-        final unregisterResult = _idRegistryService.unregisterBookIdPairs(
-          BookIdPairs(pairs: book.businessIds),
-        );
-        if (unregisterResult.isLeft()) {
-          throw unregisterResult.getLeft().getOrElse(
-            () => RegistryFailure('Unregister ID pairs failed'),
-          );
-        }
-        logger?.info('Deleting book record');
-        final deleteResult = await _bookDatasource.deleteBook(
-          book.id,
-          txn: txn,
-        );
-        if (deleteResult.isLeft()) {
-          throw deleteResult.getLeft().getOrElse(
-            () => DatabaseFailure('Delete failed'),
-          );
-        }
-        logger?.info('Removing from tags');
-        final tagNames = book.tags.map((t) => t.name).toList();
-        final updateResult = await _tagDatasource.removeBookFromTags(
-          book.id,
-          tagNames,
-          txn: txn,
-        );
-        if (updateResult.isLeft()) {
-          throw updateResult.getLeft().getOrElse(
-            () => DatabaseFailure('Update relationships failed'),
-          );
-        }
-        logger?.info('Transaction operation completed for deleteBook');
-        return unit;
-      });
+      return unitOfWork.run(
+        (Transaction txn) => idRegistryService
+            .unregisterBookIdPairs(BookIdPairs(pairs: book.businessIds))
+            .flatMap(
+              (_) => TaskEither.tryCatch(() async {
+                logger?.info('Transaction started for deleteBook');
+                logger?.info('Deleting book record');
+                final either = await bookDatasource
+                    .deleteBook(book.id, txn: txn)
+                    .run();
+                return either.fold((l) => throw l, (_) => unit);
+              }, (e, _) => e as Failure),
+            )
+            .flatMap(
+              (_) => TaskEither.tryCatch(() async {
+                logger?.info('Removing from tags');
+                final tagNames = book.tags.map((t) => t.name).toList();
+                final either = await tagDatasource
+                    .removeBookFromTags(book.id, tagNames, txn: txn)
+                    .run();
+                return either.fold((l) => throw l, (_) => unit);
+              }, (e, _) => e as Failure),
+            ),
+      );
     }
   }
 
   /// Retrieves books by a specific author.
   @override
-  Future<Either<Failure, List<Book>>> getBooksByAuthor({
-    required Author author,
-  }) async {
+  TaskEither<Failure, List<Book>> getBooksByAuthor({required Author author}) {
     logger?.info('Entering getBooksByAuthor with author: ${author.name}');
-    final result = await _bookDatasource.getBooksByAuthorId(author.id);
-    return result.fold((failure) => Either.left(failure), (models) async {
-      final books = <Book>[];
-      for (final model in models) {
-        final book = await _loadBookWithRelations(model);
-        books.add(book);
-      }
-      logger?.info('Found ${books.length} books for author ${author.name}');
-      return Either.right(books);
-    });
+    return bookDatasource
+        .getBooksByAuthorId(author.id)
+        .flatMap(
+          (models) => TaskEither.traverseList(models, _loadBookWithRelations)
+              .map((books) {
+                logger?.info(
+                  'Found ${books.length} books for author ${author.name}',
+                );
+                return books;
+              }),
+        );
   }
 
   /// Retrieves books by a specific tag.
   @override
-  Future<Either<Failure, List<Book>>> getBooksByTag({required Tag tag}) async {
+  TaskEither<Failure, List<Book>> getBooksByTag({required Tag tag}) {
     logger?.info('Entering getBooksByTag with tag: ${tag.name}');
-    final tagResult = await _tagDatasource.getTagById(tag.id);
-    if (tagResult.isLeft()) {
-      final failure = tagResult.getLeft().getOrElse(
-        () => DatabaseFailure('Failed to get tag'),
-      );
-      logger?.warning('Failed to get tag: ${failure.message}');
-      return Either.left(failure);
-    }
-    final tagModel = tagResult.getRight().getOrElse(() => null);
-    if (tagModel == null) {
-      logger?.info('Tag not found');
-      return Either.left(NotFoundFailure('Tag not found'));
-    }
-    final bookIds = tagModel.bookIds;
-    final books = <Book>[];
-    for (final bookId in bookIds) {
-      final bookResult = await getBookById(id: bookId);
-      bookResult.fold(
-        (l) => null, // ignore failure
-        (book) => books.add(book),
-      );
-    }
-    logger?.info('Found ${books.length} books for tag ${tag.name}');
-    return Either.right(books);
+    return tagDatasource.getTagById(tag.id).flatMap((tagModel) {
+      if (tagModel == null) {
+        logger?.info('Tag not found');
+        return TaskEither.left(NotFoundFailure('Tag not found'));
+      }
+      final bookIds = tagModel.bookIds;
+      return TaskEither.traverseList(
+        bookIds,
+        (bookId) => getBookById(id: bookId),
+      ).map((books) {
+        logger?.info('Found ${books.length} books for tag ${tag.name}');
+        return books.whereType<Book>().toList();
+      });
+    });
   }
 
   /// Retrieves a book by its business ID pairs.
   @override
-  Future<Either<Failure, Book>> getBookByBusinessIds({
+  TaskEither<Failure, Book> getBookByBusinessIds({
     required BookIdPairs bookId,
-  }) async {
+  }) {
     logger?.info('Entering getBookByBusinessIds with bookId: $bookId');
-    final result = await _bookDatasource.getBookByBusinessIds(bookId.idPairs);
-    return result.fold((failure) => Either.left(failure), (model) async {
+    return bookDatasource.getBookByBusinessIds(bookId.idPairs).flatMap((model) {
       if (model == null) {
         logger?.info('Book with business ids $bookId not found');
-        return Either.left(NotFoundFailure('Book not found'));
+        return TaskEither.left(NotFoundFailure('Book not found'));
       }
-      final book = await _loadBookWithRelations(model);
-      logger?.info('Output: ${book.title}');
-      return Either.right(book);
+      return _loadBookWithRelations(model).map((book) {
+        logger?.info('Output: ${book.title}');
+        return book;
+      });
     });
   }
 }

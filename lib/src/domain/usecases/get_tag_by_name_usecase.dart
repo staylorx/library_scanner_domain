@@ -9,19 +9,11 @@ class GetTagByNameUsecase with Loggable {
   GetTagByNameUsecase({Logger? logger, required this.tagRepository});
 
   /// Retrieves a tag by name.
-  Future<Either<Failure, Tag>> call({required String name}) async {
+  TaskEither<Failure, Tag> call({required String name}) {
     logger?.info('getByNameUsecase: Entering call with name: $name');
-    final result = await tagRepository.getTagByName(name: name);
-    logger?.info('getByNameUsecase: Success in call');
-    return result.match(
-      (failure) {
-        logger?.info('getByNameUsecase: Failure: $failure');
-        return Left(failure);
-      },
-      (tag) {
-        logger?.info('getByNameUsecase: Output: ${tag.name}');
-        return Right(tag);
-      },
-    );
+    return tagRepository.getTagByName(name: name).map((tag) {
+      logger?.info('getByNameUsecase: Output: ${tag.name}');
+      return tag;
+    });
   }
 }

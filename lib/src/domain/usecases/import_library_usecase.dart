@@ -22,21 +22,33 @@ class _BookParseResult {
   _BookParseResult(this.books, this.errors, this.missingAuthors);
 }
 
+class _BookProcessingResult {
+  final List<Book> books;
+  final List<String> warnings;
+  final List<String> parseErrors;
+
+  _BookProcessingResult(this.books, this.warnings, this.parseErrors);
+}
+
+class _DuplicateFilterResult {
+  final List<Book> books;
+  final List<String> warnings;
+
+  _DuplicateFilterResult(this.books, this.warnings);
+}
+
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase with Loggable {
   final LibraryDataAccess dataAccess;
   final IsBookDuplicateUsecase isBookDuplicateUsecase;
 
   ImportLibraryUsecase({
-    Logger? logger,
     required this.dataAccess,
     required this.isBookDuplicateUsecase,
   });
 
   /// Parses authors from YAML data.
-  Future<Either<Failure, Map<String, Author>>> _parseAuthors(
-    dynamic yamlAuthors,
-  ) async {
+  TaskEither<Failure, Map<String, Author>> _parseAuthors(dynamic yamlAuthors) {
     return TaskEither.tryCatch(
       () async {
         final list = yamlAuthors as YamlList;
@@ -76,190 +88,213 @@ class ImportLibraryUsecase with Loggable {
         return authors;
       },
       (error, stackTrace) => ParsingFailure('Failed to parse authors: $error'),
-    ).run();
+    );
   }
 
   /// Parses tags from YAML data.
-  Future<Either<Failure, List<Tag>>> _parseTags(dynamic yamlTags) async {
-    return TaskEither.tryCatch(
-      () async {
-        final list = yamlTags as YamlList;
-        final tagMap = <String, Tag>{};
-        for (final yamlTag in list) {
-          final name = yamlTag['name'] as String;
-          // Compute slug for uniqueness check
-          final slug = Slugify(name).toString();
-          // Skip if already exists (slug-based duplicate)
-          if (!tagMap.containsKey(slug)) {
-            tagMap[slug] = Tag(
-              id: const Uuid().v4(),
-              name: name,
-              color: yamlTag['color'] as String,
-            );
-          }
+  TaskEither<Failure, List<Tag>> _parseTags(dynamic yamlTags) {
+    return TaskEither.tryCatch(() async {
+      final list = yamlTags as YamlList;
+      final tagMap = <String, Tag>{};
+      for (final yamlTag in list) {
+        final name = yamlTag['name'] as String;
+        // Compute slug for uniqueness check
+        final slug = Slugify(name).toString();
+        // Skip if already exists (slug-based duplicate)
+        if (!tagMap.containsKey(slug)) {
+          tagMap[slug] = Tag(
+            id: const Uuid().v4(),
+            name: name,
+            color: yamlTag['color'] as String,
+          );
         }
-        return tagMap.values.toList();
-      },
-      (error, stackTrace) => ParsingFailure('Failed to parse tags: $error'),
-    ).run();
+      }
+      return tagMap.values.toList();
+    }, (error, stackTrace) => ParsingFailure('Failed to parse tags: $error'));
   }
 
   /// Parses books from YAML data with parameters.
-  Future<Either<Failure, _BookParseResult>> _parseBooks(
-    _BookParseParams params,
-  ) async {
-    return TaskEither.tryCatch(
-      () async {
-        final list = params.yamlBooks as YamlList;
-        final books = <Book>[];
-        final errors = <String>[];
-        final missingAuthors = <String>{}; // Use set to avoid duplicates
-        for (int i = 0; i < list.length; i++) {
-          final yamlBook = list[i];
-          final authorNames = (yamlBook['authors'] as List)
-              .map((a) => a['name'] as String)
-              .toList();
-          final tagNames = yamlBook['tags'] != null
-              ? (yamlBook['tags'] as List)
-                    .map((t) => t['name'] as String)
-                    .toList()
-              : <String>[];
-          final bookAuthors = <Author>[];
-          for (final name in authorNames) {
-            final author = params.authorMap[name];
-            if (author != null) {
-              bookAuthors.add(author);
-            } else {
-              missingAuthors.add(name);
-            }
+  TaskEither<Failure, _BookParseResult> _parseBooks(_BookParseParams params) {
+    return TaskEither.tryCatch(() async {
+      final list = params.yamlBooks as YamlList;
+      final books = <Book>[];
+      final errors = <String>[];
+      final missingAuthors = <String>{}; // Use set to avoid duplicates
+      for (int i = 0; i < list.length; i++) {
+        final yamlBook = list[i];
+        final authorNames = (yamlBook['authors'] as List)
+            .map((a) => a['name'] as String)
+            .toList();
+        final tagNames = yamlBook['tags'] != null
+            ? (yamlBook['tags'] as List)
+                  .map((t) => t['name'] as String)
+                  .toList()
+            : <String>[];
+        final bookAuthors = <Author>[];
+        for (final name in authorNames) {
+          final author = params.authorMap[name];
+          if (author != null) {
+            bookAuthors.add(author);
+          } else {
+            missingAuthors.add(name);
           }
-          // Match tags by slug
-          final tagSlugs = tagNames
-              .map((name) => Slugify(name).toString())
-              .toSet();
-          final bookTags = params.tags
-              .where((t) => tagSlugs.contains(t.slug))
-              .toList();
-          final idPairs = <BookIdPair>[];
-          if (yamlBook['id_pairs'] != null) {
-            final yamlIdPairs = yamlBook['id_pairs'] as List;
-            for (final yamlId in yamlIdPairs) {
-              final idType = BookIdType.values.firstWhere(
-                (e) => e.name == yamlId['id_type'],
-              );
-              idPairs.add(
-                BookIdPair(idType: idType, idCode: yamlId['id_code'] as String),
-              );
-            }
-          }
-          if (idPairs.isEmpty) {
-            // Ensure every book has at least one local ID to prevent crashes
-            // when accessing book.idPairs.first in BookListScreen.
+        }
+        // Match tags by slug
+        final tagSlugs = tagNames
+            .map((name) => Slugify(name).toString())
+            .toSet();
+        final bookTags = params.tags
+            .where((t) => tagSlugs.contains(t.slug))
+            .toList();
+        final idPairs = <BookIdPair>[];
+        if (yamlBook['id_pairs'] != null) {
+          final yamlIdPairs = yamlBook['id_pairs'] as List;
+          for (final yamlId in yamlIdPairs) {
+            final idType = BookIdType.values.firstWhere(
+              (e) => e.name == yamlId['id_type'],
+            );
             idPairs.add(
-              BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
+              BookIdPair(idType: idType, idCode: yamlId['id_code'] as String),
             );
           }
-          final originalTitle = yamlBook['title'] as String;
-          final publishedDate = yamlBook['published_date'] != null
-              ? DateTime.parse(yamlBook['published_date'] as String)
-              : null;
-          books.add(
-            Book(
-              id: const Uuid().v4(),
-              businessIds: idPairs,
-              title: cleanBookTitle(title: originalTitle),
-              originalTitle: originalTitle,
-              authors: bookAuthors,
-              tags: bookTags,
-              publishedDate: publishedDate,
-            ),
+        }
+        if (idPairs.isEmpty) {
+          // Ensure every book has at least one local ID to prevent crashes
+          // when accessing book.idPairs.first in BookListScreen.
+          idPairs.add(
+            BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
           );
         }
-        return _BookParseResult(books, errors, missingAuthors.toList());
-      },
-      (error, stackTrace) => ParsingFailure('Failed to parse books: $error'),
-    ).run();
+        final originalTitle = yamlBook['title'] as String;
+        final publishedDate = yamlBook['published_date'] != null
+            ? DateTime.parse(yamlBook['published_date'] as String)
+            : null;
+        books.add(
+          Book(
+            id: const Uuid().v4(),
+            businessIds: idPairs,
+            title: cleanBookTitle(title: originalTitle),
+            originalTitle: originalTitle,
+            authors: bookAuthors,
+            tags: bookTags,
+            publishedDate: publishedDate,
+          ),
+        );
+      }
+      return _BookParseResult(books, errors, missingAuthors.toList());
+    }, (error, stackTrace) => ParsingFailure('Failed to parse books: $error'));
   }
 
   /// Imports a library from the specified file path.
-  Future<Either<Failure, ImportResult>> call({
+  TaskEither<Failure, ImportResult> call({
     required String filePath,
     bool overwrite = false,
-  }) async {
+  }) {
     logger?.info(
       'ImportLibraryUsecase: Importing library from $filePath, overwrite: $overwrite',
     );
-    try {
-      final file = File(filePath);
-      final yamlString = await file.readAsString();
-      final yamlData = loadYaml(yamlString);
-      logger?.info('Parsed YAML data, keys: ${yamlData.keys}');
-      logger?.info(
-        'authors present: ${yamlData.containsKey('authors')}, value: ${yamlData['authors']}',
-      );
-      logger?.info(
-        'tags present: ${yamlData.containsKey('tags')}, value: ${yamlData['tags']}',
-      );
-      logger?.info(
-        'books present: ${yamlData.containsKey('books')}, value: ${yamlData['books']}',
-      );
 
+    // Read and parse YAML file
+    return TaskEither<Failure, dynamic>.tryCatch(
+      () async {
+        final file = File(filePath);
+        final yamlString = await file.readAsString();
+        return loadYaml(yamlString);
+      },
+      (error, stackTrace) => ServiceFailure('Failed to read YAML file: $error'),
+    ).flatMap((yamlData) {
+      logger?.info('Parsed YAML data, keys: ${yamlData.keys}');
+
+      // Validate required sections
       if (yamlData['books'] == null) {
-        logger?.error('Books section is null or missing in YAML');
-        return Left(
+        return TaskEither<Failure, ImportResult>.left(
           ServiceFailure('Invalid YAML format: books section is required'),
         );
       }
 
-      if (yamlData['tags'] == null) {
-        logger?.warning('Tags section is missing in YAML');
-      }
+      // Handle overwrite: clear existing data if requested
+      final clearTask = overwrite
+          ? dataAccess.databaseService.clearAll().map((_) {
+              logger?.info('Existing data cleared');
+              return unit;
+            })
+          : TaskEither<Failure, Unit>.right(unit);
 
-      if (yamlData['authors'] == null) {
-        logger?.warning('Authors section is missing in YAML');
-      }
-      if (overwrite) {
-        logger?.info('Clearing existing data due to overwrite flag');
-        final clearResult = await dataAccess.databaseService.clearAll();
-        if (clearResult.isLeft()) {
-          return Left(
-            clearResult.getLeft().getOrElse(
-              () => ServiceFailure('Clear failed'),
-            ),
-          );
-        }
-        logger?.info('Existing data cleared');
-      }
+      return clearTask.flatMap((_) {
+        // Parse authors (optional)
+        final parseAuthorsTask = yamlData['authors'] != null
+            ? _parseAuthors(yamlData['authors'])
+            : TaskEither<Failure, Map<String, Author>>.right(
+                <String, Author>{},
+              );
 
-      // Parse authors (optional, default empty)
-      final Either<Failure, Map<String, Author>> authorMapEither =
-          yamlData['authors'] != null
-          ? await _parseAuthors(yamlData['authors'])
-          : Right(<String, Author>{});
-      final authorMap = authorMapEither.match(
-        (failure) => throw ServiceFailure(
-          'Parse error',
-        ), // Let the outer try-catch handle it
-        (map) => map,
-      );
-      final authors = authorMap.values.toList();
-      logger?.info('Parsed ${authors.length} authors');
+        return parseAuthorsTask.flatMap((authorMap) {
+          final authors = authorMap.values.toList();
+          logger?.info('Parsed ${authors.length} authors');
 
-      // Parse tags (optional, default empty)
-      final Either<Failure, List<Tag>> tagsEither = yamlData['tags'] != null
-          ? await _parseTags(yamlData['tags'])
-          : Right(<Tag>[]);
-      final tags = tagsEither.match(
-        (failure) => throw ServiceFailure('Parse error'),
-        (list) => list,
-      );
-      logger?.info('Parsed ${tags.length} tags');
+          // Parse tags (optional)
+          final parseTagsTask = yamlData['tags'] != null
+              ? _parseTags(yamlData['tags'])
+              : TaskEither<Failure, List<Tag>>.right(<Tag>[]);
 
-      // Collect all unique tagNames and authorNames from books
-      final yamlBooks = yamlData['books'] as YamlList;
+          return parseTagsTask.flatMap((tags) {
+            logger?.info('Parsed ${tags.length} tags');
+
+            // Process books with author/tag resolution
+            return _processBooks(yamlData['books'], authorMap, tags).flatMap((
+              bookProcessingResult,
+            ) {
+              final processedBooks = bookProcessingResult.books;
+              final warnings = bookProcessingResult.warnings;
+              final parseErrors = bookProcessingResult.parseErrors;
+
+              // Filter duplicates
+              return _filterDuplicates(processedBooks, overwrite).flatMap((
+                filteredResult,
+              ) {
+                final finalBooks = filteredResult.books;
+                final duplicateWarnings = filteredResult.warnings;
+                warnings.addAll(duplicateWarnings);
+
+                // Save to database
+                return _saveToDatabase(authors, tags, finalBooks).map((_) {
+                  final library = Library(
+                    name: yamlData['name'] as String? ?? 'Imported Library',
+                    description:
+                        yamlData['description'] as String? ??
+                        'Imported from $filePath',
+                    books: finalBooks,
+                    authors: authors,
+                    tags: tags,
+                  );
+
+                  logger?.info('Successfully imported library');
+                  return ImportResult(
+                    library: library,
+                    parseErrors: parseErrors,
+                    warnings: warnings,
+                  );
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  }
+
+  TaskEither<Failure, _BookProcessingResult> _processBooks(
+    dynamic yamlBooks,
+    Map<String, Author> authorMap,
+    List<Tag> tags,
+  ) {
+    return TaskEither.tryCatch(() async {
+      final yamlBooksList = yamlBooks as YamlList;
       final allBookTagNames = <String>{};
       final allBookAuthorNames = <String>{};
-      for (final yamlBook in yamlBooks) {
+
+      // Collect all tag and author names from books
+      for (final yamlBook in yamlBooksList) {
         final tagNames = yamlBook['tags'] != null
             ? (yamlBook['tags'] as List).map((t) => t['name'] as String).toSet()
             : <String>{};
@@ -273,7 +308,7 @@ class ImportLibraryUsecase with Loggable {
       // Get existing tag slugs
       final existingTagSlugs = tags.map((t) => t.slug).toSet();
 
-      // Find missing tags (by slug)
+      // Find missing tags
       final missingTagNames = allBookTagNames
           .where((name) => !existingTagSlugs.contains(Slugify(name).toString()))
           .toSet();
@@ -290,6 +325,7 @@ class ImportLibraryUsecase with Loggable {
       );
 
       // Add missing authors
+      final warnings = <String>[];
       for (final authorName in missingAuthorNames) {
         final author = Author(
           id: const Uuid().v4(),
@@ -302,10 +338,9 @@ class ImportLibraryUsecase with Loggable {
           name: authorName,
           biography: null,
         );
-        authors.add(author);
         authorMap[authorName] = author;
       }
-      final warnings = <String>[];
+
       if (missingAuthorNames.isNotEmpty) {
         logger?.info(
           'Created ${missingAuthorNames.length} missing authors: ${missingAuthorNames.join(', ')}',
@@ -316,163 +351,140 @@ class ImportLibraryUsecase with Loggable {
       }
 
       // Parse books
-      final bookParseParams = _BookParseParams(
-        yamlData['books'],
-        authorMap,
-        tags,
-      );
-      final Either<Failure, _BookParseResult> bookResultEither =
-          await _parseBooks(bookParseParams);
-      final bookResult = bookResultEither.match(
-        (failure) => throw ServiceFailure('Parse error'),
-        (result) => result,
-      );
-      final parsedBooks = bookResult.books;
-      logger?.info('Parsed ${parsedBooks.length} books');
-      if (bookResult.errors.isNotEmpty) {
-        logger?.warning('Parse errors encountered:');
-        for (final error in bookResult.errors) {
-          logger?.warning(error);
-        }
-      }
-      // Since we created missing authors, bookResult.missingAuthors should be empty now
-      assert(bookResult.missingAuthors.isEmpty);
+      final bookParseParams = _BookParseParams(yamlBooks, authorMap, tags);
+      final bookResultEither = await _parseBooks(bookParseParams).run();
+      return bookResultEither.match(
+        (failure) => throw failure,
+        (bookResult) {
+          logger?.info('Parsed ${bookResult.books.length} books');
+          if (bookResult.errors.isNotEmpty) {
+            logger?.warning('Parse errors encountered:');
+            for (final error in bookResult.errors) {
+              logger?.warning(error);
+            }
+          }
 
-      // Filter out duplicates within parsed books and against existing if not overwrite
-      final List<Book> books = [];
-      final List<String> duplicateWarnings = [];
-
-      // First, filter duplicates within parsed books
-      for (final book in parsedBooks) {
-        final isDuplicateInParsed = books.any((existing) {
-          final duplicateResult = isBookDuplicateUsecase(
-            bookA: book,
-            bookB: existing,
+          return _BookProcessingResult(
+            bookResult.books,
+            warnings,
+            bookResult.errors,
           );
-          return duplicateResult.match((failure) {
-            logger?.warning('Failed to check duplicate: ${failure.message}');
-            return false;
-          }, (isDup) => isDup);
-        });
-        if (!isDuplicateInParsed) {
-          books.add(book);
-        } else {
-          duplicateWarnings.add(
-            'Skipped duplicate book in import: ${book.title}',
-          );
-        }
-      }
+        },
+      );
+    }, (error, stackTrace) => ParsingFailure('Failed to process books: $error'));
+  }
 
-      // If not overwrite, check against existing books
-      if (!overwrite) {
-        final existingBooksEither = await dataAccess.bookRepository.getBooks();
-        final existingBooks = existingBooksEither.match(
-          (failure) => throw ServiceFailure('Parse error'),
-          (books) => books,
+  TaskEither<Failure, _DuplicateFilterResult> _filterDuplicates(
+    List<Book> books,
+    bool overwrite,
+  ) {
+    // Filter duplicates within parsed books
+    final filteredBooks = <Book>[];
+    final warnings = <String>[];
+
+    for (final book in books) {
+      bool isDuplicate = false;
+      for (final existing in filteredBooks) {
+        final duplicateResult = isBookDuplicateUsecase(
+          bookA: book,
+          bookB: existing,
         );
-        final List<Book> finalBooks = [];
-        for (final book in books) {
-          final isDuplicateExisting = existingBooks.any((existing) {
+        isDuplicate = duplicateResult.fold((failure) {
+          logger?.warning('Failed to check duplicate: ${failure.message}');
+          return false;
+        }, (isDup) => isDup);
+        if (isDuplicate) break;
+      }
+      if (!isDuplicate) {
+        filteredBooks.add(book);
+      } else {
+        warnings.add('Skipped duplicate book in import: ${book.title}');
+      }
+    }
+
+    // If not overwrite, check against existing books
+    if (!overwrite) {
+      return dataAccess.bookRepository.getBooks().map((existingBooks) {
+        final finalBooks = <Book>[];
+        for (final book in filteredBooks) {
+          bool isDuplicate = false;
+          for (final existing in existingBooks) {
             final duplicateResult = isBookDuplicateUsecase(
               bookA: book,
               bookB: existing,
             );
-            return duplicateResult.match((failure) {
+            isDuplicate = duplicateResult.fold((failure) {
               logger?.warning('Failed to check duplicate: ${failure.message}');
               return false;
             }, (isDup) => isDup);
-          });
-          if (!isDuplicateExisting) {
+            if (isDuplicate) break;
+          }
+          if (!isDuplicate) {
             finalBooks.add(book);
           } else {
-            duplicateWarnings.add(
+            warnings.add(
               'Skipped existing duplicate book in import: ${book.title}',
             );
           }
         }
-        books.clear();
-        books.addAll(finalBooks);
-      }
-
-      if (duplicateWarnings.isNotEmpty) {
-        warnings.addAll(duplicateWarnings);
-      }
-
-      logger?.info('Starting database write operations...');
-
-      // Use unit of work for batch operations
-      final transactionResult = await dataAccess.unitOfWork.run((txn) async {
-        // Save authors
-        for (final author in authors) {
-          final saveResult = await dataAccess.authorRepository.addAuthor(
-            author: author,
-            txn: txn,
-          );
-          if (saveResult.isLeft()) {
-            throw saveResult.getLeft().getOrElse(
-              () => DatabaseFailure('Save author failed'),
-            );
-          }
-        }
-        logger?.info('Saved ${authors.length} authors to database');
-
-        // Save tags
-        for (final tag in tags) {
-          final saveResult = await dataAccess.tagRepository.addTag(
-            tag: tag,
-            txn: txn,
-          );
-          if (saveResult.isLeft()) {
-            throw saveResult.getLeft().getOrElse(
-              () => DatabaseFailure('Save tag failed'),
-            );
-          }
-        }
-        logger?.info('Saved ${tags.length} tags to database');
-
-        // Save books
-        for (final book in books) {
-          final saveResult = await dataAccess.bookRepository.addBook(
-            book: book,
-            txn: txn,
-          );
-          if (saveResult.isLeft()) {
-            throw saveResult.getLeft().getOrElse(
-              () => DatabaseFailure('Save book failed'),
-            );
-          }
-        }
-        logger?.info('Saved ${books.length} books to database');
+        return _DuplicateFilterResult(finalBooks, warnings);
       });
-      if (transactionResult.isLeft()) {
-        return Left(
-          transactionResult.getLeft().getOrElse(
-            () => ServiceFailure('Transaction failed'),
-          ),
-        );
-      }
-      logger?.info('Committed all database operations in transaction');
-
-      final library = Library(
-        name: yamlData['name'] as String? ?? 'Imported Library',
-        description:
-            yamlData['description'] as String? ?? 'Imported from $filePath',
-        books: books,
-        authors: authors,
-        tags: tags,
-      );
-
-      final importResult = ImportResult(
-        library: library,
-        parseErrors: bookResult.errors,
-        warnings: warnings,
-      );
-
-      logger?.info('Successfully imported library');
-      return Right(importResult);
-    } catch (e) {
-      logger?.error('Failed to import library: $e');
-      return Left(ServiceFailure('Failed to import library: $e'));
+    } else {
+      return TaskEither.right(_DuplicateFilterResult(filteredBooks, warnings));
     }
+  }
+
+  TaskEither<Failure, Unit> _saveToDatabase(
+    List<Author> authors,
+    List<Tag> tags,
+    List<Book> books,
+  ) {
+    logger?.info('Starting database write operations...');
+
+    return dataAccess.unitOfWork.run(
+      (txn) => TaskEither.tryCatch(
+        () async {
+          // Save authors
+          for (final author in authors) {
+            logger?.info('Saving author: ${author.name}');
+            final result = await dataAccess.authorRepository
+                .addAuthor(author: author, txn: txn)
+                .run();
+            if (result.isLeft()) {
+              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+            }
+          }
+
+          // Save tags
+          for (final tag in tags) {
+            logger?.info('Saving tag: ${tag.name}');
+            final result = await dataAccess.tagRepository
+                .addTag(tag: tag, txn: txn)
+                .run();
+            if (result.isLeft()) {
+              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+            }
+          }
+
+          // Save books
+          for (final book in books) {
+            logger?.info('Saving book: ${book.title}');
+            final result = await dataAccess.bookRepository
+                .addBook(book: book, txn: txn)
+                .run();
+            if (result.isLeft()) {
+              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+            }
+          }
+
+          logger?.info(
+            'Saved ${authors.length} authors, ${tags.length} tags, ${books.length} books to database',
+          );
+          return unit;
+        },
+        (error, stackTrace) =>
+            ServiceFailure('Failed to save to database: $error'),
+      ),
+    );
   }
 }

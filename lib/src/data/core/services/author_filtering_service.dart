@@ -7,25 +7,20 @@ class AuthorFilteringServiceImpl
     with Loggable
     implements AuthorFilteringService {
   @override
-  Either<Failure, List<Author>> filterAuthors({
+  TaskEither<Failure, List<Author>> filterAuthors({
     required List<Author> authors,
     required String searchQuery,
     Logger? logger,
   }) {
-    return Either.tryCatch(
-      () {
-        if (searchQuery.isEmpty) {
-          return authors;
-        }
+    if (searchQuery.isEmpty) {
+      return TaskEither.right(authors);
+    }
 
-        final query = searchQuery.toLowerCase();
-        final filteredAuthors = authors.where((author) {
-          return author.name.toLowerCase().contains(query);
-        }).toList();
+    final query = searchQuery.toLowerCase();
+    final filteredAuthors = authors.where((author) {
+      return author.name.toLowerCase().contains(query);
+    }).toList();
 
-        return filteredAuthors;
-      },
-      (error, stackTrace) => ServiceFailure('Failed to filter authors: $error'),
-    );
+    return TaskEither.right(filteredAuthors);
   }
 }

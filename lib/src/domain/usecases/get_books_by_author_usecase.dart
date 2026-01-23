@@ -3,12 +3,11 @@ import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:id_logging/id_logging.dart';
 
 class GetBooksByAuthorUseCase with Loggable {
-  final BookRepository _bookRepository;
+  final BookRepository bookRepository;
 
-  GetBooksByAuthorUseCase({required BookRepository bookRepository})
-    : _bookRepository = bookRepository;
+  GetBooksByAuthorUseCase({required this.bookRepository});
 
-  Future<Either<Failure, List<Book>>> call({required Author author}) async {
-    return await _bookRepository.getBooksByAuthor(author: author);
+  TaskEither<Failure, List<Book>> call({required Author author}) {
+    return bookRepository.getBooksByAuthor(author: author);
   }
 }

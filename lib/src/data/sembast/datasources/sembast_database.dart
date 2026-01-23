@@ -56,12 +56,12 @@ class SembastDatabase with Loggable implements DatabaseService {
 
   /// Saves data to the specified collection.
   @override
-  Future<Either<Failure, Unit>> save({
+  TaskEither<Failure, Unit> save({
     required String collection,
     required String id,
     required Map<String, dynamic> data,
     dynamic db,
-  }) async {
+  }) {
     return TaskEither.tryCatch(
       () async {
         logger?.debug(
@@ -80,52 +80,49 @@ class SembastDatabase with Loggable implements DatabaseService {
         logger?.error('Save failed: $error');
         return DatabaseFailure('Failed to save: $error');
       },
-    ).run();
+    );
   }
 
   /// Retrieves data from the specified collection by id.
   @override
-  Future<Either<Failure, Map<String, dynamic>?>> get({
+  TaskEither<Failure, Map<String, dynamic>?> get({
     required String collection,
     required String id,
-  }) async {
+  }) {
     return TaskEither.tryCatch(() async {
       final db = await database;
       final store = _getStore(collection);
       final record = await store.record(id).get(db);
       return record;
-    }, (error, stackTrace) => DatabaseFailure('Failed to get: $error')).run();
+    }, (error, stackTrace) => DatabaseFailure('Failed to get: $error'));
   }
 
   /// Retrieves all records from the collection with optional pagination.
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> getAll({
+  TaskEither<Failure, List<Map<String, dynamic>>> getAll({
     required String collection,
     int? limit,
     int? offset,
     dynamic db,
-  }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final client = db as DatabaseClient? ?? await database;
-        final store = _getStore(collection);
-        final finder = Finder(limit: limit, offset: offset);
-        final records = await store.find(client, finder: finder);
-        return records.map((r) => r.value).toList();
-      },
-      (error, stackTrace) => DatabaseFailure('Failed to get all: $error'),
-    ).run();
+  }) {
+    return TaskEither.tryCatch(() async {
+      final client = db as DatabaseClient? ?? await database;
+      final store = _getStore(collection);
+      final finder = Finder(limit: limit, offset: offset);
+      final records = await store.find(client, finder: finder);
+      return records.map((r) => r.value).toList();
+    }, (error, stackTrace) => DatabaseFailure('Failed to get all: $error'));
   }
 
   /// Queries records from the collection with filters.
   @override
-  Future<Either<Failure, List<Map<String, dynamic>>>> query({
+  TaskEither<Failure, List<Map<String, dynamic>>> query({
     required String collection,
     required Map<String, dynamic> filter,
     int? limit,
     int? offset,
     dynamic db,
-  }) async {
+  }) {
     return TaskEither.tryCatch(() async {
       final dbToUse = db as DatabaseClient? ?? await database;
       final store = _getStore(collection);
@@ -172,73 +169,64 @@ class SembastDatabase with Loggable implements DatabaseService {
         'Query collection: $collection, filter: $filter, found ${records.length} records',
       );
       return records.map((r) => r.value).toList();
-    }, (error, stackTrace) => DatabaseFailure('Failed to query: $error')).run();
+    }, (error, stackTrace) => DatabaseFailure('Failed to query: $error'));
   }
 
   /// Deletes a record from the collection.
   @override
-  Future<Either<Failure, Unit>> delete({
+  TaskEither<Failure, Unit> delete({
     required String collection,
     required String id,
     dynamic db,
-  }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final client = db as DatabaseClient? ?? await database;
-        final store = _getStore(collection);
-        await store.record(id).delete(client);
-        return unit;
-      },
-      (error, stackTrace) => DatabaseFailure('Failed to delete: $error'),
-    ).run();
+  }) {
+    return TaskEither.tryCatch(() async {
+      final client = db as DatabaseClient? ?? await database;
+      final store = _getStore(collection);
+      await store.record(id).delete(client);
+      return unit;
+    }, (error, stackTrace) => DatabaseFailure('Failed to delete: $error'));
   }
 
   /// Clears all records from the collection.
   @override
-  Future<Either<Failure, Unit>> clear({required String collection}) async {
+  TaskEither<Failure, Unit> clear({required String collection}) {
     return TaskEither.tryCatch(() async {
       final db = await database;
       final store = _getStore(collection);
       await store.delete(db);
       return unit;
-    }, (error, stackTrace) => DatabaseFailure('Failed to clear: $error')).run();
+    }, (error, stackTrace) => DatabaseFailure('Failed to clear: $error'));
   }
 
   /// Clears all records from all collections.
   @override
-  Future<Either<Failure, Unit>> clearAll() async {
-    return TaskEither.tryCatch(
-      () async {
-        final db = await database;
-        await booksStore.delete(db);
-        await authorsStore.delete(db);
-        await tagsStore.delete(db);
-        return unit;
-      },
-      (error, stackTrace) => DatabaseFailure('Failed to clear all: $error'),
-    ).run();
+  TaskEither<Failure, Unit> clearAll() {
+    return TaskEither.tryCatch(() async {
+      final db = await database;
+      await booksStore.delete(db);
+      await authorsStore.delete(db);
+      await tagsStore.delete(db);
+      return unit;
+    }, (error, stackTrace) => DatabaseFailure('Failed to clear all: $error'));
   }
 
   /// Executes an operation within a database transaction.
   @override
-  Future<Either<Failure, Unit>> transaction({
+  TaskEither<Failure, Unit> transaction({
     required Future<Unit> Function(dynamic txn) operation,
-  }) async {
-    return TaskEither.tryCatch(
-      () async {
-        final db = await database;
-        await db.transaction((txn) async {
-          await operation(txn);
-        });
-        return unit;
-      },
-      (error, stackTrace) => DatabaseFailure('Transaction failed: $error'),
-    ).run();
+  }) {
+    return TaskEither.tryCatch(() async {
+      final db = await database;
+      await db.transaction((txn) async {
+        await operation(txn);
+      });
+      return unit;
+    }, (error, stackTrace) => DatabaseFailure('Transaction failed: $error'));
   }
 
   /// Closes the database connection.
   @override
-  Future<Either<Failure, Unit>> close() async {
+  TaskEither<Failure, Unit> close() {
     return TaskEither.tryCatch(
       () async {
         final db = _database;
@@ -250,6 +238,6 @@ class SembastDatabase with Loggable implements DatabaseService {
       },
       (error, stackTrace) =>
           DatabaseFailure('Failed to close database: $error'),
-    ).run();
+    );
   }
 }

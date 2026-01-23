@@ -27,7 +27,7 @@ void main() {
       logger.info('Starting BookRepository test');
 
       logger.info('Database instance created');
-      (await database.clearAll()).fold((l) => throw l, (r) => null);
+      await database.clearAll().run();
       logger.info('Database cleared');
 
       final authorIdRegistryService = AuthorIdRegistryServiceImpl();
@@ -60,7 +60,7 @@ void main() {
         name: 'Test Author',
         biography: 'Test bio',
       );
-      await authorRepository.addAuthor(author: author);
+      await authorRepository.addAuthor(author: author).run();
 
       final tag = Tag(
         id: const Uuid().v4(),
@@ -68,10 +68,10 @@ void main() {
         description: 'Test description',
         color: '#FF0000',
       );
-      await tagRepository.addTag(tag: tag);
+      await tagRepository.addTag(tag: tag).run();
 
       // Check for zero books
-      var booksEither = await bookRepository.getBooks();
+      var booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       var books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.isEmpty, true);
@@ -88,10 +88,10 @@ void main() {
         coverImage: null,
         notes: null,
       );
-      await bookRepository.addBook(book: newBook);
+      await bookRepository.addBook(book: newBook).run();
 
       // Verify count
-      booksEither = await bookRepository.getBooks();
+      booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.length, 1);
@@ -101,19 +101,21 @@ void main() {
 
       // Update the book
       final updatedBook = books.first.copyWith(title: 'Updated Test Book');
-      await bookRepository.updateBook(book: updatedBook);
+      await bookRepository.updateBook(book: updatedBook).run();
 
       // Verify update
-      booksEither = await bookRepository.getBooks();
+      booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.length, 1);
       expect(books.first.title, 'Updated Test Book');
 
       // Get book by id pair
-      var bookResult = await bookRepository.getBookByIdPair(
-        bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "12345"),
-      );
+      var bookResult = await bookRepository
+          .getBookByIdPair(
+            bookIdPair: BookIdPair(idType: BookIdType.local, idCode: "12345"),
+          )
+          .run();
       expect(bookResult.isRight(), true);
       var book = bookResult.fold<Book?>((l) => null, (r) => r);
       expect(book, isNotNull);
@@ -127,10 +129,10 @@ void main() {
         ],
         name: 'Second Author',
       );
-      await authorRepository.addAuthor(author: secondAuthor);
+      await authorRepository.addAuthor(author: secondAuthor).run();
 
       final secondTag = Tag(id: const Uuid().v4(), name: 'Second Tag');
-      await tagRepository.addTag(tag: secondTag);
+      await tagRepository.addTag(tag: secondTag).run();
 
       final secondBook = Book(
         id: const Uuid().v4(),
@@ -140,50 +142,52 @@ void main() {
         tags: [secondTag],
         publishedDate: DateTime(2023, 2, 1),
       );
-      await bookRepository.addBook(book: secondBook);
+      await bookRepository.addBook(book: secondBook).run();
 
       // Verify count increases
-      booksEither = await bookRepository.getBooks();
+      booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.length, 2);
 
       // Test getBooksByAuthor
-      var booksByAuthor = await bookRepository.getBooksByAuthor(author: author);
+      var booksByAuthor = await bookRepository
+          .getBooksByAuthor(author: author)
+          .run();
       expect(booksByAuthor.isRight(), true);
       var authorBooks = booksByAuthor.getRight().getOrElse(() => []);
       expect(authorBooks.length, 1);
       expect(authorBooks.first.title, 'Updated Test Book');
 
       // Test getBooksByTag
-      var booksByTag = await bookRepository.getBooksByTag(tag: tag);
+      var booksByTag = await bookRepository.getBooksByTag(tag: tag).run();
       expect(booksByTag.isRight(), true);
       var tagBooks = booksByTag.getRight().getOrElse(() => []);
       expect(tagBooks.length, 1);
       expect(tagBooks.first.title, 'Updated Test Book');
 
       // Delete one book
-      await bookRepository.deleteBook(book: updatedBook);
+      await bookRepository.deleteBook(book: updatedBook).run();
 
       // Verify count decreases
-      booksEither = await bookRepository.getBooks();
+      booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.length, 1);
       expect(books.first.title, 'Second Test Book');
 
       // Delete the last book
-      await bookRepository.deleteBook(book: secondBook);
+      await bookRepository.deleteBook(book: secondBook).run();
 
       // Verify zero books
-      booksEither = await bookRepository.getBooks();
+      booksEither = await bookRepository.getBooks().run();
       expect(booksEither.isRight(), true);
       books = booksEither.getRight().getOrElse(() => <Book>[]);
       expect(books.isEmpty, true);
 
       // Close database
       logger.info('Closing database');
-      await database.close();
+      database.close();
       logger.info('Test completed');
     }, timeout: Timeout(Duration(seconds: 60)));
   });
