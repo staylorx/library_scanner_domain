@@ -37,10 +37,7 @@ class UpdateBookUsecase with Loggable {
         coverImage: coverImage,
         notes: notes,
       );
-      final cleanedBook = updatedBook.copyWith(
-        title: cleanBookTitle(title: updatedBook.title),
-      );
-      return bookRepository.updateBook(book: cleanedBook).flatMap((_) {
+      return bookRepository.updateBook(book: updatedBook).flatMap((_) {
         return bookRepository.getBooks().map((books) {
           logger?.info('UpdateBookUsecase: Success in call');
           logger?.info(

@@ -50,7 +50,6 @@ void main() {
         final addBookUsecase = AddBookUsecase(
           bookRepository: bookRepository,
           isBookDuplicateUsecase: IsBookDuplicateUsecase(),
-          bookIdRegistryService: bookIdRegistryService,
         );
         final updateBookUsecase = UpdateBookUsecase(
           bookRepository: bookRepository,

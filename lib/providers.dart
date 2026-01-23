@@ -152,11 +152,9 @@ final addAuthorUsecaseProvider = Provider<AddAuthorUsecase>((ref) {
 final addBookUsecaseProvider = Provider<AddBookUsecase>((ref) {
   final bookRepository = ref.watch(bookRepositoryProvider);
   final isBookDuplicateUsecase = ref.watch(isBookDuplicateUsecaseProvider);
-  final bookIdRegistryService = ref.watch(bookIdRegistryServiceProvider);
   return AddBookUsecase(
     bookRepository: bookRepository,
     isBookDuplicateUsecase: isBookDuplicateUsecase,
-    bookIdRegistryService: bookIdRegistryService,
   );
 });
 

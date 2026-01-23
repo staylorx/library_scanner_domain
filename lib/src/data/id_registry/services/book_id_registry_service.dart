@@ -18,7 +18,9 @@ class BookIdRegistryServiceImpl with Loggable implements BookIdRegistryService {
     return TaskEither.tryCatch(
       () async {
         _registry.register(idPairSet: idPairs);
-        logger?.info('Registered book ID pairs: ${idPairs.idPairs.length} pairs');
+        logger?.info(
+          'Registered book ID pairs: ${idPairs.idPairs.length} pairs',
+        );
         return unit;
       },
       (error, stackTrace) {

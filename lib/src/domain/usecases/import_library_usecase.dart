@@ -173,7 +173,7 @@ class ImportLibraryUsecase with Loggable {
           Book(
             id: const Uuid().v4(),
             businessIds: idPairs,
-            title: cleanBookTitle(title: originalTitle),
+            title: originalTitle,
             originalTitle: originalTitle,
             authors: bookAuthors,
             tags: bookTags,
@@ -353,24 +353,21 @@ class ImportLibraryUsecase with Loggable {
       // Parse books
       final bookParseParams = _BookParseParams(yamlBooks, authorMap, tags);
       final bookResultEither = await _parseBooks(bookParseParams).run();
-      return bookResultEither.match(
-        (failure) => throw failure,
-        (bookResult) {
-          logger?.info('Parsed ${bookResult.books.length} books');
-          if (bookResult.errors.isNotEmpty) {
-            logger?.warning('Parse errors encountered:');
-            for (final error in bookResult.errors) {
-              logger?.warning(error);
-            }
+      return bookResultEither.match((failure) => throw failure, (bookResult) {
+        logger?.info('Parsed ${bookResult.books.length} books');
+        if (bookResult.errors.isNotEmpty) {
+          logger?.warning('Parse errors encountered:');
+          for (final error in bookResult.errors) {
+            logger?.warning(error);
           }
+        }
 
-          return _BookProcessingResult(
-            bookResult.books,
-            warnings,
-            bookResult.errors,
-          );
-        },
-      );
+        return _BookProcessingResult(
+          bookResult.books,
+          warnings,
+          bookResult.errors,
+        );
+      });
     }, (error, stackTrace) => ParsingFailure('Failed to process books: $error'));
   }
 
@@ -451,7 +448,9 @@ class ImportLibraryUsecase with Loggable {
                 .addAuthor(author: author, txn: txn)
                 .run();
             if (result.isLeft()) {
-              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+              throw result.getLeft().getOrElse(
+                () => ServiceFailure('Unknown error'),
+              );
             }
           }
 
@@ -462,7 +461,9 @@ class ImportLibraryUsecase with Loggable {
                 .addTag(tag: tag, txn: txn)
                 .run();
             if (result.isLeft()) {
-              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+              throw result.getLeft().getOrElse(
+                () => ServiceFailure('Unknown error'),
+              );
             }
           }
 
@@ -473,7 +474,9 @@ class ImportLibraryUsecase with Loggable {
                 .addBook(book: book, txn: txn)
                 .run();
             if (result.isLeft()) {
-              throw result.getLeft().getOrElse(() => ServiceFailure('Unknown error'));
+              throw result.getLeft().getOrElse(
+                () => ServiceFailure('Unknown error'),
+              );
             }
           }
 

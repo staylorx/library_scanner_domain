@@ -102,7 +102,8 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final model = BookModel.fromEntity(bookWithId);
     if (txn != null) {
       logger?.info('Using provided transaction for addBook');
-      return bookDatasource.saveBook(model, txn: txn)
+      return bookDatasource
+          .saveBook(model, txn: txn)
           .map((_) => unit)
           .flatMap(
             (_) => idRegistryService.registerBookIdPairs(
@@ -111,7 +112,11 @@ class BookRepositoryImpl with Loggable implements BookRepository {
           )
           .flatMap(
             (_) => tagDatasource
-                .addBookToTags(bookWithId.id, book.tags.map((t) => t.name).toList(), txn: txn)
+                .addBookToTags(
+                  bookWithId.id,
+                  book.tags.map((t) => t.name).toList(),
+                  txn: txn,
+                )
                 .map((_) => bookWithId),
           );
     } else {
