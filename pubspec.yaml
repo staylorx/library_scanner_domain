@@ -22,7 +22,7 @@ dependencies:
   sembast: ^3.8.5+2
   id_logging:
     git: https://github.com/staylorx/id_logging.git
-  slugify: ^2.0.0
+  slugify_string: ^2.0.0
 
 dev_dependencies:
   lints: ^6.0.0

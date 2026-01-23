@@ -2,8 +2,7 @@
 
 This file tracks the project's progress...
 
-*
-[2025-12-29 16:40:16] - Reviewed entire codebase for fpdart usage. All repository interfaces and implementations properly return Either<Failure, T>. Use cases handle Either correctly with fold, map, etc. Failure classes are used for error types. No violations found.
+- [2025-12-29 16:40:16] - Reviewed entire codebase for fpdart usage. All repository interfaces and implementations properly return Either<Failure, T>. Use cases handle Either correctly with fold, map, etc. Failure classes are used for error types. No violations found.
 
 [2025-12-29 18:27:25] - [2025-12-29 18:27:21] - Implemented tag ID migration from name-based to UUID-based IDs. Created MigrateTagsUsecase to update existing tags and book references.
 
@@ -46,4 +45,4 @@ This file tracks the project's progress...
 
 [2026-01-23 03:53:46] - Added isAuthorDuplicateUsecaseProvider to providers.dart for Riverpod dependency injection.
 
-[2026-01-23 03:56:32] - Modified import_library_usecase.dart to ensure slugified local idpairs are created for authors when not included in id_pairs, matching the behavior of update_author_usecase. Changed both the _parseAuthors method and the missing authors creation to use slugify(name) instead of name for the local idCode.
+[2026-01-23 03:56:32] - Modified import_library_usecase.dart to ensure slugified local idpairs are created for authors when not included in id_pairs, matching the behavior of update_author_usecase. Changed both the \_parseAuthors method and the missing authors creation to use Slugify(name).toString() instead of name for the local idCode.

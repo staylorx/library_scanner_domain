@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import 'package:slugify/slugify.dart';
+import 'package:slugify_string/slugify_string.dart';
 
 /// Represents a tag.
 class Tag with EquatableMixin {
@@ -16,7 +16,7 @@ class Tag with EquatableMixin {
   final String color;
 
   /// Slug version of the name.
-  String get slug => slugify(name);
+  String get slug => Slugify(name).toString();
 
   /// Creates Tag.
   Tag({

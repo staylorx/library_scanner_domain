@@ -3,7 +3,7 @@ import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path/path.dart' as p;
-import 'package:slugify/slugify.dart';
+import 'package:slugify_string/slugify_string.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
@@ -97,7 +97,10 @@ void main() {
         expect(authors.first.name, 'Test Author');
         expect(authors.first.businessIds.length, 1);
         expect(authors.first.businessIds.first.idType, AuthorIdType.local);
-        expect(authors.first.businessIds.first.idCode, slugify('Test Author'));
+        expect(
+          authors.first.businessIds.first.idCode,
+          Slugify('Test Author').toString(),
+        );
         final newAuthor = authors.first;
 
         // Edit the record
@@ -118,7 +121,7 @@ void main() {
         expect(authors.first.businessIds.first.idType, AuthorIdType.local);
         expect(
           authors.first.businessIds.first.idCode,
-          slugify('Updated Test Author'),
+          Slugify('Updated Test Author').toString(),
         );
 
         // Add another record
@@ -134,7 +137,10 @@ void main() {
         );
         expect(secondAuthor.businessIds.length, 1);
         expect(secondAuthor.businessIds.first.idType, AuthorIdType.local);
-        expect(secondAuthor.businessIds.first.idCode, slugify('Second Author'));
+        expect(
+          secondAuthor.businessIds.first.idCode,
+          Slugify('Second Author').toString(),
+        );
 
         // Get author by name
         var authorResult = await getAuthorByNameUsecase(

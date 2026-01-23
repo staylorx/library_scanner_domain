@@ -1,7 +1,7 @@
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:slugify/slugify.dart';
+import 'package:slugify_string/slugify_string.dart';
 
 /// Use case for updating an author.
 class UpdateAuthorUsecase with Loggable {
@@ -23,7 +23,7 @@ class UpdateAuthorUsecase with Loggable {
     return getEither.fold((failure) => Left(failure), (existingAuthor) async {
       final slugId = AuthorIdPair(
         idType: AuthorIdType.local,
-        idCode: slugify(name),
+        idCode: Slugify(name).toString(),
       );
       final baseBusinessIds = businessIds ?? existingAuthor.businessIds;
       final updatedBusinessIds = [
