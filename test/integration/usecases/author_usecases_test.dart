@@ -3,6 +3,7 @@ import 'package:library_scanner_domain/src/data/data.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path/path.dart' as p;
+import 'package:slugify/slugify.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
@@ -94,6 +95,9 @@ void main() {
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
         expect(authors.first.name, 'Test Author');
+        expect(authors.first.businessIds.length, 1);
+        expect(authors.first.businessIds.first.idType, AuthorIdType.local);
+        expect(authors.first.businessIds.first.idCode, slugify('Test Author'));
         final newAuthor = authors.first;
 
         // Edit the record
@@ -110,6 +114,12 @@ void main() {
         authors = result.fold((l) => [], (r) => r);
         expect(authors.length, 1);
         expect(authors.first.name, 'Updated Test Author');
+        expect(authors.first.businessIds.length, 1);
+        expect(authors.first.businessIds.first.idType, AuthorIdType.local);
+        expect(
+          authors.first.businessIds.first.idCode,
+          slugify('Updated Test Author'),
+        );
 
         // Add another record
         await addAuthorUsecase(name: 'Second Author');
@@ -122,6 +132,9 @@ void main() {
         final secondAuthor = authors.firstWhere(
           (a) => a.name == 'Second Author',
         );
+        expect(secondAuthor.businessIds.length, 1);
+        expect(secondAuthor.businessIds.first.idType, AuthorIdType.local);
+        expect(secondAuthor.businessIds.first.idCode, slugify('Second Author'));
 
         // Get author by name
         var authorResult = await getAuthorByNameUsecase(

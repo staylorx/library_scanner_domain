@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/domain/utils/slug_utils.dart';
+import 'package:slugify/slugify.dart';
 import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 
@@ -83,7 +83,7 @@ class ImportLibraryUsecase with Loggable {
         for (final yamlTag in list) {
           final name = yamlTag['name'] as String;
           // Compute slug for uniqueness check
-          final slug = computeSlug(name);
+          final slug = slugify(name);
           // Skip if already exists (slug-based duplicate)
           if (!tagMap.containsKey(slug)) {
             tagMap[slug] = Tag(
@@ -129,7 +129,7 @@ class ImportLibraryUsecase with Loggable {
             }
           }
           // Match tags by slug
-          final tagSlugs = tagNames.map(computeSlug).toSet();
+          final tagSlugs = tagNames.map((name) => slugify(name)).toSet();
           final bookTags = params.tags
               .where((t) => tagSlugs.contains(t.slug))
               .toList();
@@ -268,7 +268,7 @@ class ImportLibraryUsecase with Loggable {
 
       // Find missing tags (by slug)
       final missingTagNames = allBookTagNames
-          .where((name) => !existingTagSlugs.contains(computeSlug(name)))
+          .where((name) => !existingTagSlugs.contains(slugify(name)))
           .toSet();
 
       // Add missing tags

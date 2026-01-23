@@ -1,6 +1,7 @@
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:slugify/slugify.dart';
 
 /// Use case for updating an author.
 class UpdateAuthorUsecase with Loggable {
@@ -20,10 +21,21 @@ class UpdateAuthorUsecase with Loggable {
     );
     final getEither = await authorRepository.getAuthorById(id: id);
     return getEither.fold((failure) => Left(failure), (existingAuthor) async {
+      final slugId = AuthorIdPair(
+        idType: AuthorIdType.local,
+        idCode: slugify(name),
+      );
+      final baseBusinessIds = businessIds ?? existingAuthor.businessIds;
+      final updatedBusinessIds = [
+        ...baseBusinessIds.where(
+          (idPair) => idPair.idType != AuthorIdType.local,
+        ),
+        slugId,
+      ];
       final updatedAuthor = existingAuthor.copyWith(
         name: name,
         biography: biography,
-        businessIds: businessIds ?? [],
+        businessIds: updatedBusinessIds,
       );
       final updateEither = await authorRepository.updateAuthor(
         author: updatedAuthor,

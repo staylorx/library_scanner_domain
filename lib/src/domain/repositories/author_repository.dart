@@ -20,4 +20,7 @@ abstract class AuthorRepository {
     Transaction? txn,
   });
   Future<Either<Failure, Author>> getAuthorById({required String id});
+  Future<Either<Failure, Author>> getAuthorByIdPair({
+    required AuthorIdPair authorIdPair,
+  });
 }

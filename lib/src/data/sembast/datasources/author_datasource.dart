@@ -80,6 +80,41 @@ class AuthorDatasource {
     }
   }
 
+  /// Retrieves authors containing a specific business ID pair.
+  Future<Either<Failure, List<AuthorModel>>> getAuthorsByBusinessIdPair(
+    AuthorIdPair pair,
+  ) async {
+    try {
+      final result = await _dbService.query(
+        collection: 'authors',
+        filter: {
+          '\$custom': (record) {
+            final businessIdsRaw =
+                record.value['businessIds'] as List<dynamic>? ?? [];
+            final businessIds = businessIdsRaw.map((e) {
+              final idTypeString = e['idType'] as String;
+              final idType = AuthorIdType.values.byName(idTypeString);
+              return AuthorIdPair(
+                idType: idType,
+                idCode: e['idCode'] as String,
+              );
+            }).toList();
+            return businessIds.any((p) => p == pair);
+          },
+        },
+      );
+      return result.match((failure) => Either.left(failure), (records) {
+        return Either.right(
+          records.map((record) => AuthorModel.fromMap(map: record)).toList(),
+        );
+      });
+    } catch (e) {
+      return Either.left(
+        ServiceFailure('Failed to get authors by business ID pair: $e'),
+      );
+    }
+  }
+
   /// Saves an author to the store.
   Future<Either<Failure, Unit>> saveAuthor(
     AuthorModel author, {

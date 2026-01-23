@@ -33,3 +33,11 @@ This file tracks the project's progress...
 [2026-01-18 15:53:00] - Created integration tests for Riverpod providers in test/integration/providers_integration_test.dart. Tests use real implementations (Sembast, Dio) to verify end-to-end functionality through providers, including author and book management. All 3 tests pass.
 
 [2026-01-18 17:56:53] - Updated memory bank files to reflect current project state. Project maintains comprehensive test coverage with all tests passing. Clean architecture and fpdart usage verified throughout codebase.
+
+## 2026-01-23
+
+[2026-01-23 03:24:15] - Created GetAuthorByIdPairUsecase following the same pattern as GetBookByIdPairUsecase. Added the necessary methods to AuthorDatasource, AuthorRepository interface, and AuthorRepositoryImpl. Updated domain.dart exports. All code compiles successfully.
+
+[2026-01-23 03:27:39] - Modified update_author_usecase.dart to ensure the local slugified idpair is always present in businessIds, even when businessIds is provided as an empty list or with other ids. This prevents accidental removal of the required local identifier.
+
+[2026-01-23 03:31:39] - Updated author_usecases_test.dart to include tests for the new slug functionality. Added assertions to verify that when authors are added or updated, a slug-based AuthorIdPair is correctly added to businessIds. Tests now check that the slug is generated from the author name and updated when the name changes.

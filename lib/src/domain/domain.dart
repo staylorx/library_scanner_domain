@@ -32,6 +32,7 @@ export 'usecases/filter_books_usecase.dart';
 export 'usecases/get_author_by_name_usecase.dart';
 export 'usecases/get_authors_by_names_usecase.dart';
 export 'usecases/get_authors_usecase.dart';
+export 'usecases/get_author_by_idpair_usecase.dart';
 export 'usecases/get_book_by_idpair_usecase.dart';
 export 'usecases/get_books_by_author_usecase.dart';
 export 'usecases/get_books_by_tag_usecase.dart';

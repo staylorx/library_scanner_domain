@@ -275,4 +275,24 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       },
     );
   }
+
+  /// Retrieves an author by its ID pair.
+  @override
+  Future<Either<Failure, Author>> getAuthorByIdPair({
+    required AuthorIdPair authorIdPair,
+  }) async {
+    logger?.info('Entering getByIdPair with authorIdPair: $authorIdPair');
+    final result = await _authorDatasource.getAuthorsByBusinessIdPair(
+      authorIdPair,
+    );
+    return result.fold((failure) => Either.left(failure), (models) async {
+      if (models.isEmpty) {
+        logger?.debug('Author not found');
+        return Either.left(NotFoundFailure('Author not found'));
+      }
+      final author = models.first.toEntity();
+      logger?.debug('Output: ${author.name}');
+      return Either.right(author);
+    });
+  }
 }

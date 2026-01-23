@@ -1,6 +1,6 @@
 name: library_scanner_domain
 description: The domain layer for the library scanner app.
-version: 1.2.2
+version: 1.2.3
 # repository: https://github.com/my_org/my_repo
 publish_to: none
 
@@ -22,6 +22,7 @@ dependencies:
   sembast: ^3.8.5+2
   id_logging:
     git: https://github.com/staylorx/id_logging.git
+  slugify: ^2.0.0
 
 dev_dependencies:
   lints: ^6.0.0
