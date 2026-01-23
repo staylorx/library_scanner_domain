@@ -13,6 +13,7 @@ class UpdateAuthorUsecase with Loggable {
     required String id,
     required String name,
     String? biography,
+    List<AuthorIdPair>? businessIds,
   }) async {
     logger?.info(
       'UpdateAuthorUsecase: Entering call with id: $id, name: $name',
@@ -22,6 +23,7 @@ class UpdateAuthorUsecase with Loggable {
       final updatedAuthor = existingAuthor.copyWith(
         name: name,
         biography: biography,
+        businessIds: businessIds ?? [],
       );
       final updateEither = await authorRepository.updateAuthor(
         author: updatedAuthor,

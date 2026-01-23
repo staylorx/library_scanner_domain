@@ -18,18 +18,18 @@ class AddAuthorUsecase with Loggable {
   Future<Either<Failure, Author>> call({
     required String name,
     String? biography,
+    List<AuthorIdPair>? businessIds,
   }) async {
     logger?.info('AddAuthorUsecase: Entering call with name: $name');
     final idEither = await idRegistryService.generateLocalId();
     return idEither.fold((failure) => Future.value(Left(failure)), (
       idCode,
     ) async {
-      final idPair = AuthorIdPair(idType: AuthorIdType.local, idCode: idCode);
       final author = Author(
         id: const Uuid().v4(),
-        businessIds: [idPair],
         name: name,
         biography: biography,
+        businessIds: businessIds ?? [],
       );
       final addEither = await authorRepository.addAuthor(author: author);
       logger?.info('AddAuthorUsecase: Success in call');
