@@ -62,7 +62,6 @@ export 'services/author_filtering_service.dart';
 export 'services/author_id_registry_service.dart';
 export 'services/author_sorting_service.dart';
 export 'services/author_validation_service.dart';
-export 'services/barcode_scanner_service.dart';
 export 'services/book_filtering_service.dart';
 export 'services/book_id_registry_service.dart';
 export 'services/book_sorting_service.dart';

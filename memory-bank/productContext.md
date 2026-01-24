@@ -41,17 +41,17 @@ The project follows Clean Architecture principles with three main layers:
 
 ## Features
 
-* **Book Management**: Add, update, delete, and query books with rich metadata including ISBN, title, authors, tags, and cover images.
-* **Author Management**: Handle authors with sorting and filtering capabilities.
-* **Tag System**: Organize books with customizable tags.
-* **Metadata Fetching**: Integrate with external APIs to fetch book metadata by ISBN.
-* **Library Operations**: Import/export library data, clear library, and detect duplicates.
-* **Sorting and Filtering**: Flexible sorting options for books and authors.
-* **Barcode Scanning**: Support for barcode scanning services.
-* **Database Integration**: Uses Sembast for local storage with unit of work pattern.
-* **ID Registry**: Separate registries for author and book IDs to prevent conflicts.
-* **Validation Services**: Comprehensive validation for books and authors.
-* **Comprehensive Testing**: Unit, integration, and benchmark tests with high coverage.
+- **Book Management**: Add, update, delete, and query books with rich metadata including ISBN, title, authors, tags, and cover images.
+- **Author Management**: Handle authors with sorting and filtering capabilities.
+- **Tag System**: Organize books with customizable tags.
+- **Metadata Fetching**: Integrate with external APIs to fetch book metadata by ISBN.
+- **Library Operations**: Import/export library data, clear library, and detect duplicates.
+- **Sorting and Filtering**: Flexible sorting options for books and authors.
+- **Database Integration**: Uses Sembast for local storage with unit of work pattern.
+- **ID Registry**: Separate registries for author and book IDs to prevent conflicts.
+- **Validation Services**: Comprehensive validation for books and authors.
+- **Comprehensive Testing**: Unit, integration, and benchmark tests with high coverage.
+
 ## Recent Changes
 
 [2026-01-23 07:23:52] - Removed all metadata fetching functionality from the library_scanner_domain package to keep the domain focused on core book/author/tag management. This includes removing BookMetadata entity, BookMetadataRepository, FetchBookMetadataByIsbnUsecase, RefetchBookCoversUsecase, ScanAndAddBookUsecase, BookApiService, ImageService, and related implementations. The Book entity retains the coverImage property as optional, allowing downstream apps to handle image population. This change eliminates external API dependencies from the domain layer, adhering to Clean Architecture principles.
