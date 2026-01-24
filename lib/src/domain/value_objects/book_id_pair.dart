@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:id_registry/id_registry.dart';
 
-import '../../utils/isbn_utils.dart';
+import '../../utils/validation_utils.dart';
 import 'book_id_type.dart';
 
 // idPairs are used to represent a combination of an ID type and a business code ID code
@@ -18,28 +18,21 @@ class BookIdPair with EquatableMixin implements IdPair {
   @override
   bool get isValid {
     switch (idType) {
-      case BookIdType.isbn:
+      case BookIdType.isbn10:
         return isValidISBN10(code: idCode);
       case BookIdType.isbn13:
         return isValidISBN13(code: idCode);
       case BookIdType.asin:
-        return _isValidASIN(idCode);
+        return isValidASIN(code: idCode);
       case BookIdType.doi:
-        return _isValidDOI(idCode);
+        return isValidDOI(code: idCode);
       case BookIdType.ean:
-        return isValidISBN13(code: idCode);
+        return isValidEAN(code: idCode);
+      case BookIdType.upc:
+        return isValidUPC(code: idCode);
       case BookIdType.local:
         return true;
     }
-  }
-
-  bool _isValidASIN(String code) {
-    if (code.length != 10) return false;
-    return RegExp(r'^[A-Za-z0-9]{10}$').hasMatch(code);
-  }
-
-  bool _isValidDOI(String code) {
-    return RegExp(r'^10\.[A-Za-z0-9]+$').hasMatch(code);
   }
 
   @override

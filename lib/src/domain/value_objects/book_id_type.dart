@@ -1,9 +1,10 @@
 enum BookIdType {
-  isbn('ISBN'),
+  isbn10('ISBN-10'),
   isbn13('ISBN-13'),
   asin('ASIN'),
   doi('DOI'),
   ean('EAN'),
+  upc("UPC"),
   local('LOCAL');
 
   const BookIdType(this.displayName);

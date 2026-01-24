@@ -1,31 +1,51 @@
-import 'package:test/test.dart' show test, expect, group, Timeout;
+import 'package:test/test.dart' show test, expect, group, Timeout, fail;
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 void main() {
   group('ISBN Utils Tests', () {
     group('getIsbnIdType', () {
       test(
-        'returns BookIdType.isbn for 10-character string',
+        'returns BookIdType.isbn10 for valid 10-character ISBN',
         () {
-          expect(getIsbnIdType(isbn: '1234567890'), BookIdType.isbn);
+          final either = getIsbnIdType(isbn: '0306406152');
+          either.fold(
+            (l) => fail('Expected Right, got Left: $l'),
+            (r) => expect(r, BookIdType.isbn10),
+          );
         },
         timeout: Timeout(Duration(seconds: 30)),
       );
 
       test(
-        'returns BookIdType.isbn13 for 13-character string',
+        'returns BookIdType.isbn13 for valid 13-character ISBN',
         () {
-          expect(getIsbnIdType(isbn: '1234567890123'), BookIdType.isbn13);
+          final either = getIsbnIdType(isbn: '9780306406157');
+          either.fold(
+            (l) => fail('Expected Right, got Left: $l'),
+            (r) => expect(r, BookIdType.isbn13),
+          );
         },
         timeout: Timeout(Duration(seconds: 30)),
       );
 
       test(
-        'returns null for string with length other than 10 or 13',
+        'returns ValidationFailure for string with length other than 10 or 13',
         () {
-          expect(getIsbnIdType(isbn: '123456789'), null);
-          expect(getIsbnIdType(isbn: '12345678901234'), null);
-          expect(getIsbnIdType(isbn: ''), null);
+          final either1 = getIsbnIdType(isbn: '123456789');
+          either1.fold(
+            (l) => expect(l.message, "Invalid ISBN"),
+            (r) => fail('Expected Left, got Right: $r'),
+          );
+          final either2 = getIsbnIdType(isbn: '12345678901234');
+          either2.fold(
+            (l) => expect(l.message, "Invalid ISBN"),
+            (r) => fail('Expected Left, got Right: $r'),
+          );
+          final either3 = getIsbnIdType(isbn: '');
+          either3.fold(
+            (l) => expect(l.message, "Invalid ISBN"),
+            (r) => fail('Expected Left, got Right: $r'),
+          );
         },
         timeout: Timeout(Duration(seconds: 30)),
       );
@@ -109,6 +129,45 @@ void main() {
 
       test('returns false for empty string', () {
         expect(isValidISBN13(code: ''), false);
+      }, timeout: Timeout(Duration(seconds: 30)));
+    });
+
+    group('isValidUPC', () {
+      test('returns true for valid UPC', () {
+        // Example: "012345678905" (valid UPC)
+        expect(isValidUPC(code: '012345678905'), true);
+        // Another: "036000291452"
+        expect(isValidUPC(code: '036000291452'), true);
+      }, timeout: Timeout(Duration(seconds: 30)));
+
+      test(
+        'returns false for invalid UPC due to wrong length',
+        () {
+          expect(isValidUPC(code: '12345678901'), false);
+          expect(isValidUPC(code: '1234567890123'), false);
+        },
+        timeout: Timeout(Duration(seconds: 30)),
+      );
+
+      test(
+        'returns false for UPC with invalid characters',
+        () {
+          expect(isValidUPC(code: '12345678901A'), false);
+          expect(isValidUPC(code: '12345678901!'), false);
+        },
+        timeout: Timeout(Duration(seconds: 30)),
+      );
+
+      test(
+        'returns false for UPC with incorrect checksum',
+        () {
+          expect(isValidUPC(code: '012345678906'), false); // Invalid checksum
+        },
+        timeout: Timeout(Duration(seconds: 30)),
+      );
+
+      test('returns false for empty string', () {
+        expect(isValidUPC(code: ''), false);
       }, timeout: Timeout(Duration(seconds: 30)));
     });
   });

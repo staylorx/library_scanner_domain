@@ -20,6 +20,13 @@ class BookValidationServiceImpl with Loggable implements BookValidationService {
         return Left(ValidationFailure('Book must have at least one author'));
       }
 
+      // Check ID format validity
+      for (final idPair in book.businessIds) {
+        if (!idPair.isValid) {
+          return Left(ValidationFailure('Book ID ${idPair.idType.displayName}:${idPair.idCode} has invalid format'));
+        }
+      }
+
       // Check for duplicate ID pairs
       final checks = book.businessIds
           .map(

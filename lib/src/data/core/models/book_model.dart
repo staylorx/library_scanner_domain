@@ -13,7 +13,7 @@ BookIdType _parseBookIdType(String idTypeString) {
       case 'isbn-13':
         return BookIdType.isbn13;
       case 'isbn':
-        return BookIdType.isbn;
+        return BookIdType.isbn10;
       case 'asin':
         return BookIdType.asin;
       case 'doi':
@@ -22,6 +22,8 @@ BookIdType _parseBookIdType(String idTypeString) {
         return BookIdType.ean;
       case 'local':
         return BookIdType.local;
+      case 'upc':
+        return BookIdType.upc;
       default:
         throw Exception('Unknown BookIdType: $idTypeString');
     }

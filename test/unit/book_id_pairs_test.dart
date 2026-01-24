@@ -11,7 +11,7 @@ void main() {
 
     setUp(() {
       validIsbnPair = const BookIdPair(
-        idType: BookIdType.isbn,
+        idType: BookIdType.isbn10,
         idCode: '0306406152',
       );
       validAsinPair = const BookIdPair(

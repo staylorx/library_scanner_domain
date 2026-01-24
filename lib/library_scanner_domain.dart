@@ -2,7 +2,7 @@
 library;
 
 export 'src/utils/failure.dart';
-export 'src/utils/isbn_utils.dart';
+export 'src/utils/validation_utils.dart';
 export 'src/utils/task_either.dart';
 
 export 'src/domain/domain.dart';
