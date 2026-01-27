@@ -87,7 +87,7 @@ class AddBookUsecase with Loggable {
         );
       }
 
-      return bookRepository.addBook(book: book).flatMap((_) {
+      return bookRepository.create(item: book).flatMap((_) {
         return bookRepository.getBooks().map((books) {
           logger?.info(
             'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',

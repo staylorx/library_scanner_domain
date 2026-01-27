@@ -95,7 +95,7 @@ void main() {
         final List<Author> authors = authorsResult.fold((l) => [], (r) => r);
         final newAuthor = authors.first;
         await addTagUsecase(name: 'Test Tag').run();
-        final tagsResult = await tagRepository.getTags().run();
+        final tagsResult = await tagRepository.getAll().run();
         expect(tagsResult.isRight(), true);
         final List<Tag> tags = tagsResult.fold((l) => [], (r) => r);
         final newTag = tags.firstWhere((t) => t.name == 'Test Tag');
@@ -158,7 +158,7 @@ void main() {
           (a) => a.name == 'Second Author',
         );
         await addTagUsecase(name: 'Second Tag').run();
-        final tagsResult2 = await tagRepository.getTags().run();
+        final tagsResult2 = await tagRepository.getAll().run();
         expect(tagsResult2.isRight(), true);
         final List<Tag> tags2 = tagsResult2.fold((l) => [], (r) => r);
         final secondTag = tags2.firstWhere((t) => t.name == 'Second Tag');

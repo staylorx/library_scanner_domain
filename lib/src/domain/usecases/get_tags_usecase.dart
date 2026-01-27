@@ -12,7 +12,7 @@ class GetTagsUsecase with Loggable {
   /// Retrieves all tags.
   TaskEither<Failure, List<Tag>> call() {
     logger?.info('GetTagsUsecase: Entering call');
-    return tagRepository.getTags().map((tags) {
+    return tagRepository.getAll().map((tags) {
       logger?.info(
         'GetTagsUsecase: Output: ${tags.map((t) => t.name).toList()}',
       );

@@ -32,7 +32,7 @@ void main() {
       );
 
       // Check for zero tags
-      var tagsEither = await tagRepository.getTags().run();
+      var tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       var tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.isEmpty, true);
@@ -44,10 +44,10 @@ void main() {
         description: 'Test description',
         color: '#FF0000',
       );
-      await tagRepository.addTag(tag: newTag).run();
+      await tagRepository.create(item: newTag).run();
 
       // Verify count
-      tagsEither = await tagRepository.getTags().run();
+      tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
@@ -58,10 +58,10 @@ void main() {
         name: 'Updated Test Tag',
         description: 'Updated description',
       );
-      await tagRepository.updateTag(tag: updatedTag).run();
+      await tagRepository.update(item: updatedTag).run();
 
       // Verify update
-      tagsEither = await tagRepository.getTags().run();
+      tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
@@ -70,7 +70,7 @@ void main() {
 
       // Get tag by name
       var tagResult = await tagRepository
-          .getTagByName(name: 'Updated Test Tag')
+          .getByName(name: 'Updated Test Tag')
           .run();
       expect(tagResult.isRight(), true);
       var tag = tagResult.fold((l) => null, (r) => r);
@@ -83,29 +83,29 @@ void main() {
         name: 'Second Tag',
         color: '#00FF00',
       );
-      await tagRepository.addTag(tag: secondTag).run();
+      await tagRepository.create(item: secondTag).run();
 
       // Verify count increases
-      tagsEither = await tagRepository.getTags().run();
+      tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 2);
 
       // Delete one tag
-      await tagRepository.deleteTag(tag: updatedTag).run();
+      await tagRepository.deleteById(item: updatedTag).run();
 
       // Verify count decreases
-      tagsEither = await tagRepository.getTags().run();
+      tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.length, 1);
       expect(tags.first.name, 'Second Tag');
 
       // Delete the last tag
-      await tagRepository.deleteTag(tag: secondTag).run();
+      await tagRepository.deleteById(item: secondTag).run();
 
       // Verify zero tags
-      tagsEither = await tagRepository.getTags().run();
+      tagsEither = await tagRepository.getAll().run();
       expect(tagsEither.isRight(), true);
       tags = tagsEither.fold((l) => <Tag>[], (r) => r);
       expect(tags.isEmpty, true);

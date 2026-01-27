@@ -14,8 +14,8 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Retrieves all tags from the database.
   @override
-  TaskEither<Failure, List<Tag>> getTags() {
-    logger?.info('Entering getTags');
+  TaskEither<Failure, List<Tag>> getAll() {
+    logger?.info('Entering list');
     return tagDatasource.getAllTags().map((models) {
       logger?.info('Successfully retrieved ${models.length} tags');
       final tags = models.map((model) => model.toEntity()).toList();
@@ -25,7 +25,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Retrieves a tag by name.
   @override
-  TaskEither<Failure, Tag> getTagByName({required String name}) {
+  TaskEither<Failure, Tag> getByName({required String name}) {
     logger?.info('Entering getByName with name: $name');
     return tagDatasource.getTagByName(name).flatMap((model) {
       if (model == null) {
@@ -52,16 +52,17 @@ class TagRepositoryImpl with Loggable implements TagRepository {
     });
   }
 
-  /// Adds a new tag to the database.
+  /// Creates a new tag in the database.
   @override
-  TaskEither<Failure, Tag> addTag({required Tag tag, Transaction? txn}) {
-    logger?.info('Entering addTag with tag: ${tag.name}, id: ${tag.id}');
+  TaskEither<Failure, Tag> create({required Tag item, Transaction? txn}) {
+    final tag = item;
+    logger?.info('Entering createTag with tag: ${tag.name}, id: ${tag.id}');
     final tagWithId = tag.id.isNotEmpty
         ? tag
         : tag.copyWith(id: const Uuid().v4());
     final model = TagModel.fromEntity(tagWithId);
     if (txn != null) {
-      logger?.info('Using provided transaction for addTag');
+      logger?.info('Using provided transaction for createTag');
       return tagDatasource.saveTag(model, txn: txn).map((_) => tagWithId);
     } else {
       return unitOfWork.run(
@@ -73,13 +74,14 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Updates an existing tag in the database.
   @override
-  TaskEither<Failure, Unit> updateTag({required Tag tag, Transaction? txn}) {
+  TaskEither<Failure, Tag> update({required Tag item, Transaction? txn}) {
+    final tag = item;
     logger?.info('Entering updateTag with tag: ${tag.name}');
     if (txn != null) {
       logger?.info('Using provided transaction for updateTag');
       final model = TagModel.fromEntity(tag);
       logger?.info('Saving updated tag ${tag.name}');
-      return tagDatasource.saveTag(model, txn: txn).map((_) => unit);
+      return tagDatasource.saveTag(model, txn: txn).map((_) => tag);
     } else {
       return unitOfWork.run(
         (Transaction txn) => TaskEither.tryCatch(() async {
@@ -87,7 +89,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
           final model = TagModel.fromEntity(tag);
           logger?.info('Saving updated tag ${tag.name}');
           final result = await tagDatasource.saveTag(model, txn: txn).run();
-          return result.fold((l) => throw l, (_) => unit);
+          return result.fold((l) => throw l, (_) => tag);
         }, (e, _) => e as Failure),
       );
     }
@@ -95,7 +97,8 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Deletes a tag from the database.
   @override
-  TaskEither<Failure, Unit> deleteTag({required Tag tag, Transaction? txn}) {
+  TaskEither<Failure, Unit> deleteById({required Tag item, Transaction? txn}) {
+    final tag = item;
     logger?.info('Entering deleteTag with tag: ${tag.name}');
     if (txn != null) {
       logger?.info('Using provided transaction for deleteTag');
@@ -115,7 +118,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Retrieves a tag by handle.
   @override
-  TaskEither<Failure, Tag> getTagById({required String id}) {
+  TaskEither<Failure, Tag> getById({required String id}) {
     logger?.info('Entering getById with id: $id');
     return tagDatasource.getTagById(id).flatMap((model) {
       logger?.info('Successfully retrieved tag by id: $id');
@@ -127,5 +130,10 @@ class TagRepositoryImpl with Loggable implements TagRepository {
       logger?.info('Output: ${tag.name}');
       return TaskEither.right(tag);
     });
+  }
+
+  @override
+  TaskEither<Failure, Unit> deleteAll({Transaction? txn}) {
+    throw UnimplementedError();
   }
 }

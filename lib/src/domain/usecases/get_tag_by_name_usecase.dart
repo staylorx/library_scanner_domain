@@ -11,7 +11,7 @@ class GetTagByNameUsecase with Loggable {
   /// Retrieves a tag by name.
   TaskEither<Failure, Tag> call({required String name}) {
     logger?.info('getByNameUsecase: Entering call with name: $name');
-    return tagRepository.getTagByName(name: name).map((tag) {
+    return tagRepository.getByName(name: name).map((tag) {
       logger?.info('getByNameUsecase: Output: ${tag.name}');
       return tag;
     });

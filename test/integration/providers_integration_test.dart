@@ -119,7 +119,7 @@ void main() {
 
       await runTaskEither(addTagUsecase(name: 'Book Integration Tag'));
       final tagsResult = await runTaskEither(
-        container.read(tagRepositoryProvider).getTags(),
+        container.read(tagRepositoryProvider).getAll(),
       );
       expect(tagsResult.isRight(), true);
       final Tag tag = tagsResult

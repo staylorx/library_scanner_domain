@@ -14,7 +14,7 @@ class GetAuthorsUsecase with Loggable {
   TaskEither<Failure, List<Author>> call() {
     logger?.info('GetAuthorsUsecase: Entering call');
     logger?.info('GetAuthorsUsecase: Success in call');
-    return authorRepository.getAuthors().map((authors) {
+    return authorRepository.getAll().map((authors) {
       logger?.info(
         'GetAuthorsUsecase: Output: ${authors.map((a) => a.name).toList()}',
       );

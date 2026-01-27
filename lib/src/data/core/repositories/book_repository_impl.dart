@@ -35,6 +35,16 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     );
   }
 
+  @override
+  TaskEither<Failure, List<Book>> getAll() {
+    return getBooks();
+  }
+
+  @override
+  TaskEither<Failure, List<Book>> listSection({int? limit, int? offset}) {
+    return getBooks(limit: limit, offset: offset);
+  }
+
   TaskEither<Failure, Book> _loadBookWithRelations(BookModel model) {
     // Load authors
     final loadAuthors = TaskEither.traverseList(
@@ -60,7 +70,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Retrieves a book by its id.
   @override
-  TaskEither<Failure, Book> getBookById({required String id}) {
+  TaskEither<Failure, Book> getById({required String id}) {
     logger?.info('Entering getById with id: $id');
     return bookDatasource.getBookById(id).flatMap((model) {
       if (model == null) {
@@ -92,10 +102,13 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     });
   }
 
-  /// Adds a new book to the database.
+  /// Creates a new book in the database.
   @override
-  TaskEither<Failure, Book> addBook({required Book book, Transaction? txn}) {
-    logger?.info('Entering addBook with book: ${book.title}, id: ${book.id}');
+  TaskEither<Failure, Book> create({required Book item, Transaction? txn}) {
+    final book = item;
+    logger?.info(
+      'Entering createBook with book: ${book.title}, id: ${book.id}',
+    );
     final bookWithId = book.id.isNotEmpty
         ? book
         : book.copyWith(id: const Uuid().v4());
@@ -123,7 +136,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       return unitOfWork.run(
         (Transaction txn) =>
             TaskEither.tryCatch(() async {
-                  logger?.info('Transaction started for addBook');
+                  logger?.info('Transaction started for saveBook');
                   final either = await bookDatasource
                       .saveBook(model, txn: txn)
                       .run();
@@ -148,23 +161,24 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     }
   }
 
-  /// Updates an existing book in the database.
+  /// Updates an existing book in the database and returns the updated book.
   @override
-  TaskEither<Failure, Unit> updateBook({required Book book, Transaction? txn}) {
+  TaskEither<Failure, Book> update({required Book item, Transaction? txn}) {
+    final book = item;
     logger?.info('Entering updateBook with book: ${book.title}');
     final model = BookModel.fromEntity(book);
     if (txn != null) {
       logger?.info('Using provided transaction for updateBook');
       return TaskEither.tryCatch(() async {
         final either = await bookDatasource.saveBook(model, txn: txn).run();
-        return either.fold((l) => throw l, (_) => unit);
+        return either.fold((l) => throw l, (_) => book);
       }, (e, _) => e as Failure);
     } else {
       return unitOfWork.run(
         (Transaction txn) => TaskEither.tryCatch(() async {
           logger?.info('Transaction started for updateBook');
           final either = await bookDatasource.saveBook(model, txn: txn).run();
-          return either.fold((l) => throw l, (_) => unit);
+          return either.fold((l) => throw l, (_) => book);
         }, (e, _) => e as Failure),
       );
     }
@@ -172,7 +186,8 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Deletes a book from the database.
   @override
-  TaskEither<Failure, Unit> deleteBook({required Book book, Transaction? txn}) {
+  TaskEither<Failure, Unit> deleteById({required Book item, Transaction? txn}) {
+    final book = item;
     logger?.info('Entering deleteBook with book: ${book.title}');
 
     if (txn != null) {
@@ -255,7 +270,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
       final bookIds = tagModel.bookIds;
       return TaskEither.traverseList(
         bookIds,
-        (bookId) => getBookById(id: bookId),
+        (bookId) => getById(id: bookId),
       ).map((books) {
         logger?.info('Found ${books.length} books for tag ${tag.name}');
         return books.whereType<Book>().toList();
@@ -279,5 +294,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         return book;
       });
     });
+  }
+
+  @override
+  TaskEither<Failure, Unit> deleteAll({Transaction? txn}) {
+    throw UnimplementedError();
   }
 }

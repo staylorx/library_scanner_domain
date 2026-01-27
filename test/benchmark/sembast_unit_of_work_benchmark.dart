@@ -72,13 +72,13 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
             ],
           );
           final addAuthorResult = await authorRepository
-              .addAuthor(author: author, txn: txn)
+              .create(item: author, txn: txn)
               .run();
           addAuthorResult.fold((l) => throw l, (r) => null);
 
           final tag = Tag(id: uuid.v4(), name: 'Tag $i');
           final addTagResult = await tagRepository
-              .addTag(tag: tag, txn: txn)
+              .create(item: tag, txn: txn)
               .run();
           addTagResult.fold((l) => throw l, (r) => null);
 
@@ -92,7 +92,7 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
             ],
           );
           final addBookResult = await bookRepository
-              .addBook(book: book, txn: txn)
+              .create(item: book, txn: txn)
               .run();
           addBookResult.fold((l) => throw l, (r) => null);
         }

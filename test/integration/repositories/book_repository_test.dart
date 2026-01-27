@@ -60,7 +60,7 @@ void main() {
         name: 'Test Author',
         biography: 'Test bio',
       );
-      await authorRepository.addAuthor(author: author).run();
+      await authorRepository.create(item: author).run();
 
       final tag = Tag(
         id: const Uuid().v4(),
@@ -68,7 +68,7 @@ void main() {
         description: 'Test description',
         color: '#FF0000',
       );
-      await tagRepository.addTag(tag: tag).run();
+      await tagRepository.create(item: tag).run();
 
       // Check for zero books
       var booksEither = await bookRepository.getBooks().run();
@@ -88,7 +88,7 @@ void main() {
         coverImage: null,
         notes: null,
       );
-      await bookRepository.addBook(book: newBook).run();
+      await bookRepository.create(item: newBook).run();
 
       // Verify count
       booksEither = await bookRepository.getBooks().run();
@@ -101,7 +101,7 @@ void main() {
 
       // Update the book
       final updatedBook = books.first.copyWith(title: 'Updated Test Book');
-      await bookRepository.updateBook(book: updatedBook).run();
+      await bookRepository.update(item: updatedBook).run();
 
       // Verify update
       booksEither = await bookRepository.getBooks().run();
@@ -129,10 +129,10 @@ void main() {
         ],
         name: 'Second Author',
       );
-      await authorRepository.addAuthor(author: secondAuthor).run();
+      await authorRepository.create(item: secondAuthor).run();
 
       final secondTag = Tag(id: const Uuid().v4(), name: 'Second Tag');
-      await tagRepository.addTag(tag: secondTag).run();
+      await tagRepository.create(item: secondTag).run();
 
       final secondBook = Book(
         id: const Uuid().v4(),
@@ -142,7 +142,7 @@ void main() {
         tags: [secondTag],
         publishedDate: DateTime(2023, 2, 1),
       );
-      await bookRepository.addBook(book: secondBook).run();
+      await bookRepository.create(item: secondBook).run();
 
       // Verify count increases
       booksEither = await bookRepository.getBooks().run();
@@ -167,7 +167,7 @@ void main() {
       expect(tagBooks.first.title, 'Updated Test Book');
 
       // Delete one book
-      await bookRepository.deleteBook(book: updatedBook).run();
+      await bookRepository.deleteById(item: updatedBook).run();
 
       // Verify count decreases
       booksEither = await bookRepository.getBooks().run();
@@ -177,7 +177,7 @@ void main() {
       expect(books.first.title, 'Second Test Book');
 
       // Delete the last book
-      await bookRepository.deleteBook(book: secondBook).run();
+      await bookRepository.deleteById(item: secondBook).run();
 
       // Verify zero books
       booksEither = await bookRepository.getBooks().run();

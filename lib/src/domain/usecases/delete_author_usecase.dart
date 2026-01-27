@@ -11,10 +11,10 @@ class DeleteAuthorUsecase with Loggable {
   /// Deletes an author by id and returns the updated list of authors.
   TaskEither<Failure, List<Author>> call({required String id}) {
     logger?.info('DeleteAuthorUsecase: Entering call with id: $id');
-    return authorRepository.getAuthorById(id: id).flatMap((author) {
+    return authorRepository.getById(id: id).flatMap((author) {
       logger?.info('DeleteAuthorUsecase: Deleting author: ${author.name}');
-      return authorRepository.deleteAuthor(author: author).flatMap((_) {
-        return authorRepository.getAuthors().map((authors) {
+      return authorRepository.deleteById(item: author).flatMap((_) {
+        return authorRepository.getAll().map((authors) {
           final updatedAuthors = authors.where((a) => a.id != id).toList();
           logger?.info('DeleteAuthorUsecase: Success in call');
           logger?.info(

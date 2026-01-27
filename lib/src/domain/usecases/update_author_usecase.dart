@@ -19,7 +19,7 @@ class UpdateAuthorUsecase with Loggable {
     logger?.info(
       'UpdateAuthorUsecase: Entering call with id: $id, name: $name',
     );
-    return authorRepository.getAuthorById(id: id).flatMap((existingAuthor) {
+    return authorRepository.getById(id: id).flatMap((existingAuthor) {
       final slugId = AuthorIdPair(
         idType: AuthorIdType.local,
         idCode: Slugify(name).toString(),
@@ -36,9 +36,7 @@ class UpdateAuthorUsecase with Loggable {
         biography: biography,
         businessIds: updatedBusinessIds,
       );
-      return authorRepository
-          .updateAuthor(author: updatedAuthor)
-          .map((_) => unit);
+      return authorRepository.update(item: updatedAuthor).map((_) => unit);
     });
   }
 }

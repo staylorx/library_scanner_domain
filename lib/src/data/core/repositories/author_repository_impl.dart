@@ -20,7 +20,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves all authors from the database.
   @override
-  TaskEither<Failure, List<Author>> getAuthors() {
+  TaskEither<Failure, List<Author>> getAll() {
     return authorDatasource.getAllAuthors().map((models) {
       final authors = <Author>[];
       for (final model in models) {
@@ -65,13 +65,11 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     });
   }
 
-  /// Adds a new author to the database.
+  /// Creates a new author in the database.
   @override
-  TaskEither<Failure, Author> addAuthor({
-    required Author author,
-    Transaction? txn,
-  }) {
-    logger?.info('Entering addAuthor with author: ${author.name}');
+  TaskEither<Failure, Author> create({required Author item, Transaction? txn}) {
+    final author = item;
+    logger?.info('Entering createAuthor with author: ${author.name}');
     final authorWithId = author.id.isNotEmpty
         ? author
         : author.copyWith(id: const Uuid().v4());
@@ -80,15 +78,15 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     final registerResult = idRegistryService.registerAuthorIdPairs(idPairs);
     return registerResult.flatMap((_) {
       if (txn != null) {
-        logger?.info('Using provided transaction for addAuthor');
+        logger?.info('Using provided transaction for createAuthor');
         return authorDatasource
             .saveAuthor(model, txn: txn)
             .map((_) => authorWithId);
       } else {
         return unitOfWork.run((Transaction txn) {
-          logger?.info('Transaction started for addAuthor');
+          logger?.info('Transaction started for createAuthor');
           return authorDatasource.saveAuthor(model, txn: txn).map((_) {
-            logger?.info('Transaction operation completed for addAuthor');
+            logger?.info('Transaction operation completed for createAuthor');
             return authorWithId;
           });
         });
@@ -97,15 +95,14 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   }
 
   /// Updates an existing author in the database.
+  /// Updates an existing author in the database.
   @override
-  TaskEither<Failure, Unit> updateAuthor({
-    required Author author,
-    Transaction? txn,
-  }) {
+  TaskEither<Failure, Author> update({required Author item, Transaction? txn}) {
+    final author = item;
     logger?.info(
       'Entering updateAuthor with id: ${author.id} and author: ${author.name}',
     );
-    return getAuthorById(id: author.id).flatMap((oldAuthor) {
+    return getById(id: author.id).flatMap((oldAuthor) {
       final oldIdPairs = AuthorIdPairs(pairs: oldAuthor.businessIds);
       final newIdPairs = AuthorIdPairs(pairs: author.businessIds);
       final unregisterResult = idRegistryService.unregisterAuthorIdPairs(
@@ -121,13 +118,13 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
             logger?.info('Using provided transaction for updateAuthor');
             return authorDatasource
                 .saveAuthor(model, txn: txn)
-                .map((_) => unit);
+                .map((_) => author);
           } else {
             return unitOfWork.run((Transaction txn) {
               logger?.info('Transaction started for updateAuthor');
               return authorDatasource.saveAuthor(model, txn: txn).map((_) {
                 logger?.info('Update author completed');
-                return unit;
+                return author;
               });
             });
           }
@@ -137,13 +134,15 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   }
 
   /// Deletes an author from the database.
+  /// Deletes an author from the database.
   @override
-  TaskEither<Failure, Unit> deleteAuthor({
-    required Author author,
+  TaskEither<Failure, Unit> deleteById({
+    required Author item,
     Transaction? txn,
   }) {
+    final author = item;
     logger?.info('Entering deleteAuthor with id: ${author.id}');
-    return getAuthorById(id: author.id).flatMap((author) {
+    return getById(id: author.id).flatMap((author) {
       logger?.info('Author exists before deletion');
       final idPairs = AuthorIdPairs(pairs: author.businessIds);
       final unregisterResult = idRegistryService.unregisterAuthorIdPairs(
@@ -172,7 +171,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Retrieves an author by id.
   @override
-  TaskEither<Failure, Author> getAuthorById({required String id}) {
+  TaskEither<Failure, Author> getById({required String id}) {
     logger?.info('Entering getById with id: $id');
     return authorDatasource.getAuthorById(id).flatMap((model) {
       logger?.info('Successfully retrieved Author by id: $id');
@@ -203,5 +202,18 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
       logger?.debug('Output: ${author.name}');
       return TaskEither.right(author);
     });
+  }
+
+  @override
+  TaskEither<Failure, Unit> deleteAll({Transaction? txn}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  TaskEither<Failure, Author> updateAuthor({
+    required Author author,
+    Transaction? txn,
+  }) {
+    return update(item: author, txn: txn);
   }
 }

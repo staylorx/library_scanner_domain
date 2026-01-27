@@ -12,11 +12,11 @@ class DeleteBookUsecase with Loggable {
   /// Deletes a book by id and returns the updated list of books.
   TaskEither<Failure, List<Book>> call({required String id}) {
     logger?.info('DeleteBookUsecase: Entering call with id: $id');
-    return bookRepository.getBookById(id: id).flatMap((book) {
+    return bookRepository.getById(id: id).flatMap((book) {
       logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
       );
-      return bookRepository.deleteBook(book: book).flatMap((_) {
+      return bookRepository.deleteById(item: book).flatMap((_) {
         return bookRepository.getBooks().map((books) {
           final updatedBooks = books.where((b) => b.id != id).toList();
           logger?.info('DeleteBookUsecase: Success in call');

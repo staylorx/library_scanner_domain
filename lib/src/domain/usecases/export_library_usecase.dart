@@ -20,8 +20,8 @@ class ExportLibraryUsecase with Loggable {
   TaskEither<Failure, Unit> call({required String filePath}) {
     logger?.info('ExportLibraryUsecase: Exporting library to $filePath');
     return dataAccess.bookRepository.getBooks().flatMap((books) {
-      return dataAccess.authorRepository.getAuthors().flatMap((authors) {
-        return dataAccess.tagRepository.getTags().flatMap((tags) {
+      return dataAccess.authorRepository.getAll().flatMap((authors) {
+        return dataAccess.tagRepository.getAll().flatMap((tags) {
           final library = Library(
             name: 'Exported Library',
             description: 'Current library exported on ${DateTime.now()}',

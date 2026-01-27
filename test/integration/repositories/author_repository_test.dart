@@ -37,7 +37,7 @@ void main() {
       );
 
       // Check for zero authors
-      var authorsEither = await authorRepository.getAuthors().run();
+      var authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       var authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.isEmpty, true);
@@ -51,10 +51,10 @@ void main() {
         name: 'Test Author',
         biography: 'Test bio',
       );
-      await authorRepository.addAuthor(author: newAuthor).run();
+      await authorRepository.create(item: newAuthor).run();
 
       // Verify count
-      authorsEither = await authorRepository.getAuthors().run();
+      authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
@@ -62,10 +62,10 @@ void main() {
 
       // Update the author
       final updatedAuthor = authors.first.copyWith(name: 'Updated Test Author');
-      await authorRepository.updateAuthor(author: updatedAuthor).run();
+      await authorRepository.update(item: updatedAuthor).run();
 
       // Verify update
-      authorsEither = await authorRepository.getAuthors().run();
+      authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
@@ -88,29 +88,29 @@ void main() {
         ],
         name: 'Second Author',
       );
-      await authorRepository.addAuthor(author: secondAuthor).run();
+      await authorRepository.create(item: secondAuthor).run();
 
       // Verify count increases
-      authorsEither = await authorRepository.getAuthors().run();
+      authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 2);
 
       // Delete one author
-      await authorRepository.deleteAuthor(author: updatedAuthor).run();
+      await authorRepository.deleteById(item: updatedAuthor).run();
 
       // Verify count decreases
-      authorsEither = await authorRepository.getAuthors().run();
+      authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.length, 1);
       expect(authors.first.name, 'Second Author');
 
       // Delete the last author
-      await authorRepository.deleteAuthor(author: secondAuthor).run();
+      await authorRepository.deleteById(item: secondAuthor).run();
 
       // Verify zero authors
-      authorsEither = await authorRepository.getAuthors().run();
+      authorsEither = await authorRepository.getAll().run();
       expect(authorsEither.isRight(), true);
       authors = authorsEither.fold((l) => <Author>[], (r) => r);
       expect(authors.isEmpty, true);

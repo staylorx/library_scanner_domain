@@ -32,7 +32,7 @@ class AddAuthorUsecase with Loggable {
       biography: biography,
       businessIds: (businessIds ?? [])..add(slugId),
     );
-    return authorRepository.addAuthor(author: author).map((author) {
+    return authorRepository.create(item: author).map((author) {
       logger?.info('AddAuthorUsecase: Output: $author');
       return author;
     });

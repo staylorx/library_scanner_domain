@@ -72,7 +72,7 @@ void main() {
       // Add authors
       await addAuthorUsecase(name: 'Author One').run();
       await addAuthorUsecase(name: 'Author Two').run();
-      final authorsResult = await authorRepository.getAuthors().run();
+      final authorsResult = await authorRepository.getAll().run();
       expect(authorsResult.isRight(), true);
       final List<Author> authors = authorsResult.fold(
         (l) => <Author>[],
@@ -85,7 +85,7 @@ void main() {
       await addTagUsecase(name: 'Fiction').run();
       await addTagUsecase(name: 'Sci-Fi').run();
       await addTagUsecase(name: 'Mystery').run();
-      final tagsResult = await tagRepository.getTags().run();
+      final tagsResult = await tagRepository.getAll().run();
       expect(tagsResult.isRight(), true);
       final List<Tag> tags = tagsResult.fold((l) => <Tag>[], (r) => r);
       final fictionTag = tags.firstWhere((t) => t.name == 'Fiction');
@@ -165,7 +165,7 @@ void main() {
 
       // Test getBooksByTag for a tag with no books (create a new tag)
       await addTagUsecase(name: 'Empty Tag').run();
-      final emptyTagsResult = await tagRepository.getTags().run();
+      final emptyTagsResult = await tagRepository.getAll().run();
       expect(emptyTagsResult.isRight(), true);
       final List<Tag> emptyTags = emptyTagsResult.fold(
         (l) => <Tag>[],

@@ -13,8 +13,8 @@ class GetLibraryStatsUsecase with Loggable {
   /// Gets comprehensive library statistics.
   TaskEither<Failure, LibraryStats> call() {
     return dataAccess.bookRepository.getBooks().flatMap((books) {
-      return dataAccess.authorRepository.getAuthors().flatMap((authors) {
-        return dataAccess.tagRepository.getTags().map((tags) {
+      return dataAccess.authorRepository.getAll().flatMap((authors) {
+        return dataAccess.tagRepository.getAll().map((tags) {
           return LibraryStats(
             totalBooks: books.length,
             totalAuthors: authors.length,

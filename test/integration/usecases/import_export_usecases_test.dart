@@ -163,11 +163,11 @@ void main() {
       );
 
       // Save via repositories (which will use unitOfWork)
-      final aRes = await authorRepository.addAuthor(author: author).run();
+      final aRes = await authorRepository.create(item: author).run();
       aRes.fold((l) => throw l, (r) => null);
-      final tRes = await tagRepository.addTag(tag: tag).run();
+      final tRes = await tagRepository.create(item: tag).run();
       tRes.fold((l) => throw l, (r) => null);
-      final bRes = await bookRepository.addBook(book: book).run();
+      final bRes = await bookRepository.create(item: book).run();
       bRes.fold((l) => throw l, (r) => null);
 
       // Export

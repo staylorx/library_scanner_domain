@@ -24,7 +24,7 @@ class UpdateBookUsecase with Loggable {
     logger?.info(
       'UpdateBookUsecase: Entering call with id: $id, title: $title',
     );
-    return bookRepository.getBookById(id: id).flatMap((existingBook) {
+    return bookRepository.getById(id: id).flatMap((existingBook) {
       final finalBusinessIds = businessIds ?? existingBook.businessIds;
       final updatedBook = existingBook.copyWith(
         businessIds: finalBusinessIds,
@@ -37,7 +37,7 @@ class UpdateBookUsecase with Loggable {
         coverImage: coverImage,
         notes: notes,
       );
-      return bookRepository.updateBook(book: updatedBook).flatMap((_) {
+      return bookRepository.update(item: updatedBook).flatMap((_) {
         return bookRepository.getBooks().map((books) {
           logger?.info('UpdateBookUsecase: Success in call');
           logger?.info(

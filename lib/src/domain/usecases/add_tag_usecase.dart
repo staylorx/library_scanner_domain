@@ -34,8 +34,8 @@ class AddTagUsecase with Loggable {
               description: description,
               color: color,
             );
-            return tagRepository.addTag(tag: tag).flatMap((_) {
-              return tagRepository.getTags().map((tags) {
+            return tagRepository.create(item: tag).flatMap((_) {
+              return tagRepository.getAll().map((tags) {
                 logger?.info('AddTagUsecase: Success in call');
                 logger?.info(
                   'AddTagUsecase: Output: ${tags.map((t) => t.name).toList()}',

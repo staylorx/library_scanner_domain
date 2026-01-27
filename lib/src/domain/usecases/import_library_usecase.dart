@@ -440,7 +440,7 @@ class ImportLibraryUsecase with Loggable {
           for (final author in authors) {
             logger?.info('Saving author: ${author.name}');
             final result = await dataAccess.authorRepository
-                .addAuthor(author: author, txn: txn)
+                .create(item: author, txn: txn)
                 .run();
             if (result.isLeft()) {
               throw result.getLeft().getOrElse(
@@ -453,7 +453,7 @@ class ImportLibraryUsecase with Loggable {
           for (final tag in tags) {
             logger?.info('Saving tag: ${tag.name}');
             final result = await dataAccess.tagRepository
-                .addTag(tag: tag, txn: txn)
+                .create(item: tag, txn: txn)
                 .run();
             if (result.isLeft()) {
               throw result.getLeft().getOrElse(
@@ -466,7 +466,7 @@ class ImportLibraryUsecase with Loggable {
           for (final book in books) {
             logger?.info('Saving book: ${book.title}');
             final result = await dataAccess.bookRepository
-                .addBook(book: book, txn: txn)
+                .create(item: book, txn: txn)
                 .run();
             if (result.isLeft()) {
               throw result.getLeft().getOrElse(
