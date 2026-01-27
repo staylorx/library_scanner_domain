@@ -29,3 +29,7 @@ export 'sembast/datasources/tag_datasource.dart';
 // Unit of Work
 export 'sembast/unit_of_work/sembast_transaction.dart';
 export 'sembast/unit_of_work/sembast_unit_of_work.dart';
+
+// File I/O
+export 'file/library_file_loader_impl.dart';
+export 'file/library_file_writer_impl.dart';

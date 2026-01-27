@@ -1,20 +1,6 @@
 import 'package:riverpod/riverpod.dart';
-import 'src/data/id_registry/services/book_id_registry_service.dart';
-import 'src/data/core/repositories/author_repository_impl.dart';
-import 'src/data/core/repositories/book_repository_impl.dart';
-import 'src/data/core/repositories/tag_repository_impl.dart';
-import 'src/data/sembast/datasources/author_datasource.dart';
-import 'src/data/sembast/datasources/book_datasource.dart';
-import 'src/data/sembast/datasources/tag_datasource.dart';
-import 'src/data/core/services/author_filtering_service.dart';
-import 'src/data/core/services/author_sorting_service.dart';
-import 'src/data/core/services/book_sorting_service.dart';
-import 'src/data/core/services/book_filtering_service.dart';
-import 'src/data/core/services/author_validation_service.dart';
-import 'src/data/core/services/book_validation_service.dart';
-import 'src/data/id_registry/services/author_id_registry_service.dart';
+import 'src/data/data.dart';
 import 'src/domain/domain.dart';
-import 'src/data/file/library_file_loader_impl.dart';
 
 // External dependencies providers (to be overridden by users)
 // These provide external services that the domain layer depends on
@@ -175,8 +161,8 @@ final clearLibraryUsecaseProvider = Provider<ClearLibraryUsecase>((ref) {
 
 final exportLibraryUsecaseProvider = Provider<ExportLibraryUsecase>((ref) {
   final dataAccess = ref.watch(libraryDataAccessProvider);
-  final fileLoader = LibraryFileLoaderImpl();
-  return ExportLibraryUsecase(dataAccess: dataAccess, fileLoader: fileLoader);
+  final fileWriter = ref.watch(libraryFileWriterProvider);
+  return ExportLibraryUsecase(dataAccess: dataAccess, fileWriter: fileWriter);
 });
 
 final filterAuthorsUsecaseProvider = Provider<FilterAuthorsUsecase>((ref) {
@@ -267,10 +253,18 @@ final getTagsUsecaseProvider = Provider<GetTagsUsecase>((ref) {
   return GetTagsUsecase(tagRepository: tagRepository);
 });
 
+final libraryFileLoaderProvider = Provider<LibraryFileLoader>((ref) {
+  return LibraryFileLoaderImpl();
+});
+
+final libraryFileWriterProvider = Provider<LibraryFileWriter>((ref) {
+  return LibraryFileWriterImpl();
+});
+
 final importLibraryUsecaseProvider = Provider<ImportLibraryUsecase>((ref) {
   final dataAccess = ref.watch(libraryDataAccessProvider);
   final isBookDuplicateUsecase = ref.watch(isBookDuplicateUsecaseProvider);
-  final fileLoader = LibraryFileLoaderImpl();
+  final fileLoader = ref.watch(libraryFileLoaderProvider);
   return ImportLibraryUsecase(
     dataAccess: dataAccess,
     isBookDuplicateUsecase: isBookDuplicateUsecase,

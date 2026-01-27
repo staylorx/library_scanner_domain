@@ -14,6 +14,7 @@ import 'package:library_scanner_domain/src/data/sembast/datasources/tag_datasour
 import 'package:library_scanner_domain/src/data/id_registry/services/author_id_registry_service.dart';
 import 'package:library_scanner_domain/src/data/id_registry/services/book_id_registry_service.dart';
 import 'package:library_scanner_domain/src/data/file/library_file_loader_impl.dart';
+import 'package:library_scanner_domain/src/data/file/library_file_writer_impl.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
@@ -173,7 +174,7 @@ void main() {
       final exportPath = p.join('build', 'export_test.yaml');
       final exportUsecase = ExportLibraryUsecase(
         dataAccess: dataAccess,
-        fileLoader: LibraryFileLoaderImpl(),
+        fileWriter: LibraryFileWriterImpl(),
       );
       final exportResult = await exportUsecase(filePath: exportPath).run();
       expect(exportResult.isRight(), true);

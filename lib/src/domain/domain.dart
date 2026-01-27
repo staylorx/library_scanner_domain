@@ -50,6 +50,7 @@ export 'usecases/validate_book_usecase.dart';
 
 // Ports
 export 'ports/library_file_loader.dart';
+export 'ports/library_file_writer.dart';
 
 // Value Objects
 export 'value_objects/book_id_pair.dart';
