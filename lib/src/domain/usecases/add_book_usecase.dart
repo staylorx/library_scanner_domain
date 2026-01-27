@@ -15,8 +15,8 @@ class AddBookUsecase with Loggable {
     required this.isBookDuplicateUsecase,
   });
 
-  /// Adds a new book and returns the updated list of books.
-  TaskEither<Failure, List<Book>> call({
+  /// Adds a new book and returns the created book.
+  TaskEither<Failure, Book> call({
     required String title,
     required List<Author> authors,
     List<Tag> tags = const [],
@@ -41,7 +41,7 @@ class AddBookUsecase with Loggable {
     );
   }
 
-  TaskEither<Failure, List<Book>> _createBookAndAdd({
+  TaskEither<Failure, Book> _createBookAndAdd({
     required String id,
     required String title,
     required List<Author> authors,
@@ -87,13 +87,11 @@ class AddBookUsecase with Loggable {
         );
       }
 
-      return bookRepository.create(item: book).flatMap((_) {
-        return bookRepository.getBooks().map((books) {
-          logger?.info(
-            'AddBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
-          );
-          return books;
-        });
+      return bookRepository.create(item: book).map((created) {
+        logger?.info(
+          'AddBookUsecase: Output: ${created.title} (businessIds: ${created.businessIds})',
+        );
+        return created;
       });
     });
   }

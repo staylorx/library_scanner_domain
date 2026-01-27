@@ -9,18 +9,13 @@ class DeleteTagUsecase with Loggable {
   DeleteTagUsecase({Logger? logger, required this.tagRepository});
 
   /// Deletes a tag by id and returns the updated list of tags.
-  TaskEither<Failure, List<Tag>> call({required String id}) {
+  /// Deletes a tag by id and returns `unit` on success.
+  TaskEither<Failure, Unit> call({required String id}) {
     logger?.info('DeleteTagUsecase: Entering call with id: $id');
     return tagRepository.getById(id: id).flatMap((tag) {
-      return tagRepository.deleteById(item: tag).flatMap((_) {
-        return tagRepository.getAll().map((tags) {
-          final updatedTags = tags.where((t) => t.id != id).toList();
-          logger?.info('DeleteTagUsecase: Success in call');
-          logger?.info(
-            'DeleteTagUsecase: Output: ${updatedTags.map((t) => t.name).toList()}',
-          );
-          return updatedTags;
-        });
+      return tagRepository.deleteById(item: tag).map((_) {
+        logger?.info('DeleteTagUsecase: Success in call');
+        return unit;
       });
     });
   }

@@ -83,10 +83,9 @@ void main() {
         ).run();
         logger.info('updateTagUsecase call completed');
         expect(updateResult.isRight(), true);
-        final updatedTags = updateResult.fold((l) => <Tag>[], (r) => r);
-        expect(updatedTags.length, 1);
-        expect(updatedTags.first.name, 'Updated Test Tag');
-        expect(updatedTags.first.description, 'Updated description');
+        final updated = updateResult.fold((l) => throw l, (r) => r);
+        expect(updated.name, 'Updated Test Tag');
+        expect(updated.description, 'Updated description');
 
         // Verify count remains the same
         result = await getTagsUsecase().run();

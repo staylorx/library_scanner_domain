@@ -15,8 +15,8 @@ class AddTagUsecase with Loggable {
     required this.getTagByNameUsecase,
   });
 
-  /// Adds a new tag and returns the updated list of tags.
-  TaskEither<Failure, List<Tag>> call({
+  /// Adds a new tag and returns the created tag.
+  TaskEither<Failure, Tag> call({
     required String name,
     String? description,
     String color = '#FF0000',
@@ -34,18 +34,14 @@ class AddTagUsecase with Loggable {
               description: description,
               color: color,
             );
-            return tagRepository.create(item: tag).flatMap((_) {
-              return tagRepository.getAll().map((tags) {
-                logger?.info('AddTagUsecase: Success in call');
-                logger?.info(
-                  'AddTagUsecase: Output: ${tags.map((t) => t.name).toList()}',
-                );
-                return tags;
-              });
+            return tagRepository.create(item: tag).map((created) {
+              logger?.info('AddTagUsecase: Success in call');
+              logger?.info('AddTagUsecase: Output: ${created.name}');
+              return created;
             }).run();
           } else {
             logger?.info('AddTagUsecase: Unexpected failure: $failure');
-            return left<Failure, List<Tag>>(failure);
+            return left<Failure, Tag>(failure);
           }
         },
         (existingTag) {
@@ -53,7 +49,7 @@ class AddTagUsecase with Loggable {
           logger?.info(
             'AddTagUsecase: Duplicate tag found, returning ValidationFailure for slug: $slug',
           );
-          return left<Failure, List<Tag>>(
+          return left<Failure, Tag>(
             ValidationFailure('A tag with the slug "$slug" already exists.'),
           );
         },

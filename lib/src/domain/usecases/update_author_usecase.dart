@@ -10,7 +10,8 @@ class UpdateAuthorUsecase with Loggable {
   UpdateAuthorUsecase({Logger? logger, required this.authorRepository});
 
   /// Updates an existing author.
-  TaskEither<Failure, Unit> call({
+  /// Updates an existing author and returns the updated author.
+  TaskEither<Failure, Author> call({
     required String id,
     required String name,
     String? biography,
@@ -36,7 +37,10 @@ class UpdateAuthorUsecase with Loggable {
         biography: biography,
         businessIds: updatedBusinessIds,
       );
-      return authorRepository.update(item: updatedAuthor).map((_) => unit);
+      return authorRepository.update(item: updatedAuthor).map((updated) {
+        logger?.info('UpdateAuthorUsecase: Success in call');
+        return updated;
+      });
     });
   }
 }

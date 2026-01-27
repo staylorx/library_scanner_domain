@@ -101,11 +101,10 @@ void main() {
         businessIds: [BookIdPair(idType: BookIdType.local, idCode: "book1")],
       ).run();
       expect(addResult1.isRight(), true);
-      final booksAfterAdd1 = addResult1.getRight().getOrElse(() => []);
-      expect(booksAfterAdd1.length, 1);
-      expect(booksAfterAdd1.first.title, 'Book One');
-      expect(booksAfterAdd1.first.tags.length, 1);
-      expect(booksAfterAdd1.first.tags.first.name, 'Fiction');
+      final createdBook1 = addResult1.fold((l) => throw l, (r) => r);
+      expect(createdBook1.title, 'Book One');
+      expect(createdBook1.tags.length, 1);
+      expect(createdBook1.tags.first.name, 'Fiction');
 
       await addBookUsecase(
         title: 'Book Two',

@@ -9,8 +9,8 @@ class UpdateBookUsecase with Loggable {
 
   UpdateBookUsecase({Logger? logger, required this.bookRepository});
 
-  /// Updates an existing book and returns the updated list of books.
-  TaskEither<Failure, List<Book>> call({
+  /// Updates an existing book and returns the updated book.
+  TaskEither<Failure, Book> call({
     required String id,
     required String title,
     required List<Author> authors,
@@ -37,14 +37,12 @@ class UpdateBookUsecase with Loggable {
         coverImage: coverImage,
         notes: notes,
       );
-      return bookRepository.update(item: updatedBook).flatMap((_) {
-        return bookRepository.getBooks().map((books) {
-          logger?.info('UpdateBookUsecase: Success in call');
-          logger?.info(
-            'UpdateBookUsecase: Output: ${books.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
-          );
-          return books;
-        });
+      return bookRepository.update(item: updatedBook).map((updated) {
+        logger?.info('UpdateBookUsecase: Success in call');
+        logger?.info(
+          'UpdateBookUsecase: Output: ${updated.title} (businessIds: ${updated.businessIds})',
+        );
+        return updated;
       });
     });
   }

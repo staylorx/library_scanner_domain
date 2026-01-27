@@ -82,9 +82,7 @@ class TestEnv {
       getTagByNameUsecase: GetTagByNameUsecase(tagRepository: tagRepository),
     );
     final res = await usecase(name: name).run();
-    final list = res.fold((l) => <Tag>[], (r) => r);
-    if (list.isEmpty) throw StateError('Add tag failed');
-    return list.first;
+    return res.fold((l) => throw StateError('Add tag failed'), (r) => r);
   }
 
   Future<Book> addBook({
@@ -105,9 +103,7 @@ class TestEnv {
         BookIdPair(idType: BookIdType.local, idCode: const Uuid().v4()),
       ],
     ).run();
-    final list = res.getRight().getOrElse(() => <Book>[]);
-    if (list.isEmpty) throw StateError('Add book failed');
-    return list.first;
+    return res.fold((l) => throw StateError('Add book failed'), (r) => r);
   }
 }
 

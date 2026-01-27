@@ -10,21 +10,16 @@ class DeleteBookUsecase with Loggable {
   DeleteBookUsecase({Logger? logger, required this.bookRepository});
 
   /// Deletes a book by id and returns the updated list of books.
-  TaskEither<Failure, List<Book>> call({required String id}) {
+  /// Deletes a book by id and returns `unit` on success.
+  TaskEither<Failure, Unit> call({required String id}) {
     logger?.info('DeleteBookUsecase: Entering call with id: $id');
     return bookRepository.getById(id: id).flatMap((book) {
       logger?.info(
         'DeleteBookUsecase: Deleting book: ${book.title} (businessIds: ${book.businessIds})',
       );
-      return bookRepository.deleteById(item: book).flatMap((_) {
-        return bookRepository.getBooks().map((books) {
-          final updatedBooks = books.where((b) => b.id != id).toList();
-          logger?.info('DeleteBookUsecase: Success in call');
-          logger?.info(
-            'DeleteBookUsecase: Output: ${updatedBooks.map((b) => '${b.title} (businessIds: ${b.businessIds})').toList()}',
-          );
-          return updatedBooks;
-        });
+      return bookRepository.deleteById(item: book).map((_) {
+        logger?.info('DeleteBookUsecase: Success in call');
+        return unit;
       });
     });
   }
