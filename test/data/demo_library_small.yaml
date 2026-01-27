@@ -9,7 +9,7 @@ books:
       - Fiction
 
     year: 1949
-    isbn: "9780451524935"
+    upc: "9780451524935"
 
   - title: Pride and Prejudice
     authorNames:
@@ -17,7 +17,7 @@ books:
     tagNames:
       - Fiction
     year: 1813
-    isbn: "9780486284736"
+    upc: "9780486284736"
 
   - title: The Great Gatsby
     authorNames:
@@ -25,7 +25,7 @@ books:
     tagNames:
       - Fiction
     year: 1925
-    isbn: "9780743273565"
+    upc: "9780743273565"
 
   - title: To Kill a Mockingbird
     authorNames:
@@ -33,7 +33,7 @@ books:
     tagNames:
       - Fiction
     year: 1960
-    isbn: "9780061120084"
+    upc: "9780061120084"
 
   - title: Harry Potter and the Philosopher's Stone
     authorNames:
@@ -41,4 +41,4 @@ books:
     tagNames:
       - Fiction
     year: 1997
-    isbn: "9780747532699"
+    upc: "9780747532699"

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
@@ -41,10 +40,12 @@ class _DuplicateFilterResult {
 class ImportLibraryUsecase with Loggable {
   final LibraryDataAccess dataAccess;
   final IsBookDuplicateUsecase isBookDuplicateUsecase;
+  final LibraryFileLoader fileLoader;
 
   ImportLibraryUsecase({
     required this.dataAccess,
     required this.isBookDuplicateUsecase,
+    required this.fileLoader,
   });
 
   /// Parses authors from YAML data.
@@ -194,15 +195,8 @@ class ImportLibraryUsecase with Loggable {
       'ImportLibraryUsecase: Importing library from $filePath, overwrite: $overwrite',
     );
 
-    // Read and parse YAML file
-    return TaskEither<Failure, dynamic>.tryCatch(
-      () async {
-        final file = File(filePath);
-        final yamlString = await file.readAsString();
-        return loadYaml(yamlString);
-      },
-      (error, stackTrace) => ServiceFailure('Failed to read YAML file: $error'),
-    ).flatMap((yamlData) {
+    // Read and parse YAML file via injected loader
+    return fileLoader.loadYaml(filePath).flatMap((yamlData) {
       logger?.info('Parsed YAML data, keys: ${yamlData.keys}');
 
       // Validate required sections

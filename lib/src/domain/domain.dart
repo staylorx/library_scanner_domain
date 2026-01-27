@@ -48,6 +48,9 @@ export 'usecases/update_book_usecase.dart';
 export 'usecases/update_tag_usecase.dart';
 export 'usecases/validate_book_usecase.dart';
 
+// Ports
+export 'ports/library_file_loader.dart';
+
 // Value Objects
 export 'value_objects/book_id_pair.dart';
 export 'value_objects/book_id_pairs.dart';

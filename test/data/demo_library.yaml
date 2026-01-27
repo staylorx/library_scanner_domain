@@ -172,7 +172,7 @@ books:
       - Science Fiction
       - Classic
     year: 1949
-    isbn: "9780451524935"
+    upc: "9780451524935"
 
   - title: Pride and Prejudice
     authorNames:
@@ -182,7 +182,7 @@ books:
       - Romance
       - Classic
     year: 1813
-    isbn: "9780486284736"
+    upc: "9780486284736"
 
   - title: The Great Gatsby
     authorNames:
@@ -192,7 +192,7 @@ books:
       - Classic
       - Modern
     year: 1925
-    isbn: "9780743273565"
+    upc: "9780743273565"
 
   - title: To Kill a Mockingbird
     authorNames:
@@ -201,7 +201,7 @@ books:
       - Fiction
       - Classic
     year: 1960
-    isbn: "9780061120084"
+    upc: "9780061120084"
 
   - title: Harry Potter and the Philosopher's Stone
     authorNames:
@@ -210,7 +210,7 @@ books:
       - Fiction
       - Adventure
     year: 1997
-    isbn: "9780747532699"
+    upc: "9780747532699"
 
   - title: The Catcher in the Rye
     authorNames:
@@ -1053,11 +1053,11 @@ books:
     tagNames:
       - Romance
     year: 1901
-    isbn: "0385420161"
+    upc: "0385420161"
 
   - title: Redneck Manifesto
     authorNames:
       - "Jim Goad"
     tagNames:
       - Non-Fiction
-    isbn: "0684838648"
+    upc: "0684838648"

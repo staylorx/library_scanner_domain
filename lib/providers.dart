@@ -14,6 +14,7 @@ import 'src/data/core/services/author_validation_service.dart';
 import 'src/data/core/services/book_validation_service.dart';
 import 'src/data/id_registry/services/author_id_registry_service.dart';
 import 'src/domain/domain.dart';
+import 'src/data/file/library_file_loader_impl.dart';
 
 // External dependencies providers (to be overridden by users)
 // These provide external services that the domain layer depends on
@@ -174,7 +175,8 @@ final clearLibraryUsecaseProvider = Provider<ClearLibraryUsecase>((ref) {
 
 final exportLibraryUsecaseProvider = Provider<ExportLibraryUsecase>((ref) {
   final dataAccess = ref.watch(libraryDataAccessProvider);
-  return ExportLibraryUsecase(dataAccess: dataAccess);
+  final fileLoader = LibraryFileLoaderImpl();
+  return ExportLibraryUsecase(dataAccess: dataAccess, fileLoader: fileLoader);
 });
 
 final filterAuthorsUsecaseProvider = Provider<FilterAuthorsUsecase>((ref) {
@@ -268,9 +270,11 @@ final getTagsUsecaseProvider = Provider<GetTagsUsecase>((ref) {
 final importLibraryUsecaseProvider = Provider<ImportLibraryUsecase>((ref) {
   final dataAccess = ref.watch(libraryDataAccessProvider);
   final isBookDuplicateUsecase = ref.watch(isBookDuplicateUsecaseProvider);
+  final fileLoader = LibraryFileLoaderImpl();
   return ImportLibraryUsecase(
     dataAccess: dataAccess,
     isBookDuplicateUsecase: isBookDuplicateUsecase,
+    fileLoader: fileLoader,
   );
 });
 

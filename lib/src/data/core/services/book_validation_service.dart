@@ -23,7 +23,11 @@ class BookValidationServiceImpl with Loggable implements BookValidationService {
       // Check ID format validity
       for (final idPair in book.businessIds) {
         if (!idPair.isValid) {
-          return Left(ValidationFailure('Book ID ${idPair.idType.displayName}:${idPair.idCode} has invalid format'));
+          return Left(
+            ValidationFailure(
+              'Book ID ${idPair.idType.displayName}:${idPair.idCode} has invalid format',
+            ),
+          );
         }
       }
 

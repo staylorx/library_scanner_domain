@@ -7,8 +7,15 @@ import 'package:yaml_writer/yaml_writer.dart';
 /// Use case for exporting a library to a file.
 class ExportLibraryUsecase with Loggable {
   final LibraryDataAccess dataAccess;
+  final LibraryFileLoader fileLoader;
 
-  ExportLibraryUsecase({Logger? logger, required this.dataAccess});
+  ExportLibraryUsecase({
+    Logger? logger,
+    required this.dataAccess,
+    required this.fileLoader,
+  }) {
+    this.logger = logger;
+  }
 
   /// Exports the current library to the specified file path.
   TaskEither<Failure, Unit> call({required String filePath}) {
