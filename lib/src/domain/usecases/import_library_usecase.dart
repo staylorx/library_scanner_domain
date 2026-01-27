@@ -223,8 +223,7 @@ class ImportLibraryUsecase with Loggable {
               );
 
         return parseAuthorsTask.flatMap((authorMap) {
-          final authors = authorMap.values.toList();
-          logger?.info('Parsed ${authors.length} authors');
+          logger?.info('Parsed ${authorMap.length} authors');
 
           // Parse tags (optional)
           final parseTagsTask = yamlData['tags'] != null
@@ -250,15 +249,17 @@ class ImportLibraryUsecase with Loggable {
                 final duplicateWarnings = filteredResult.warnings;
                 warnings.addAll(duplicateWarnings);
 
-                // Save to database
-                return _saveToDatabase(authors, tags, finalBooks).map((_) {
+                // Recompute authors list (include any authors created while
+                // processing books) and save to database
+                final finalAuthors = authorMap.values.toList();
+                return _saveToDatabase(finalAuthors, tags, finalBooks).map((_) {
                   final library = Library(
                     name: yamlData['name'] as String? ?? 'Imported Library',
                     description:
                         yamlData['description'] as String? ??
                         'Imported from $filePath',
                     books: finalBooks,
-                    authors: authors,
+                    authors: finalAuthors,
                     tags: tags,
                   );
 
