@@ -7,4 +7,5 @@ export 'src/utils/task_either.dart';
 
 export 'src/domain/domain.dart';
 
-export 'providers.dart';
+export 'library_domain.dart';
+export 'library_domain_factory.dart';

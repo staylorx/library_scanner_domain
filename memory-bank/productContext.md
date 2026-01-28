@@ -15,12 +15,11 @@ The project follows Clean Architecture principles with three main layers:
 
 - **Domain Layer**: Contains entities, repositories interfaces, services interfaces, and use cases. Pure business logic with no external dependencies.
 - **Data Layer**: Contains repository implementations, data sources, and external service integrations. Handles data persistence and external APIs.
-- **Presentation Layer**: Contains Riverpod providers for state management and dependency injection.
+- **Presentation Layer**: Consumer applications handle UI and state management.
 
 ## Key Dependencies
 
 - **fpdart**: Functional programming library for Either, TaskEither, and functional constructs.
-- **riverpod**: State management and dependency injection (used only in presentation layer).
 - **sembast**: NoSQL database for local storage.
 - **dio**: HTTP client for API calls.
 - **uuid**: UUID generation for unique identifiers.

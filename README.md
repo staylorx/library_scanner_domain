@@ -32,6 +32,73 @@ flutter pub get
 
 ## Usage
 
+The library scanner domain is used through the factory pattern for dependency injection.
+
+### Using the Library Domain Factory and Facade
+
+The library provides a factory pattern for creating a fully wired domain layer instance, along with a facade class for easy access to all business logic operations.
+
+#### Creating a Library Domain Instance
+
+Use `LibraryDomainFactory.create()` to instantiate the domain layer with your database implementations:
+
+```dart
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+
+// Provide your database service and unit of work implementations
+final myDatabaseService = MyDatabaseService();
+final myUnitOfWork = MyUnitOfWork();
+
+// Create the domain instance
+final libraryDomain = LibraryDomainFactory.create(
+  databaseService: myDatabaseService,
+  unitOfWork: myUnitOfWork,
+  // Optional: provide custom file loaders/writers
+  fileLoader: MyFileLoader(),
+  fileWriter: MyFileWriter(),
+);
+```
+
+#### Using the Facade
+
+The `LibraryDomain` facade provides access to all usecases for managing your library:
+
+```dart
+// Add a book
+final addBookResult = await libraryDomain.addBookUsecase(book: myBook);
+
+// Get all books
+final booksResult = await libraryDomain.getBooksUsecase();
+
+// Filter books
+final filteredBooks = await libraryDomain.filterBooksUsecase(
+  books: allBooks,
+  query: 'fantasy',
+);
+
+// Export library
+final exportResult = await libraryDomain.exportLibraryUsecase(filePath: 'library.yaml');
+```
+
+#### Example with Sembast
+
+```dart
+import 'package:sembast/sembast.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
+
+final dbService = SembastDatabase(testDbPath: 'path/to/db');
+final unitOfWork = SembastUnitOfWork(dbService: dbService);
+
+final libraryDomain = LibraryDomainFactory.create(
+  databaseService: dbService,
+  unitOfWork: unitOfWork,
+);
+
+final books = await libraryDomain.getBooksUsecase();
+```
+
+This approach is framework-agnostic and suitable for CLI apps, testing, or when you prefer manual dependency injection.
+
 See the test files for detailed usage examples and how the code works.
 
 ## Implementing Custom Database Layer
@@ -155,101 +222,51 @@ final factory = LibraryFactory(
 );
 ```
 
-## Provider Setup and Dependency Injection
+## Factory Setup and Dependency Injection
 
-The library uses Riverpod for dependency injection. All providers are defined in `lib/providers.dart`. The library provides external dependency providers that **must be overridden** by consumers, and internal providers that wire up the domain layer automatically.
+The library provides a factory pattern for dependency injection. Use `LibraryDomainFactory` to create a fully wired domain instance.
 
-### External Dependencies (Must Override)
 
-These providers throw `UnimplementedError` and must be overridden with your implementations:
 
-- `dioProvider`: HTTP client for API calls (provide `Dio` instance)
-- `databaseServiceProvider`: Database service implementation (provide `DatabaseService` instance)
-- `transactionProvider`: Transaction management (Unit of Work pattern, provide `UnitOfWork` instance)
-- `imageServiceProvider`: Image processing service (provide `ImageService` instance)
+### Factory Examples
 
-### Internal Providers (Automatic)
-
-These providers are wired automatically once external dependencies are provided:
-
-- **Data Access**: `dataAccessProvider` - Main entry point providing `LibraryDataAccess` with all repositories and services
-- **Repositories**: `bookRepositoryProvider`, `authorRepositoryProvider`, `tagRepositoryProvider`, `bookMetadataRepositoryProvider`
-- **Services**: Filtering, sorting, validation, and ID registry services
-- **Usecases**: All business logic operations (add, update, delete, query operations)
-
-### Provider Override Examples
-
-#### Flutter App (using overrideWith)
+#### Flutter App (using Factory)
 
 ```dart
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'package:path_provider/path_provider.dart';
 
-final dioProvider = Provider<Dio>((ref) => Dio());
-
-final databasePathProvider = FutureProvider<String?>((ref) async {
+void main() async {
   final directory = await getApplicationDocumentsDirectory();
-  return '${directory.path}/library.db';
-});
+  final dbPath = '${directory.path}/library.db';
+  final dbService = SembastDatabase(testDbPath: dbPath);
+  final unitOfWork = SembastUnitOfWork(dbService: dbService);
 
-// Override external providers
-final databaseServiceProviderOverride = databaseServiceProvider.overrideWith(
-  (ref) async {
-    final dbPath = await ref.watch(databasePathProvider.future);
-    return SembastDatabase(testDbPath: dbPath);
-  },
-);
-
-final transactionProviderOverride = transactionProvider.overrideWith((ref) {
-  final dbService = ref.watch(databaseServiceProvider);
-  return SembastUnitOfWork(dbService: dbService);
-});
-
-final imageServiceProviderOverride = imageServiceProvider.overrideWith((ref) {
-  final dio = ref.watch(dioProvider);
-  return FlutterImageService(dio); // Your ImageService implementation
-});
-
-// Use in ProviderScope
-void main() {
-  runApp(
-    ProviderScope(
-      overrides: [
-        databaseServiceProviderOverride,
-        transactionProviderOverride,
-        imageServiceProviderOverride,
-      ],
-      child: MyApp(),
-    ),
+  final libraryDomain = LibraryDomainFactory.create(
+    databaseService: dbService,
+    unitOfWork: unitOfWork,
   );
+
+  runApp(MyApp(libraryDomain: libraryDomain));
 }
 ```
 
-#### CLI App (using ProviderContainer)
+#### CLI App (using Factory)
 
 ```dart
-import 'package:riverpod/riverpod.dart';
 import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 void main() async {
-  final dio = Dio();
   final dbService = SembastDatabase(testDbPath: null); // In-memory
   final unitOfWork = SembastUnitOfWork(dbService: dbService);
-  final imageService = CliImageService(dio); // Your ImageService implementation
 
-  final container = ProviderContainer(
-    overrides: [
-      dioProvider.overrideWithValue(dio),
-      databaseServiceProvider.overrideWithValue(dbService),
-      transactionProvider.overrideWithValue(unitOfWork),
-      imageServiceProvider.overrideWithValue(imageService),
-    ],
+  final libraryDomain = LibraryDomainFactory.create(
+    databaseService: dbService,
+    unitOfWork: unitOfWork,
   );
 
-  // Now use the container to access providers
-  final dataAccess = await container.read(dataAccessProvider.future);
-  final getBooksUsecase = await container.read(getBooksUsecaseProvider.future);
+  // Use the domain
+  final books = await libraryDomain.getBooksUsecase();
 }
 ```
 
@@ -258,14 +275,9 @@ void main() async {
 #### Recommended: Use Usecases (Business Logic Layer)
 
 ```dart
-final booksProvider = FutureProvider<List<Book>>((ref) async {
-  final usecase = await ref.watch(getBooksUsecaseProvider.future);
-  final result = await usecase();
-  return result.fold(
-    (failure) => throw Exception(failure.message),
-    (books) => books,
-  );
-});
+final libraryDomain = LibraryDomainFactory.create(...);
+
+final books = await libraryDomain.getBooksUsecase();
 ```
 
 #### Alternative: Direct Repository Access
@@ -279,10 +291,7 @@ final authors = await dataAccess.authorRepository.getAll();
 
 ### Complete Examples
 
-See the example applications for full implementations:
-
-- **Flutter**: `example/flutter/lib/providers.dart` and `example/flutter/lib/main.dart`
-- **CLI**: `example/cli/lib/main.dart`
+See the factory examples above for full implementations.
 
 This approach ensures that repositories are created once and reused, while allowing easy testing and dependency swapping.
 
