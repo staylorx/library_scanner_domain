@@ -11,6 +11,7 @@ class LibraryDomain {
   final GetAuthorsUsecase getAuthorsUsecase;
   final GetAuthorByNameUsecase getAuthorByNameUsecase;
   final GetAuthorsByNamesUsecase getAuthorsByNamesUsecase;
+  final GetAuthorByIdUsecase getAuthorByIdUsecase;
   final GetAuthorByIdPairUsecase getAuthorByIdPairUsecase;
   final GetSortedAuthorsUsecase getSortedAuthorsUsecase;
   final FilterAuthorsUsecase filterAuthorsUsecase;
@@ -21,6 +22,7 @@ class LibraryDomain {
   final DeleteBookUsecase deleteBookUsecase;
   final UpdateBookUsecase updateBookUsecase;
   final GetBooksUsecase getBooksUsecase;
+  final GetBookByIdUsecase getBookByIdUsecase;
   final GetBookByIdPairUsecase getBookByIdPairUsecase;
   final GetBooksByAuthorUseCase getBooksByAuthorUsecase;
   final GetBooksByTagUseCase getBooksByTagUsecase;
@@ -34,6 +36,7 @@ class LibraryDomain {
   final DeleteTagUsecase deleteTagUsecase;
   final UpdateTagUsecase updateTagUsecase;
   final GetTagsUsecase getTagsUsecase;
+  final GetTagByIdUsecase getTagByIdUsecase;
   final GetTagByNameUsecase getTagByNameUsecase;
   final GetTagsByNamesUsecase getTagsByNamesUsecase;
 
@@ -50,6 +53,7 @@ class LibraryDomain {
     required this.getAuthorsUsecase,
     required this.getAuthorByNameUsecase,
     required this.getAuthorsByNamesUsecase,
+    required this.getAuthorByIdUsecase,
     required this.getAuthorByIdPairUsecase,
     required this.getSortedAuthorsUsecase,
     required this.filterAuthorsUsecase,
@@ -58,6 +62,7 @@ class LibraryDomain {
     required this.deleteBookUsecase,
     required this.updateBookUsecase,
     required this.getBooksUsecase,
+    required this.getBookByIdUsecase,
     required this.getBookByIdPairUsecase,
     required this.getBooksByAuthorUsecase,
     required this.getBooksByTagUsecase,
@@ -69,6 +74,7 @@ class LibraryDomain {
     required this.deleteTagUsecase,
     required this.updateTagUsecase,
     required this.getTagsUsecase,
+    required this.getTagByIdUsecase,
     required this.getTagByNameUsecase,
     required this.getTagsByNamesUsecase,
     required this.clearLibraryUsecase,

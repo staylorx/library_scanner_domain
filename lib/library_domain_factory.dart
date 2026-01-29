@@ -111,13 +111,23 @@ class LibraryDomainFactory {
       authorRepository: authorRepository,
     );
 
+    final getAuthorByIdUsecase = GetAuthorByIdUsecase(
+      authorRepository: authorRepository,
+    );
+
     final getAuthorByIdPairUsecase = GetAuthorByIdPairUsecase(
       authorRepository: authorRepository,
+    );
+
+    final getBookByIdUsecase = GetBookByIdUsecase(
+      bookRepository: bookRepository,
     );
 
     final getBookByIdPairUsecase = GetBookByIdPairUsecase(
       bookRepository: bookRepository,
     );
+
+    final getTagByIdUsecase = GetTagByIdUsecase(tagRepository: tagRepository);
 
     final getBooksByAuthorUsecase = GetBooksByAuthorUseCase(
       bookRepository: bookRepository,
@@ -188,6 +198,7 @@ class LibraryDomainFactory {
       getAuthorsUsecase: getAuthorsUsecase,
       getAuthorByNameUsecase: getAuthorByNameUsecase,
       getAuthorsByNamesUsecase: getAuthorsByNamesUsecase,
+      getAuthorByIdUsecase: getAuthorByIdUsecase,
       getAuthorByIdPairUsecase: getAuthorByIdPairUsecase,
       getSortedAuthorsUsecase: getSortedAuthorsUsecase,
       filterAuthorsUsecase: filterAuthorsUsecase,
@@ -196,6 +207,7 @@ class LibraryDomainFactory {
       deleteBookUsecase: deleteBookUsecase,
       updateBookUsecase: updateBookUsecase,
       getBooksUsecase: getBooksUsecase,
+      getBookByIdUsecase: getBookByIdUsecase,
       getBookByIdPairUsecase: getBookByIdPairUsecase,
       getBooksByAuthorUsecase: getBooksByAuthorUsecase,
       getBooksByTagUsecase: getBooksByTagUsecase,
@@ -207,6 +219,7 @@ class LibraryDomainFactory {
       deleteTagUsecase: deleteTagUsecase,
       updateTagUsecase: updateTagUsecase,
       getTagsUsecase: getTagsUsecase,
+      getTagByIdUsecase: getTagByIdUsecase,
       getTagByNameUsecase: getTagByNameUsecase,
       getTagsByNamesUsecase: getTagsByNamesUsecase,
       clearLibraryUsecase: clearLibraryUsecase,
