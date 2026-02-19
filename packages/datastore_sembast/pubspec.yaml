@@ -1,5 +1,5 @@
-name: domain_usecases
-description: The usecases layer for the library scanner app.
+name: datastore_sembast
+description: Sembast datastore implementation for the library scanner domain.
 version: 2.1.2
 # repository: https://github.com/my_org/my_repo
 publish_to: none
@@ -10,20 +10,15 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  equatable: ^2.0.7
-  fpdart: ^1.2.0
-  yaml: ^3.1.2
-  yaml_writer: ^2.1.0
-  uuid: ^4.5.2
-  id_registry: ^1.0.1
   sembast: ^3.8.5+2
+  fpdart: ^1.2.0
+  id_registry: ^1.0.1
   id_logging:
     git: https://github.com/staylorx/id_logging.git
-  slugify_string: ^2.0.0
-  melos: ^7.4.0
-  domain_entities: any
+  uuid: ^4.5.2
+
   domain_contracts: any
-  datastore_sembast: any
+  domain_entities: any
 
 dev_dependencies:
   lints: ^6.0.0

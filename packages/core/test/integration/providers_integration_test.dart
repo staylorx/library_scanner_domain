@@ -1,7 +1,6 @@
 import 'package:test/test.dart';
-import 'package:library_scanner_domain/library_scanner_domain.dart';
-import 'package:library_scanner_domain/src/data/sembast/datasources/sembast_database.dart';
-import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
+import 'package:library_scanner_core/library_scanner_domain.dart';
+import 'package:datastore_sembast/datastore_sembast.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 

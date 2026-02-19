@@ -14,6 +14,8 @@ export 'src/value_objects/author_id_pairs.dart';
 export 'src/value_objects/author_id_type.dart';
 export 'src/value_objects/author_id_pair.dart';
 export 'src/value_objects/library_stats.dart';
+export 'src/value_objects/book_import.dart';
+export 'src/value_objects/unit_of_work.dart';
 
 export 'src/validation_utils.dart';
 

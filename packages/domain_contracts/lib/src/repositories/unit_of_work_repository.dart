@@ -1,4 +1,4 @@
-import 'unit_of_work.dart';
+import 'package:domain_entities/domain_entities.dart';
 
 /// Abstraction for a unit of work (transaction) in the persistence layer.
 ///

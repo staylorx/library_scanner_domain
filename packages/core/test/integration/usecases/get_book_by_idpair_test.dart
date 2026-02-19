@@ -1,5 +1,5 @@
+import 'package:domain_usecases/domain_usecase.dart';
 import 'package:test/test.dart';
-import 'package:library_scanner_domain/library_scanner_domain.dart';
 import 'test_utils.dart';
 
 void main() {

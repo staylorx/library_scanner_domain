@@ -1,7 +1,6 @@
 import 'package:fpdart/fpdart.dart';
 import 'package:domain_entities/domain_entities.dart';
 import 'basic_crud_contract.dart';
-import 'unit_of_work.dart';
 
 abstract class BookRepository implements BasicCrudContract<Book> {
   @override

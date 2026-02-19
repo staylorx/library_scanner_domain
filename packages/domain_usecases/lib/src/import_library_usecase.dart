@@ -7,37 +7,6 @@ import 'package:slugify_string/slugify_string.dart';
 import 'package:uuid/uuid.dart';
 import 'package:yaml/yaml.dart';
 
-class _BookParseParams {
-  final dynamic yamlBooks;
-  final Map<String, Author> authorMap;
-  final List<Tag> tags;
-
-  _BookParseParams(this.yamlBooks, this.authorMap, this.tags);
-}
-
-class _BookParseResult {
-  final List<Book> books;
-  final List<String> errors;
-  final List<String> missingAuthors;
-
-  _BookParseResult(this.books, this.errors, this.missingAuthors);
-}
-
-class _BookProcessingResult {
-  final List<Book> books;
-  final List<String> warnings;
-  final List<String> parseErrors;
-
-  _BookProcessingResult(this.books, this.warnings, this.parseErrors);
-}
-
-class _DuplicateFilterResult {
-  final List<Book> books;
-  final List<String> warnings;
-
-  _DuplicateFilterResult(this.books, this.warnings);
-}
-
 /// Use case for importing a library from a file.
 class ImportLibraryUsecase with Loggable {
   final LibraryDataAccess dataAccess;
@@ -117,7 +86,7 @@ class ImportLibraryUsecase with Loggable {
   }
 
   /// Parses books from YAML data with parameters.
-  TaskEither<Failure, _BookParseResult> _parseBooks(_BookParseParams params) {
+  TaskEither<Failure, BookParseResult> _parseBooks(BookParseParams params) {
     return TaskEither.tryCatch(() async {
       final list = params.yamlBooks as YamlList;
       final books = <Book>[];
@@ -184,7 +153,7 @@ class ImportLibraryUsecase with Loggable {
           ),
         );
       }
-      return _BookParseResult(books, errors, missingAuthors.toList());
+      return BookParseResult(books, errors, missingAuthors.toList());
     }, (error, stackTrace) => ParsingFailure('Failed to parse books: $error'));
   }
 
@@ -210,7 +179,7 @@ class ImportLibraryUsecase with Loggable {
 
       // Handle overwrite: clear existing data if requested
       final clearTask = overwrite
-          ? dataAccess.databaseService.clearAll().map((_) {
+          ? dataAccess.tagRepository.deleteAll().map((_) {
               logger?.info('Existing data cleared');
               return unit;
             })
@@ -280,7 +249,7 @@ class ImportLibraryUsecase with Loggable {
     });
   }
 
-  TaskEither<Failure, _BookProcessingResult> _processBooks(
+  TaskEither<Failure, BookProcessingResult> _processBooks(
     dynamic yamlBooks,
     Map<String, Author> authorMap,
     List<Tag> tags,
@@ -348,7 +317,7 @@ class ImportLibraryUsecase with Loggable {
       }
 
       // Parse books
-      final bookParseParams = _BookParseParams(yamlBooks, authorMap, tags);
+      final bookParseParams = BookParseParams(yamlBooks, authorMap, tags);
       final bookResultEither = await _parseBooks(bookParseParams).run();
       return bookResultEither.match((failure) => throw failure, (bookResult) {
         logger?.info('Parsed ${bookResult.books.length} books');
@@ -359,7 +328,7 @@ class ImportLibraryUsecase with Loggable {
           }
         }
 
-        return _BookProcessingResult(
+        return BookProcessingResult(
           bookResult.books,
           warnings,
           bookResult.errors,
@@ -368,7 +337,7 @@ class ImportLibraryUsecase with Loggable {
     }, (error, stackTrace) => ParsingFailure('Failed to process books: $error'));
   }
 
-  TaskEither<Failure, _DuplicateFilterResult> _filterDuplicates(
+  TaskEither<Failure, DuplicateFilterResult> _filterDuplicates(
     List<Book> books,
     bool overwrite,
   ) {
@@ -398,7 +367,9 @@ class ImportLibraryUsecase with Loggable {
 
     // If not overwrite, check against existing books
     if (!overwrite) {
-      return dataAccess.bookRepository.getBooks().map((List<Book> existingBooks) {
+      return dataAccess.bookRepository.getBooks().map((
+        List<Book> existingBooks,
+      ) {
         final finalBooks = <Book>[];
         for (final book in filteredBooks) {
           bool isDuplicate = false;
@@ -421,10 +392,10 @@ class ImportLibraryUsecase with Loggable {
             );
           }
         }
-        return _DuplicateFilterResult(finalBooks, warnings);
+        return DuplicateFilterResult(finalBooks, warnings);
       });
     } else {
-      return TaskEither.right(_DuplicateFilterResult(filteredBooks, warnings));
+      return TaskEither.right(DuplicateFilterResult(filteredBooks, warnings));
     }
   }
 

@@ -1,56 +1,17 @@
 import 'package:test/test.dart'
-    show test, expect, group, setUp, contains, Timeout;
-import 'package:library_scanner_domain/library_scanner_domain.dart';
+    show test, expect, group, setUp, contains, Timeout, fail;
+import 'package:domain_entities/domain_entities.dart';
+import 'package:dataservice_filtering/dataservice_filtering.dart';
 import 'package:uuid/uuid.dart';
 
-// Extracted filtering logic from BookListScreen for testing
-List<Book> filterBooks(
-  List<Book> books,
-  List<Tag> tags,
-  List<String> selectedTagIds,
-  bool isInclusive,
-  String searchQuery,
-) {
-  return books.where((book) {
-    // Search filter
-    if (searchQuery.isNotEmpty) {
-      final titleMatch = book.title.toLowerCase().contains(searchQuery);
-      final idPairsMatch = book.businessIds.any(
-        (pair) => pair.idCode.toLowerCase().contains(searchQuery),
-      );
-      final authorMatch = book.authors.any(
-        (author) => author.name.toLowerCase().contains(searchQuery),
-      );
-
-      if (!titleMatch && !idPairsMatch && !authorMatch) {
-        return false;
-      }
-    }
-    // Tag filter
-    if (selectedTagIds.isNotEmpty) {
-      if (isInclusive) {
-        // Inclusive (AND) logic: Book must have ALL selected tags
-        return selectedTagIds.every(
-          (selectedTagId) =>
-              book.tags.any((bookTag) => bookTag.name == selectedTagId),
-        );
-      } else {
-        // Exclusive (OR) logic: Book must have ANY of the selected tags
-        return book.tags.any(
-          (bookTag) => selectedTagIds.contains(bookTag.name),
-        );
-      }
-    }
-    return true;
-  }).toList();
-}
-
 void main() {
-  group('Book Filtering Logic Tests', () {
+  group('Book Filtering Service Tests', () {
     late List<Book> testBooks;
     late List<Tag> testTags;
+    late BookFilteringServiceImpl service;
 
     setUp(() {
+      service = BookFilteringServiceImpl();
       // Create test tags
       testTags = [
         Tag(id: const Uuid().v4(), name: 'fiction', color: '#FF0000'),
@@ -92,31 +53,73 @@ void main() {
       ];
     });
 
-    test('No filters should return all books', () {
-      final result = filterBooks(testBooks, testTags, [], false, '');
-      expect(result.length, 4);
+    test('No filters should return all books', () async {
+      final result = await service.filterBooks(
+        books: testBooks,
+        tags: testTags,
+        searchQuery: '',
+        selectedTagIds: [],
+        isInclusiveFilter: false,
+      ).run();
+      result.fold(
+        (failure) => fail('Expected success, got failure: $failure'),
+        (books) => expect(books.length, 4),
+      );
     }, timeout: Timeout(Duration(seconds: 30)));
 
-    test('Search filter should match title', () {
-      final result = filterBooks(testBooks, testTags, [], false, 'dune');
-      expect(result.length, 1);
-      expect(result.first.title, 'Dune');
+    test('Search filter should match title', () async {
+      final result = await service.filterBooks(
+        books: testBooks,
+        tags: testTags,
+        searchQuery: 'dune',
+        selectedTagIds: [],
+        isInclusiveFilter: false,
+      ).run();
+      result.fold(
+        (failure) => fail('Expected success, got failure: $failure'),
+        (books) {
+          expect(books.length, 1);
+          expect(books.first.title, 'Dune');
+        },
+      );
     }, timeout: Timeout(Duration(seconds: 30)));
 
-    test('Search filter should match ID', () {
-      final result = filterBooks(testBooks, testTags, [], false, '2');
-      expect(result.length, 1);
-      expect(result.first.title, 'The Hobbit');
+    test('Search filter should match ID', () async {
+      final result = await service.filterBooks(
+        books: testBooks,
+        tags: testTags,
+        searchQuery: '2',
+        selectedTagIds: [],
+        isInclusiveFilter: false,
+      ).run();
+      result.fold(
+        (failure) => fail('Expected success, got failure: $failure'),
+        (books) {
+          expect(books.length, 1);
+          expect(books.first.title, 'The Hobbit');
+        },
+      );
     }, timeout: Timeout(Duration(seconds: 30)));
 
     test(
       'Exclusive tag filter (OR) with single tag should return matching books',
-      () {
-        final result = filterBooks(testBooks, testTags, ['fiction'], false, '');
-        expect(result.length, 3); // Dune, Hobbit, Pride and Prejudice
-        expect(result.map((b) => b.title), contains('Dune'));
-        expect(result.map((b) => b.title), contains('The Hobbit'));
-        expect(result.map((b) => b.title), contains('Pride and Prejudice'));
+      () async {
+        final result = await service.filterBooks(
+          books: testBooks,
+          tags: testTags,
+          searchQuery: '',
+          selectedTagIds: ['fiction'],
+          isInclusiveFilter: false,
+        ).run();
+        result.fold(
+          (failure) => fail('Expected success, got failure: $failure'),
+          (books) {
+            expect(books.length, 3); // Dune, Hobbit, Pride and Prejudice
+            expect(books.map((b) => b.title), contains('Dune'));
+            expect(books.map((b) => b.title), contains('The Hobbit'));
+            expect(books.map((b) => b.title), contains('Pride and Prejudice'));
+          },
+        );
       },
       timeout: Timeout(Duration(seconds: 30)),
     );

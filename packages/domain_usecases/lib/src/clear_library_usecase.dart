@@ -12,8 +12,9 @@ class ClearLibraryUsecase with Loggable {
   /// Clears all data from the library (books, authors, tags).
   TaskEither<Failure, Unit> call() {
     logger?.info('ClearLibraryUsecase: Clearing library');
-    return dataAccess.databaseService
-        .clearAll()
+    // TODO: run through all data access layers and clear them in the correct order (e.g., clear books before authors)
+    return dataAccess.tagRepository
+        .deleteAll()
         .map((_) {
           logger?.info('ClearLibraryUsecase: Successfully cleared library');
           return unit;
