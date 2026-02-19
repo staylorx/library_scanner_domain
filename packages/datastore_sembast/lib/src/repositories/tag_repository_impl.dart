@@ -1,20 +1,22 @@
 import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
+
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
 
 import '../sembast/datasources/tag_datasource.dart';
 import '../models/tag_model.dart';
-import '../sembast/unit_of_work/sembast_transaction_handle.dart';
+
+import 'base_repository.dart';
 
 /// Implementation of tag repository using Sembast.
-class TagRepositoryImpl with Loggable implements TagRepository {
+class TagRepositoryImpl extends SembastBaseRepository with Loggable implements TagRepository {
   final TagDatasource tagDatasource;
-  final UnitOfWork<TransactionHandle> unitOfWork;
 
   /// Creates a TagRepositoryImpl instance.
-  TagRepositoryImpl({required this.tagDatasource, required this.unitOfWork});
+  TagRepositoryImpl({required this.tagDatasource, required UnitOfWork<TransactionHandle> unitOfWork})
+      : super(unitOfWork);
 
   /// Retrieves all tags from the database.
   @override
@@ -68,14 +70,10 @@ class TagRepositoryImpl with Loggable implements TagRepository {
         ? tag
         : tag.copyWith(id: const Uuid().v4());
     final model = TagModel.fromEntity(tagWithId);
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (UnitOfWork<TransactionHandle> t) => tagDatasource
-          .saveTag(
-            model,
-            txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          )
-          .map((_) => tagWithId),
+    logger?.info('Transaction started for createTag');
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => tagDatasource.saveTag(model, txn: dbClient).map((_) => tagWithId),
     );
   }
 
@@ -87,18 +85,13 @@ class TagRepositoryImpl with Loggable implements TagRepository {
   }) {
     final tag = item;
     logger?.info('Entering updateTag with tag: ${tag.name}');
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run((UnitOfWork<TransactionHandle> t) {
-      logger?.info('Transaction started for updateTag');
-      final model = TagModel.fromEntity(tag);
-      logger?.info('Saving updated tag ${tag.name}');
-      return tagDatasource
-          .saveTag(
-            model,
-            txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          )
-          .map((_) => tag);
-    });
+    logger?.info('Transaction started for updateTag');
+    final model = TagModel.fromEntity(tag);
+    logger?.info('Saving updated tag ${tag.name}');
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => tagDatasource.saveTag(model, txn: dbClient).map((_) => tag),
+    );
   }
 
   /// Deletes a tag from the database.
@@ -109,16 +102,12 @@ class TagRepositoryImpl with Loggable implements TagRepository {
   }) {
     final tag = item;
     logger?.info('Entering deleteTag with tag: ${tag.name}');
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run((UnitOfWork<TransactionHandle> t) {
-      logger?.info('Transaction started for deleteTag');
-      return tagDatasource
-          .deleteTag(
-            tag.id,
-            txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          )
-          .map((_) => unit);
-    });
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => tagDatasource
+          .deleteTag(tag.id, txn: dbClient)
+          .map((_) => unit),
+    );
   }
 
   /// Retrieves a tag by handle.

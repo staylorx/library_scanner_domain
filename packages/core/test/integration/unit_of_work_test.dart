@@ -39,7 +39,7 @@ void main() {
       );
 
       // Run transaction that saves a tag
-      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
+      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
         return TaskEither.tryCatch(() async {
           final tagModel = TagModel(
             id: 'test-tag',
@@ -80,7 +80,7 @@ void main() {
       );
 
       // Run transaction that saves tag but then fails
-      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
+      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
         return TaskEither.tryCatch(() async {
           final tagModel = TagModel(
             id: 'test-tag',
@@ -113,7 +113,7 @@ void main() {
     });
 
     test('Multiple operations in transaction are atomic', () async {
-      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
+      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
         return TaskEither.tryCatch(() async {
           // Save first tag
           final tagModel1 = TagModel(
@@ -159,7 +159,7 @@ void main() {
     });
 
     test('Transaction failure rolls back multiple operations', () async {
-      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
+      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
         return TaskEither.tryCatch(() async {
           // Save first tag
           final tagModel1 = TagModel(
@@ -213,6 +213,75 @@ void main() {
     test('Manual rollback returns failure', () async {
       final result = await unitOfWork.rollback().run();
       expect(result.isLeft(), true);
+    });
+
+    test('Nested transactions reuse same transaction handle', () async {
+      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> outerTxn) {
+        return TaskEither.tryCatch(() async {
+          // Capture outer handle
+          final outerHandle = outerTxn.transactionHandle;
+          expect(outerHandle, isNotNull);
+          // Start another transaction using the same unitOfWork (should reuse handle)
+          await outerTxn.run((UnitOfWork<TransactionHandle> innerTxn) {
+            return TaskEither.tryCatch(() async {
+              final innerHandle = innerTxn.transactionHandle;
+              // Both handles should be identical (same transaction)
+              expect(innerHandle, equals(outerHandle));
+              // Verify they are SembastTransactionHandle instances
+              expect(innerHandle, isA<SembastTransactionHandle>());
+              return 'success';
+            }, (error, stack) => ServiceFailure(error.toString()));
+          }).run();
+          return 'success';
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
+      expect(result.isRight(), true);
+    });
+
+    test('Sequential transactions are independent', () async {
+      // First transaction inserts tag A
+      final result1 = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
+        return TaskEither.tryCatch(() async {
+          final tagModel = TagModel(
+            id: 'seq-1',
+            name: 'Sequential 1',
+            slug: 'seq-1',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(
+            tagModel,
+            txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+          ).run();
+          return 'success';
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
+      expect(result1.isRight(), true);
+
+      // Second transaction inserts tag B
+      final result2 = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
+        return TaskEither.tryCatch(() async {
+          final tagModel = TagModel(
+            id: 'seq-2',
+            name: 'Sequential 2',
+            slug: 'seq-2',
+            bookIds: [],
+          );
+          await tagDatasource.saveTag(
+            tagModel,
+            txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+          ).run();
+          return 'success';
+        }, (error, stack) => ServiceFailure(error.toString()));
+      }).run();
+      expect(result2.isRight(), true);
+
+      // Verify both tags exist
+      final verifyResult = await tagDatasource.getAllTags().run();
+      expect(verifyResult.isRight(), true);
+      verifyResult.fold(
+        (l) => fail('Expected right'),
+        (r) => expect(r.length, 2),
+      );
     });
   });
 }

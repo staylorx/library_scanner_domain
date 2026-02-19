@@ -1,5 +1,8 @@
 import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
+import 'package:domain_entities/src/utils/transaction_handle.dart';
+
+
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
@@ -7,15 +10,15 @@ import '../sembast/datasources/book_datasource.dart';
 import '../sembast/datasources/author_datasource.dart';
 import '../sembast/datasources/tag_datasource.dart';
 import '../models/book_model.dart';
-import '../sembast/unit_of_work/sembast_transaction_handle.dart';
+
+import 'base_repository.dart';
 
 /// Implementation of book repository using Sembast.
-class BookRepositoryImpl with Loggable implements BookRepository {
+class BookRepositoryImpl extends SembastBaseRepository with Loggable implements BookRepository {
   final BookDatasource bookDatasource;
   final AuthorDatasource authorDatasource;
   final TagDatasource tagDatasource;
   final BookIdRegistryService idRegistryService;
-  final UnitOfWork<TransactionHandle> unitOfWork;
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
@@ -23,9 +26,11 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     required this.authorDatasource,
     required this.tagDatasource,
     required this.idRegistryService,
-    required this.unitOfWork,
+    required UnitOfWork<TransactionHandle> unitOfWork,
     Logger? logger,
-  });
+  }) : super(unitOfWork) {
+    this.logger = logger;
+  }
 
   /// Retrieves books from the database.
   @override
@@ -121,13 +126,11 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         ? book
         : book.copyWith(id: const Uuid().v4());
     final model = BookModel.fromEntity(bookWithId);
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (UnitOfWork<TransactionHandle> t) => bookDatasource
-          .saveBook(
-            model,
-            txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          )
+    logger?.info('Transaction started for createBook');
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => bookDatasource
+          .saveBook(model, txn: dbClient)
           .map((_) => unit)
           .flatMap(
             (_) => idRegistryService.registerBookIdPairs(
@@ -135,14 +138,11 @@ class BookRepositoryImpl with Loggable implements BookRepository {
             ),
           )
           .flatMap(
-            (_) => tagDatasource
-                .addBookToTags(
-                  bookWithId.id,
-                  book.tags.map((t) => t.name).toList(),
-                  txn: (t.transactionHandle as SembastTransactionHandle?)
-                      ?.dbClient,
-                )
-                .map((_) => bookWithId),
+            (_) => tagDatasource.addBookToTags(
+              bookWithId.id,
+              book.tags.map((t) => t.name).toList(),
+              txn: dbClient,
+            ).map((_) => bookWithId),
           ),
     );
   }
@@ -156,14 +156,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final book = item;
     logger?.info('Entering updateBook with book: ${book.title}');
     final model = BookModel.fromEntity(book);
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (UnitOfWork<TransactionHandle> t) => bookDatasource
-          .saveBook(
-            model,
-            txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          )
-          .map((_) => book),
+    logger?.info('Transaction started for updateBook');
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => bookDatasource.saveBook(model, txn: dbClient).map((_) => book),
     );
   }
 
@@ -176,23 +172,17 @@ class BookRepositoryImpl with Loggable implements BookRepository {
     final book = item;
     logger?.info('Entering deleteBook with book: ${book.title}');
 
-    final UnitOfWork<TransactionHandle> effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (UnitOfWork<TransactionHandle> t) => idRegistryService
+    logger?.info('Transaction started for deleteBook');
+    return runInTransaction(
+      txn: txn,
+      operation: (dbClient) => idRegistryService
           .unregisterBookIdPairs(BookIdPairs(pairs: book.businessIds))
           .flatMap(
-            (_) => bookDatasource.deleteBook(
-              book.id,
-              txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-            ),
+            (_) => bookDatasource.deleteBook(book.id, txn: dbClient),
           )
           .flatMap((_) {
             final tagNames = book.tags.map((t) => t.name).toList();
-            return tagDatasource.removeBookFromTags(
-              book.id,
-              tagNames,
-              txn: (t.transactionHandle as SembastTransactionHandle?)?.dbClient,
-            );
+            return tagDatasource.removeBookFromTags(book.id, tagNames, txn: dbClient);
           }),
     );
   }
