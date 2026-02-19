@@ -3,6 +3,7 @@ import 'package:domain_entities/domain_entities.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sembast/sembast.dart' as sembast;
 
 import '../sembast/datasources/tag_datasource.dart';
 import '../models/tag_model.dart';
@@ -10,7 +11,7 @@ import '../models/tag_model.dart';
 /// Implementation of tag repository using Sembast.
 class TagRepositoryImpl with Loggable implements TagRepository {
   final TagDatasource tagDatasource;
-  final UnitOfWork unitOfWork;
+  final UnitOfWork<Object?> unitOfWork;
 
   /// Creates a TagRepositoryImpl instance.
   TagRepositoryImpl({required this.tagDatasource, required this.unitOfWork});
@@ -57,63 +58,42 @@ class TagRepositoryImpl with Loggable implements TagRepository {
 
   /// Creates a new tag in the database.
   @override
-  TaskEither<Failure, Tag> create({required Tag item}) {
+  TaskEither<Failure, Tag> create({required Tag item, UnitOfWork<Object?>? txn}) {
     final tag = item;
     logger?.info('Entering createTag with tag: ${tag.name}, id: ${tag.id}');
     final tagWithId = tag.id.isNotEmpty
         ? tag
         : tag.copyWith(id: const Uuid().v4());
     final model = TagModel.fromEntity(tagWithId);
-    return unitOfWork.run(
-      (Transaction txn) =>
-          tagDatasource.saveTag(model, txn: txn).map((_) => tagWithId),
-    );
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
+    return effectiveTxn.run((UnitOfWork<Object?> t) =>
+        tagDatasource.saveTag(model, txn: t.transactionHandle as sembast.DatabaseClient?).map((_) => tagWithId));
   }
 
   /// Updates an existing tag in the database.
   @override
-  TaskEither<Failure, Tag> update({required Tag item, Transaction? txn}) {
+  TaskEither<Failure, Tag> update({required Tag item, UnitOfWork<Object?>? txn}) {
     final tag = item;
     logger?.info('Entering updateTag with tag: ${tag.name}');
-    if (txn != null) {
-      logger?.info('Using provided transaction for updateTag');
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
+    return effectiveTxn.run((UnitOfWork<Object?> t) {
+      logger?.info('Transaction started for updateTag');
       final model = TagModel.fromEntity(tag);
       logger?.info('Saving updated tag ${tag.name}');
-      return tagDatasource.saveTag(model, txn: txn).map((_) => tag);
-    } else {
-      return unitOfWork.run(
-        (Transaction txn) => TaskEither.tryCatch(() async {
-          logger?.info('Transaction started for updateTag');
-          final model = TagModel.fromEntity(tag);
-          logger?.info('Saving updated tag ${tag.name}');
-          final result = await tagDatasource
-              .saveTag(model, txn: txn)
-              .run();
-          return result.fold((l) => throw l, (_) => tag);
-        }, (e, _) => e as Failure),
-      );
-    }
+      return tagDatasource.saveTag(model, txn: t.transactionHandle as sembast.DatabaseClient?).map((_) => tag);
+    });
   }
 
   /// Deletes a tag from the database.
   @override
-  TaskEither<Failure, Unit> deleteById({required Tag item, UnitOfWork? txn}) {
+  TaskEither<Failure, Unit> deleteById({required Tag item, UnitOfWork<Object?>? txn}) {
     final tag = item;
     logger?.info('Entering deleteTag with tag: ${tag.name}');
-    if (txn != null) {
-      logger?.info('Using provided transaction for deleteTag');
-      return           tagDatasource.deleteTag(tag.id, txn: txn).map((_) => unit);
-    } else {
-      return unitOfWork.run(
-        (Transaction txn) => TaskEither.tryCatch(() async {
-          logger?.info('Transaction started for deleteTag');
-          final deleteResult = await tagDatasource
-              .deleteTag(tag.id, txn: txn)
-              .run();
-          return deleteResult.fold((l) => throw l, (_) => unit);
-        }, (e, _) => e as Failure),
-      );
-    }
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
+    return effectiveTxn.run((UnitOfWork<Object?> t) {
+      logger?.info('Transaction started for deleteTag');
+      return tagDatasource.deleteTag(tag.id, txn: t.transactionHandle as sembast.DatabaseClient?).map((_) => unit);
+    });
   }
 
   /// Retrieves a tag by handle.
@@ -133,7 +113,7 @@ class TagRepositoryImpl with Loggable implements TagRepository {
   }
 
   @override
-  TaskEither<Failure, Unit> deleteAll({UnitOfWork? txn}) {
+  TaskEither<Failure, Unit> deleteAll({UnitOfWork<Object?>? txn}) {
     throw UnimplementedError();
   }
 }

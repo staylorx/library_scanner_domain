@@ -1,4 +1,6 @@
 import 'package:id_logging/id_logging.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:domain_entities/domain_entities.dart';
 
 import 'package:sembast/sembast_io.dart';
 import 'package:sembast/sembast_memory.dart';
@@ -46,5 +48,16 @@ class SembastDatabase with Loggable {
       await db.close();
       _database = null;
     }
+  }
+
+  /// Clears all data from all stores.
+  TaskEither<Failure, Unit> clearAll() {
+    return TaskEither.tryCatch(() async {
+      final db = await database;
+      await booksStore.delete(db);
+      await authorsStore.delete(db);
+      await tagsStore.delete(db);
+      return unit;
+    }, (error, stackTrace) => DatabaseFailure('Failed to clear database: $error'));
   }
 }

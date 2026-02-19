@@ -1,6 +1,5 @@
 import 'package:benchmark_harness/benchmark_harness.dart';
 import 'package:datastore_sembast/datastore_sembast.dart';
-import 'package:datastore_sembast/src/sembast/datasources/sembast_database.dart';
 import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
 import 'package:fpdart/fpdart.dart';
@@ -24,11 +23,11 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
       'benchmark_uow_${DateTime.now().millisecondsSinceEpoch}',
     );
     database = SembastDatabase(testDbPath: dbPath);
-    unitOfWork = SembastUnitOfWork(dbService: database);
+    unitOfWork = SembastUnitOfWork(sembastDb: database);
 
-    final authorDatasource = AuthorDatasource(dbService: database);
-    final bookDatasource = BookDatasource(dbService: database);
-    final tagDatasource = TagDatasource(dbService: database);
+    final authorDatasource = AuthorDatasource(sembastDb: database);
+    final bookDatasource = BookDatasource(sembastDb: database);
+    final tagDatasource = TagDatasource(sembastDb: database);
     final authorIdRegistry = AuthorIdRegistryServiceImpl();
     final bookIdRegistry = BookIdRegistryServiceImpl();
 
@@ -53,7 +52,7 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Big test: Add 1000 books with authors and tags in one transaction
-    unitOfWork.run<String>((txn) {
+    unitOfWork.run<String>((UnitOfWork<Object?> txn) {
       return TaskEither.tryCatch(() async {
         final uuid = Uuid();
         for (var i = 0; i < 500; i++) {

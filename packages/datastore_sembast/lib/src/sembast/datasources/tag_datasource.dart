@@ -1,11 +1,9 @@
 import 'package:datastore_sembast/src/models/tag_model.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
 import 'package:sembast/sembast.dart' as sembast;
-
 import 'sembast_database.dart';
-import '../unit_of_work/sembast_transaction.dart';
+
 
 class TagDatasource {
   final SembastDatabase _sembastDb;
@@ -58,30 +56,29 @@ class TagDatasource {
       );
 
   /// Retrieves a tag by ID.
-  TaskEither<Failure, TagModel?> getTagById(String id) =>
-      TaskEither.tryCatch(
-        () async {
-          final db = await _sembastDb.database;
-          final record = await _sembastDb.tagsStore.record(id).get(db);
-          return record != null ? TagModel.fromMap(map: record) : null;
-        },
-        (error, stackTrace) => DatabaseFailure('Failed to get tag by id: $error'),
-      );
+  TaskEither<Failure, TagModel?> getTagById(String id) => TaskEither.tryCatch(
+    () async {
+      final db = await _sembastDb.database;
+      final record = await _sembastDb.tagsStore.record(id).get(db);
+      return record != null ? TagModel.fromMap(map: record) : null;
+    },
+    (error, stackTrace) => DatabaseFailure('Failed to get tag by id: $error'),
+  );
 
   /// Saves a tag to the store.
-  TaskEither<Failure, Unit> saveTag(TagModel tag, {Transaction? txn}) {
+  TaskEither<Failure, Unit> saveTag(TagModel tag, {sembast.DatabaseClient? txn}) {
     return TaskEither.tryCatch(() async {
       final data = tag.toMap();
-      final db = txn?.db as sembast.Database? ?? await _sembastDb.database;
+      final db = txn ?? await _sembastDb.database;
       await _sembastDb.tagsStore.record(tag.id).put(db, data);
       return unit;
     }, (error, stackTrace) => DatabaseFailure('Failed to save tag: $error'));
   }
 
   /// Deletes a tag by ID.
-  TaskEither<Failure, Unit> deleteTag(String id, {Transaction? txn}) {
+  TaskEither<Failure, Unit> deleteTag(String id, {sembast.DatabaseClient? txn}) {
     return TaskEither.tryCatch(() async {
-      final db = txn?.db as sembast.Database? ?? await _sembastDb.database;
+      final db = txn ?? await _sembastDb.database;
       await _sembastDb.tagsStore.record(id).delete(db);
       return unit;
     }, (error, stackTrace) => DatabaseFailure('Failed to delete tag: $error'));
@@ -91,7 +88,7 @@ class TagDatasource {
   TaskEither<Failure, Unit> addBookToTags(
     String bookId,
     List<String> tagNames, {
-    Transaction? txn,
+    sembast.DatabaseClient? txn,
   }) => TaskEither.traverseList(
     tagNames,
     (tagName) => _addBookToTag(bookId, tagName, txn),
@@ -100,7 +97,7 @@ class TagDatasource {
   TaskEither<Failure, Unit> _addBookToTag(
     String bookId,
     String tagName,
-    Transaction? txn,
+    sembast.DatabaseClient? txn,
   ) => getTagByName(tagName).flatMap((tag) {
     if (tag == null) return TaskEither.right(unit);
     final updatedBookIds = List<String>.from(tag.bookIds);
@@ -122,7 +119,7 @@ class TagDatasource {
   TaskEither<Failure, Unit> removeBookFromTags(
     String bookId,
     List<String> tagNames, {
-    Transaction? txn,
+    sembast.DatabaseClient? txn,
   }) => TaskEither.traverseList(
     tagNames,
     (tagName) => _removeBookFromTag(bookId, tagName, txn),
@@ -131,7 +128,7 @@ class TagDatasource {
   TaskEither<Failure, Unit> _removeBookFromTag(
     String bookId,
     String tagName,
-    Transaction? txn,
+    sembast.DatabaseClient? txn,
   ) => getTagByName(tagName).flatMap((tag) {
     if (tag == null) return TaskEither.right(unit);
     final updatedBookIds = List<String>.from(tag.bookIds)..remove(bookId);
@@ -148,11 +145,11 @@ class TagDatasource {
 
   /// Executes a transaction with the given operation.
   TaskEither<Failure, Unit> transaction(
-    Future<Unit> Function(dynamic txn) operation,
+    Future<Unit> Function(sembast.DatabaseClient txn) operation,
   ) => TaskEither.tryCatch(() async {
     final db = await _sembastDb.database;
     await db.transaction((txn) async {
-      await operation(SembastTransaction(txn));
+      await operation(txn);
     });
     return unit;
   }, (error, stackTrace) => DatabaseFailure('Transaction failed: $error'));

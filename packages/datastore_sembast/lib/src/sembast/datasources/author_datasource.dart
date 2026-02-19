@@ -1,12 +1,11 @@
 import 'package:datastore_sembast/src/models/author_model.dart';
 import 'package:datastore_sembast/src/models/book_model.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
 import 'package:sembast/sembast.dart' as sembast;
 
 import 'sembast_database.dart';
-import '../unit_of_work/sembast_transaction.dart';
+
 
 class AuthorDatasource {
   final SembastDatabase _sembastDb;
@@ -82,19 +81,19 @@ class AuthorDatasource {
   }
 
   /// Saves an author to the store.
-  TaskEither<Failure, Unit> saveAuthor(AuthorModel author, {Transaction? txn}) {
+  TaskEither<Failure, Unit> saveAuthor(AuthorModel author, {sembast.DatabaseClient? txn}) {
     return TaskEither.tryCatch(() async {
       final data = author.toMap();
-      final db = txn?.db as sembast.Database? ?? await _sembastDb.database;
+      final db = txn ?? await _sembastDb.database;
       await _sembastDb.authorsStore.record(author.id).put(db, data);
       return unit;
     }, (error, stackTrace) => DatabaseFailure('Failed to save author: $error'));
   }
 
   /// Deletes an author by ID.
-  TaskEither<Failure, Unit> deleteAuthor(String id, {Transaction? txn}) {
+  TaskEither<Failure, Unit> deleteAuthor(String id, {sembast.DatabaseClient? txn}) {
     return TaskEither.tryCatch(() async {
-      final db = txn?.db as sembast.Database? ?? await _sembastDb.database;
+      final db = txn ?? await _sembastDb.database;
       await _sembastDb.authorsStore.record(id).delete(db);
       return unit;
     }, (error, stackTrace) => DatabaseFailure('Failed to delete author: $error'));
@@ -103,10 +102,10 @@ class AuthorDatasource {
   /// Deletes an author with cascade deletion of associated books.
   TaskEither<Failure, Unit> deleteAuthorWithCascade(
     String authorId, {
-    Transaction? txn,
+    sembast.DatabaseClient? txn,
   }) {
     return TaskEither.tryCatch(() async {
-      final db = txn?.db as sembast.Database? ?? await _sembastDb.database;
+      final db = txn ?? await _sembastDb.database;
       final authorRecord = await _sembastDb.authorsStore.record(authorId).get(db);
       if (authorRecord == null) {
         throw ServiceFailure('Author not found');
@@ -128,12 +127,12 @@ class AuthorDatasource {
 
   /// Executes a transaction with the given operation.
   TaskEither<Failure, Unit> transaction(
-    Future<Unit> Function(dynamic txn) operation,
+    Future<Unit> Function(sembast.DatabaseClient txn) operation,
   ) {
     return TaskEither.tryCatch(() async {
       final db = await _sembastDb.database;
       await db.transaction((txn) async {
-        await operation(SembastTransaction(txn));
+        await operation(txn);
       });
       return unit;
     }, (error, stackTrace) => DatabaseFailure('Transaction failed: $error'));

@@ -3,7 +3,7 @@ import 'package:domain_entities/domain_entities.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
-
+import 'package:sembast/sembast.dart' as sembast;
 import '../sembast/datasources/book_datasource.dart';
 import '../sembast/datasources/author_datasource.dart';
 import '../sembast/datasources/tag_datasource.dart';
@@ -15,7 +15,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   final AuthorDatasource authorDatasource;
   final TagDatasource tagDatasource;
   final BookIdRegistryService idRegistryService;
-  final UnitOfWork unitOfWork;
+  final UnitOfWork<Object?> unitOfWork;
 
   /// Creates a BookRepositoryImpl instance.
   BookRepositoryImpl({
@@ -109,7 +109,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Creates a new book in the database.
   @override
-  TaskEither<Failure, Book> create({required Book item, UnitOfWork? txn}) {
+  TaskEither<Failure, Book> create({required Book item, UnitOfWork<Object?>? txn}) {
     final book = item;
     logger?.info(
       'Entering createBook with book: ${book.title}, id: ${book.id}',
@@ -118,10 +118,10 @@ class BookRepositoryImpl with Loggable implements BookRepository {
         ? book
         : book.copyWith(id: const Uuid().v4());
     final model = BookModel.fromEntity(bookWithId);
-    final effectiveTxn = txn ?? unitOfWork;
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
     return effectiveTxn.run(
-      (Transaction t) => bookDatasource
-          .saveBook(model, txn: t)
+      (UnitOfWork<Object?> t) => bookDatasource
+          .saveBook(model, txn: t.transactionHandle as sembast.DatabaseClient?)
           .map((_) => unit)
           .flatMap(
             (_) => idRegistryService.registerBookIdPairs(
@@ -133,7 +133,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
                 .addBookToTags(
                   bookWithId.id,
                   book.tags.map((t) => t.name).toList(),
-                  txn: t,
+                   txn: t.transactionHandle as sembast.DatabaseClient?,
                 )
                 .map((_) => bookWithId),
           ),
@@ -142,47 +142,29 @@ class BookRepositoryImpl with Loggable implements BookRepository {
 
   /// Updates an existing book in the database and returns the updated book.
   @override
-  TaskEither<Failure, Book> update({required Book item, UnitOfWork? txn}) {
+  TaskEither<Failure, Book> update({required Book item, UnitOfWork<Object?>? txn}) {
     final book = item;
     logger?.info('Entering updateBook with book: ${book.title}');
     final model = BookModel.fromEntity(book);
-    final effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (Transaction t) => TaskEither.tryCatch(() async {
-        final either = await bookDatasource.saveBook(model, txn: t).run();
-        return either.fold((l) => throw l, (_) => book);
-      }, (e, _) => e as Failure),
-    );
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
+    return effectiveTxn.run((UnitOfWork<Object?> t) =>
+        bookDatasource.saveBook(model, txn: t.transactionHandle as sembast.DatabaseClient?).map((_) => book));
   }
 
   /// Deletes a book from the database.
   @override
-  TaskEither<Failure, Unit> deleteById({required Book item, UnitOfWork? txn}) {
+  TaskEither<Failure, Unit> deleteById({required Book item, UnitOfWork<Object?>? txn}) {
     final book = item;
     logger?.info('Entering deleteBook with book: ${book.title}');
 
-    final effectiveTxn = txn ?? unitOfWork;
-    return effectiveTxn.run(
-      (Transaction t) => idRegistryService
-          .unregisterBookIdPairs(BookIdPairs(pairs: book.businessIds))
-          .flatMap(
-            (_) => TaskEither.tryCatch(() async {
-              final either = await bookDatasource
-                  .deleteBook(book.id, txn: t)
-                  .run();
-              return either.fold((l) => throw l, (_) => unit);
-            }, (e, _) => e as Failure),
-          )
-          .flatMap(
-            (_) => TaskEither.tryCatch(() async {
-              final tagNames = book.tags.map((t) => t.name).toList();
-              final either = await tagDatasource
-                  .removeBookFromTags(book.id, tagNames, txn: t)
-                  .run();
-              return either.fold((l) => throw l, (_) => unit);
-            }, (e, _) => e as Failure),
-          ),
-    );
+    final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
+    return effectiveTxn.run((UnitOfWork<Object?> t) => idRegistryService
+        .unregisterBookIdPairs(BookIdPairs(pairs: book.businessIds))
+        .flatMap((_) => bookDatasource.deleteBook(book.id, txn: t.transactionHandle as sembast.DatabaseClient?))
+        .flatMap((_) {
+          final tagNames = book.tags.map((t) => t.name).toList();
+          return tagDatasource.removeBookFromTags(book.id, tagNames, txn: t.transactionHandle as sembast.DatabaseClient?);
+        }));
   }
 
   /// Retrieves books by a specific author.
@@ -241,7 +223,7 @@ class BookRepositoryImpl with Loggable implements BookRepository {
   }
 
   @override
-  TaskEither<Failure, Unit> deleteAll({UnitOfWork? txn}) {
+  TaskEither<Failure, Unit> deleteAll({UnitOfWork<Object?>? txn}) {
     throw UnimplementedError();
   }
 }

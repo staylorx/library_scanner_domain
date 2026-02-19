@@ -19,14 +19,14 @@ abstract class BookRepository implements BasicCrudContract<Book> {
   TaskEither<Failure, List<Book>> getBooksByTag({required Tag tag});
 
   @override
-  TaskEither<Failure, Book> create({required Book item, UnitOfWork? txn});
+  TaskEither<Failure, Book> create({required Book item, UnitOfWork<Object?>? txn});
 
   @override
-  TaskEither<Failure, Book> update({required Book item, UnitOfWork? txn});
+  TaskEither<Failure, Book> update({required Book item, UnitOfWork<Object?>? txn});
 
   @override
-  TaskEither<Failure, Unit> deleteById({required Book item, UnitOfWork? txn});
+  TaskEither<Failure, Unit> deleteById({required Book item, UnitOfWork<Object?>? txn});
 
   @override
-  TaskEither<Failure, Unit> deleteAll({UnitOfWork? txn});
+  TaskEither<Failure, Unit> deleteAll({UnitOfWork<Object?>? txn});
 }

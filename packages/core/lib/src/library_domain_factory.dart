@@ -1,5 +1,6 @@
 import 'package:datastore_sembast/datastore_sembast.dart';
 import 'package:domain_contracts/domain_contracts.dart';
+import 'package:domain_entities/domain_entities.dart';
 import 'package:domain_usecases/domain_usecase.dart';
 import 'package:dataservice_filtering/dataservice_filtering.dart';
 import 'package:datastore_files/datastore_files.dart';
@@ -16,7 +17,7 @@ class LibraryDomainFactory {
   /// [databaseService] - External database service implementation
   /// [unitOfWork] - External unit of work implementation for transaction management
   static LibraryDomain create({
-    required UnitOfWork unitOfWork,
+    required UnitOfWork<Object?> unitOfWork,
     LibraryFileLoader? fileLoader,
     LibraryFileWriter? fileWriter,
   }) {

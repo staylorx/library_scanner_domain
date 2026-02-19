@@ -1,15 +1,14 @@
 import 'package:test/test.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:library_scanner_domain/src/data/sembast/unit_of_work/sembast_unit_of_work.dart';
-import 'package:library_scanner_domain/src/data/sembast/datasources/sembast_database.dart';
-import 'package:library_scanner_domain/src/data/sembast/datasources/tag_datasource.dart';
-import 'package:library_scanner_domain/src/data/core/models/tag_model.dart';
-import 'package:library_scanner_domain/library_scanner_domain.dart';
+import 'package:datastore_sembast/datastore_sembast.dart';
+import 'package:datastore_sembast/src/models/tag_model.dart';
+import 'package:domain_entities/domain_entities.dart';
+import 'package:sembast/sembast.dart' as sembast;
 import 'package:path/path.dart' as p;
 
 void main() {
   group('Unit of Work Integration Tests', () {
-    late DatabaseService database;
+    late SembastDatabase database;
     late TagDatasource tagDatasource;
     late SembastUnitOfWork unitOfWork;
 
@@ -17,8 +16,8 @@ void main() {
       database = SembastDatabase(
         testDbPath: p.join('build', 'uow_integration_test'),
       );
-      tagDatasource = TagDatasource(dbService: database);
-      unitOfWork = SembastUnitOfWork(dbService: database);
+      tagDatasource = TagDatasource(sembastDb: database);
+      unitOfWork = SembastUnitOfWork(sembastDb: database);
       await database.clearAll().run();
     });
 
@@ -41,7 +40,7 @@ void main() {
       );
 
       // Run transaction that saves a tag
-      final result = await unitOfWork.run((txn) {
+      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
         return TaskEither.tryCatch(() async {
           final tagModel = TagModel(
             id: 'test-tag',
@@ -50,7 +49,7 @@ void main() {
             bookIds: [],
           );
           final saveResult = await tagDatasource
-              .saveTag(tagModel, txn: txn)
+              .saveTag(tagModel, txn: txn.transactionHandle as sembast.DatabaseClient?)
               .run();
           expect(saveResult.isRight(), true);
           return 'success';
@@ -79,7 +78,7 @@ void main() {
       );
 
       // Run transaction that saves tag but then fails
-      final result = await unitOfWork.run((txn) {
+      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
         return TaskEither.tryCatch(() async {
           final tagModel = TagModel(
             id: 'test-tag',
@@ -88,7 +87,7 @@ void main() {
             bookIds: [],
           );
           final saveResult = await tagDatasource
-              .saveTag(tagModel, txn: txn)
+              .saveTag(tagModel, txn: txn.transactionHandle as sembast.DatabaseClient?)
               .run();
           expect(saveResult.isRight(), true);
 
@@ -109,7 +108,7 @@ void main() {
     });
 
     test('Multiple operations in transaction are atomic', () async {
-      final result = await unitOfWork.run((txn) {
+      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
         return TaskEither.tryCatch(() async {
           // Save first tag
           final tagModel1 = TagModel(
@@ -118,7 +117,7 @@ void main() {
             slug: 'tag-1',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel1, txn: txn).run();
+          await tagDatasource.saveTag(tagModel1, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
 
           // Save second tag
           final tagModel2 = TagModel(
@@ -127,7 +126,7 @@ void main() {
             slug: 'tag-2',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel2, txn: txn).run();
+          await tagDatasource.saveTag(tagModel2, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
 
           return 'success';
         }, (error, stack) => ServiceFailure(error.toString()));
@@ -145,7 +144,7 @@ void main() {
     });
 
     test('Transaction failure rolls back multiple operations', () async {
-      final result = await unitOfWork.run((txn) {
+      final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
         return TaskEither.tryCatch(() async {
           // Save first tag
           final tagModel1 = TagModel(
@@ -154,7 +153,7 @@ void main() {
             slug: 'tag-1',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel1, txn: txn).run();
+          await tagDatasource.saveTag(tagModel1, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
 
           // Save second tag
           final tagModel2 = TagModel(
@@ -163,7 +162,7 @@ void main() {
             slug: 'tag-2',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel2, txn: txn).run();
+          await tagDatasource.saveTag(tagModel2, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
 
           // Fail after both saves
           throw Exception('Transaction failure');

@@ -1,7 +1,5 @@
 import 'package:datastore_sembast/datastore_sembast.dart';
-import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_entities/domain_entities.dart';
-import 'package:sembast/sembast_io.dart';
 import 'package:test/test.dart';
 import 'package:fpdart/fpdart.dart';
 
@@ -18,8 +16,8 @@ void main() {
     group('run', () {
       test('returns Right with result on successful operation', () async {
         const expectedResult = 'test result';
-        final result = await unitOfWork.run((Transaction txn) {
-          expect(txn, isA<SembastTransaction>());
+        final result = await unitOfWork.run((UnitOfWork<Object?> txn) {
+          expect(txn, isA<SembastTransactionUnitOfWork>());
           return TaskEither.right(expectedResult);
         }).run();
         expect(result, Right(expectedResult));
@@ -28,7 +26,7 @@ void main() {
       test('returns Left with failure when operation fails', () async {
         final expectedFailure = DatabaseFailure('Operation failed');
         final result = await unitOfWork
-            .run((Transaction txn) => TaskEither.left(expectedFailure))
+            .run((UnitOfWork<Object?> txn) => TaskEither.left(expectedFailure))
             .run();
         expect(result, Left(expectedFailure));
       });
@@ -37,7 +35,7 @@ void main() {
         final expectedFailure = ServiceFailure('Operation failed');
         final result = await unitOfWork
             .run(
-              (Transaction txn) => TaskEither(() async {
+              (UnitOfWork<Object?> txn) => TaskEither(() async {
                 throw expectedFailure;
               }),
             )
