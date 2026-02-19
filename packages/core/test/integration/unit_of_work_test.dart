@@ -3,7 +3,6 @@ import 'package:fpdart/fpdart.dart';
 import 'package:datastore_sembast/datastore_sembast.dart';
 import 'package:datastore_sembast/src/models/tag_model.dart';
 import 'package:domain_entities/domain_entities.dart';
-import 'package:sembast/sembast.dart' as sembast;
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -49,7 +48,10 @@ void main() {
             bookIds: [],
           );
           final saveResult = await tagDatasource
-              .saveTag(tagModel, txn: txn.transactionHandle as sembast.DatabaseClient?)
+              .saveTag(
+                tagModel,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
               .run();
           expect(saveResult.isRight(), true);
           return 'success';
@@ -87,7 +89,10 @@ void main() {
             bookIds: [],
           );
           final saveResult = await tagDatasource
-              .saveTag(tagModel, txn: txn.transactionHandle as sembast.DatabaseClient?)
+              .saveTag(
+                tagModel,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
               .run();
           expect(saveResult.isRight(), true);
 
@@ -117,7 +122,12 @@ void main() {
             slug: 'tag-1',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel1, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
+          await tagDatasource
+              .saveTag(
+                tagModel1,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
+              .run();
 
           // Save second tag
           final tagModel2 = TagModel(
@@ -126,7 +136,12 @@ void main() {
             slug: 'tag-2',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel2, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
+          await tagDatasource
+              .saveTag(
+                tagModel2,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
+              .run();
 
           return 'success';
         }, (error, stack) => ServiceFailure(error.toString()));
@@ -153,7 +168,12 @@ void main() {
             slug: 'tag-1',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel1, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
+          await tagDatasource
+              .saveTag(
+                tagModel1,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
+              .run();
 
           // Save second tag
           final tagModel2 = TagModel(
@@ -162,7 +182,12 @@ void main() {
             slug: 'tag-2',
             bookIds: [],
           );
-          await tagDatasource.saveTag(tagModel2, txn: txn.transactionHandle as sembast.DatabaseClient?).run();
+          await tagDatasource
+              .saveTag(
+                tagModel2,
+                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
+              )
+              .run();
 
           // Fail after both saves
           throw Exception('Transaction failure');

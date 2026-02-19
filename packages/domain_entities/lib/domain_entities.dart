@@ -21,3 +21,4 @@ export 'src/validation_utils.dart';
 
 export 'src/utils/failure.dart';
 export 'src/utils/task_either.dart';
+export 'src/utils/transaction_handle.dart';

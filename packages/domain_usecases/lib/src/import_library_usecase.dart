@@ -407,7 +407,7 @@ class ImportLibraryUsecase with Loggable {
     logger?.info('Starting database write operations...');
 
     return dataAccess.unitOfWork.run(
-      (UnitOfWork<Object?> txn) => TaskEither.tryCatch(
+      (UnitOfWork<TransactionHandle> txn) => TaskEither.tryCatch(
         () async {
           // Save authors
           for (final author in authors) {

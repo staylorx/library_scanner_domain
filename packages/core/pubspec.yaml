@@ -19,7 +19,6 @@ dependencies:
   id_logging:
     git: https://github.com/staylorx/id_logging.git
   slugify_string: ^2.0.0
-  melos: ^7.4.0
 
   domain_contracts: any
   domain_usecases: any
@@ -35,4 +34,3 @@ dev_dependencies:
   matcher: ^0.12.18
   benchmark_harness: ^2.3.0
   path: ^1.9.1
-  library_scanner_domain: any

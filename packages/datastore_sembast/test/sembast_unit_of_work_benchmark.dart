@@ -52,7 +52,7 @@ class SembastUnitOfWorkBenchmark extends BenchmarkBase {
   @override
   void run() {
     // Big test: Add 1000 books with authors and tags in one transaction
-    unitOfWork.run<String>((UnitOfWork<Object?> txn) {
+    unitOfWork.run<String>((UnitOfWork<TransactionHandle> txn) {
       return TaskEither.tryCatch(() async {
         final uuid = Uuid();
         for (var i = 0; i < 500; i++) {

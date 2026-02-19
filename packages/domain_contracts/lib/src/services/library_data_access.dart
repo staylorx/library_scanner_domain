@@ -13,7 +13,7 @@ class LibraryDataAccess {
   final TagRepository tagRepository;
   final AuthorIdRegistryService authorIdRegistryService;
   final BookIdRegistryService bookIdRegistryService;
-  final UnitOfWork<Object?> unitOfWork;
+  final UnitOfWork<TransactionHandle> unitOfWork;
 
   const LibraryDataAccess({
     required this.authorRepository,

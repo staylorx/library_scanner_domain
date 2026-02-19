@@ -3,24 +3,26 @@ import 'package:domain_entities/domain_entities.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
-import 'package:sembast/sembast.dart' as sembast;
-
 import '../sembast/datasources/author_datasource.dart';
 import '../models/author_model.dart';
+import 'base_repository.dart';
 
 /// Implementation of author repository using Sembast.
-class AuthorRepositoryImpl with Loggable implements AuthorRepository {
+class AuthorRepositoryImpl extends SembastBaseRepository
+    with Loggable
+    implements AuthorRepository {
   final AuthorDatasource authorDatasource;
-  final UnitOfWork<Object?> unitOfWork;
   final AuthorIdRegistryService idRegistryService;
 
   /// Creates an AuthorRepositoryImpl instance.
   AuthorRepositoryImpl({
     required this.authorDatasource,
-    required this.unitOfWork,
+    required UnitOfWork<TransactionHandle> unitOfWork,
     required this.idRegistryService,
     Logger? logger,
-  });
+  }) : super(unitOfWork) {
+    this.logger = logger;
+  }
 
   /// Retrieves all authors from the database.
   @override
@@ -71,7 +73,10 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
 
   /// Creates a new author in the database.
   @override
-  TaskEither<Failure, Author> create({required Author item, UnitOfWork<Object?>? txn}) {
+  TaskEither<Failure, Author> create({
+    required Author item,
+    UnitOfWork<TransactionHandle>? txn,
+  }) {
     final author = item;
     logger?.info('Entering createAuthor with author: ${author.name}');
     final authorWithId = author.id.isNotEmpty
@@ -81,23 +86,25 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
     final idPairs = AuthorIdPairs(pairs: authorWithId.businessIds);
     final registerResult = idRegistryService.registerAuthorIdPairs(idPairs);
     return registerResult.flatMap((_) {
-      final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
-      return effectiveTxn.run((UnitOfWork<Object?> t) {
-        logger?.info('Transaction started for createAuthor');
-        return authorDatasource.saveAuthor(model, txn: t.transactionHandle as sembast.DatabaseClient?).map(
-          (_) {
-            logger?.info('Transaction operation completed for createAuthor');
-            return authorWithId;
-          },
-        );
-      });
+      logger?.info('Transaction started for createAuthor');
+      return runInTransaction(
+        txn: txn,
+        operation: (dbClient) =>
+            authorDatasource.saveAuthor(model, txn: dbClient).map((_) {
+              logger?.info('Transaction operation completed for createAuthor');
+              return authorWithId;
+            }),
+      );
     });
   }
 
   /// Updates an existing author in the database.
   /// Updates an existing author in the database.
   @override
-  TaskEither<Failure, Author> update({required Author item, UnitOfWork<Object?>? txn}) {
+  TaskEither<Failure, Author> update({
+    required Author item,
+    UnitOfWork<TransactionHandle>? txn,
+  }) {
     final author = item;
     logger?.info(
       'Entering updateAuthor with id: ${author.id} and author: ${author.name}',
@@ -114,14 +121,15 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
         );
         return registerResult.flatMap((_) {
           final model = AuthorModel.fromEntity(author);
-          final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
-          return effectiveTxn.run((UnitOfWork<Object?> t) {
-            logger?.info('Transaction started for updateAuthor');
-            return authorDatasource.saveAuthor(model, txn: t.transactionHandle as sembast.DatabaseClient?).map((_) {
-              logger?.info('Update author completed');
-              return author;
-            });
-          });
+          logger?.info('Transaction started for updateAuthor');
+          return runInTransaction(
+            txn: txn,
+            operation: (dbClient) =>
+                authorDatasource.saveAuthor(model, txn: dbClient).map((_) {
+                  logger?.info('Update author completed');
+                  return author;
+                }),
+          );
         });
       });
     });
@@ -132,7 +140,7 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   @override
   TaskEither<Failure, Unit> deleteById({
     required Author item,
-    UnitOfWork<Object?>? txn,
+    UnitOfWork<TransactionHandle>? txn,
   }) {
     final author = item;
     logger?.info('Entering deleteAuthor with id: ${author.id}');
@@ -143,16 +151,16 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
         idPairs,
       );
       return unregisterResult.flatMap((_) {
-        final UnitOfWork<Object?> effectiveTxn = txn ?? unitOfWork;
-        return effectiveTxn.run((UnitOfWork<Object?> t) {
-          logger?.info('Transaction started for deleteAuthor');
-          return authorDatasource
-              .deleteAuthorWithCascade(author.id, txn: t.transactionHandle as sembast.DatabaseClient?)
+        logger?.info('Transaction started for deleteAuthor');
+        return runInTransaction(
+          txn: txn,
+          operation: (dbClient) => authorDatasource
+              .deleteAuthorWithCascade(author.id, txn: dbClient)
               .map((_) {
                 logger?.info('Delete author completed successfully');
                 return unit;
-              });
-        });
+              }),
+        );
       });
     });
   }
@@ -193,13 +201,13 @@ class AuthorRepositoryImpl with Loggable implements AuthorRepository {
   }
 
   @override
-  TaskEither<Failure, Unit> deleteAll({UnitOfWork<Object?>? txn}) {
+  TaskEither<Failure, Unit> deleteAll({UnitOfWork<TransactionHandle>? txn}) {
     throw UnimplementedError();
   }
 
   TaskEither<Failure, Author> updateAuthor({
     required Author author,
-    UnitOfWork<Object?>? txn,
+    UnitOfWork<TransactionHandle>? txn,
   }) {
     return update(item: author, txn: txn);
   }

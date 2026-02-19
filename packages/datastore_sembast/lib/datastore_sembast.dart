@@ -6,7 +6,7 @@ export 'src/sembast/datasources/author_datasource.dart';
 export 'src/sembast/datasources/book_datasource.dart';
 export 'src/sembast/datasources/tag_datasource.dart';
 export 'src/sembast/unit_of_work/sembast_unit_of_work.dart';
-
+export 'src/sembast/unit_of_work/sembast_transaction_handle.dart';
 
 export 'src/repositories/author_repository_impl.dart';
 export 'src/repositories/book_repository_impl.dart';
