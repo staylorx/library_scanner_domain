@@ -14,3 +14,5 @@ export 'src/repositories/tag_repository_impl.dart';
 
 export 'src/id_registry/services/author_id_registry_service.dart';
 export 'src/id_registry/services/book_id_registry_service.dart';
+
+export 'src/hive_domain_factory.dart';

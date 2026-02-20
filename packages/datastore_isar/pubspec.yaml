@@ -17,6 +17,10 @@ dependencies:
 
   domain_contracts: any
   domain_entities: any
+  domain_usecases: any
+  library_scanner_core: any
+  dataservice_filtering: any
+  datastore_files: any
 
 dev_dependencies:
   lints: ^6.0.0

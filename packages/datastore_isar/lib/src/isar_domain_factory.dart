@@ -1,50 +1,43 @@
-import 'package:datastore_hive/datastore_hive.dart';
 import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_usecases/domain_usecase.dart';
 import 'package:dataservice_filtering/dataservice_filtering.dart';
 import 'package:datastore_files/datastore_files.dart';
 import 'package:library_scanner_core/library_scanner_domain.dart';
 
-/// Factory for creating a [LibraryDomain] instance with all Hive dependencies
-/// wired up.
-///
-/// Callers provide a [HiveUnitOfWork] (and optionally file I/O services).
-/// All internal datasources, repositories and usecases are created here.
-///
-/// ## No domain changes required
-///
-/// This factory is proof that the clean architecture is truly decoupled.
-/// The domain layer (`domain_entities`, `domain_contracts`, `domain_usecases`)
-/// is identical for both Sembast and Hive backends — only this factory and
-/// the `datastore_hive` package differ.
-class HiveDomainFactory {
-  /// Creates a fully wired [LibraryDomain] backed by a Hive database.
-  ///
-  /// [unitOfWork] — the Hive unit of work that owns the database connection.
-  /// [fileLoader] / [fileWriter] — optional overrides for file I/O (useful in tests).
-  static LibraryDomain create({
-    required HiveUnitOfWork unitOfWork,
-    LibraryFileLoader? fileLoader,
-    LibraryFileWriter? fileWriter,
-  }) {
-    // The HiveDatabase is not directly exposed by HiveUnitOfWork, so callers
-    // must pass the HiveDatabase separately when constructing datasources.
-    // To keep the factory API simple (mirrors LibraryDomainFactory), callers
-    // can pass a HiveDatabase via a wrapper or construct the domain objects
-    // directly. Here we require the caller to supply the HiveDatabase.
-    throw UnimplementedError(
-      'Use HiveDomainFactory.createWithDatabase(...) instead.',
-    );
-  }
+import 'isar/database/isar_database.dart';
+import 'isar/datasources/author_datasource.dart';
+import 'isar/datasources/book_datasource.dart';
+import 'isar/datasources/tag_datasource.dart';
+import 'isar/unit_of_work/isar_unit_of_work.dart';
+import 'id_registry/services/author_id_registry_service.dart';
+import 'id_registry/services/book_id_registry_service.dart';
+import 'repositories/author_repository_impl.dart';
+import 'repositories/book_repository_impl.dart';
+import 'repositories/tag_repository_impl.dart';
 
-  /// Creates a fully wired [LibraryDomain] backed by a [HiveDatabase].
+/// Factory for creating a [LibraryDomain] instance backed by Isar.
+///
+/// Add `datastore_isar` to your `pubspec.yaml` dependencies alongside
+/// `library_scanner_core`. No other datastore package is required.
+///
+/// Isar provides full ACID write transactions — the architectural proof that
+/// the domain layer requires zero changes to support a new backend.
+///
+/// ```dart
+/// final domain = IsarDomainFactory.createWithDatabase(
+///   isarDb: myIsarDatabase,
+///   unitOfWork: IsarUnitOfWork(isarDb: myIsarDatabase),
+/// );
+/// ```
+class IsarDomainFactory {
+  /// Creates a fully wired [LibraryDomain] backed by an [IsarDatabase].
   ///
-  /// [hiveDb]     — the open (or lazy-open) Hive database instance.
-  /// [unitOfWork] — the Hive unit of work (shares the same backend as [hiveDb]).
+  /// [isarDb]     — the open (or lazy-open) Isar database instance.
+  /// [unitOfWork] — the Isar unit of work (shares the same backend as [isarDb]).
   /// [fileLoader] / [fileWriter] — optional overrides for file I/O.
   static LibraryDomain createWithDatabase({
-    required HiveDatabase hiveDb,
-    required HiveUnitOfWork unitOfWork,
+    required IsarDatabase isarDb,
+    required IsarUnitOfWork unitOfWork,
     LibraryFileLoader? fileLoader,
     LibraryFileWriter? fileWriter,
   }) {
@@ -53,9 +46,9 @@ class HiveDomainFactory {
     final bookIdRegistryService = BookIdRegistryServiceImpl();
 
     // Datasources
-    final authorDatasource = AuthorDatasource(hiveDb: hiveDb);
-    final bookDatasource = BookDatasource(hiveDb: hiveDb);
-    final tagDatasource = TagDatasource(hiveDb: hiveDb);
+    final authorDatasource = AuthorDatasource(isarDb: isarDb);
+    final bookDatasource = BookDatasource(isarDb: isarDb);
+    final tagDatasource = TagDatasource(isarDb: isarDb);
 
     // Repositories
     final authorRepository = AuthorRepositoryImpl(
@@ -63,7 +56,6 @@ class HiveDomainFactory {
       unitOfWork: unitOfWork,
       idRegistryService: authorIdRegistryService,
     );
-
     final bookRepository = BookRepositoryImpl(
       bookDatasource: bookDatasource,
       authorDatasource: authorDatasource,
@@ -71,7 +63,6 @@ class HiveDomainFactory {
       idRegistryService: bookIdRegistryService,
       unitOfWork: unitOfWork,
     );
-
     final tagRepository = TagRepositoryImpl(
       tagDatasource: tagDatasource,
       unitOfWork: unitOfWork,
@@ -82,7 +73,6 @@ class HiveDomainFactory {
     final authorSortingService = AuthorSortingServiceImpl();
     final bookSortingService = BookSortingServiceImpl();
     final bookFilteringService = BookFilteringServiceImpl();
-
     final bookValidationService = BookValidationServiceImpl(
       idRegistryService: bookIdRegistryService,
     );
@@ -106,118 +96,85 @@ class HiveDomainFactory {
       authorRepository: authorRepository,
       idRegistryService: authorIdRegistryService,
     );
-
     final addBookUsecase = AddBookUsecase(
       bookRepository: bookRepository,
       isBookDuplicateUsecase: IsBookDuplicateUsecase(),
     );
-
     final addTagUsecase = AddTagUsecase(
       tagRepository: tagRepository,
       getTagByNameUsecase: GetTagByNameUsecase(tagRepository: tagRepository),
     );
-
     final clearLibraryUsecase = ClearLibraryUsecase(dataAccess: dataAccess);
-
     final exportLibraryUsecase = ExportLibraryUsecase(
       dataAccess: dataAccess,
       fileWriter: libraryFileWriter,
     );
-
     final filterAuthorsUsecase = FilterAuthorsUsecase(authorFilteringService);
-
     final filterBooksUsecase = FilterBooksUsecase(bookFilteringService);
-
     final getAuthorByNameUsecase = GetAuthorByNameUsecase(
       authorRepository: authorRepository,
     );
-
     final getAuthorsByNamesUsecase = GetAuthorsByNamesUsecase(
       authorRepository: authorRepository,
     );
-
     final getAuthorsUsecase = GetAuthorsUsecase(
       authorRepository: authorRepository,
     );
-
     final getAuthorByIdUsecase = GetAuthorByIdUsecase(
       authorRepository: authorRepository,
     );
-
     final getAuthorByIdPairUsecase = GetAuthorByIdPairUsecase(
       authorRepository: authorRepository,
     );
-
     final getBookByIdUsecase = GetBookByIdUsecase(
       bookRepository: bookRepository,
     );
-
     final getBookByIdPairUsecase = GetBookByIdPairUsecase(
       bookRepository: bookRepository,
     );
-
     final getTagByIdUsecase = GetTagByIdUsecase(tagRepository: tagRepository);
-
     final getBooksByAuthorUsecase = GetBooksByAuthorUseCase(
       bookRepository: bookRepository,
     );
-
     final getBooksByTagUsecase = GetBooksByTagUseCase(
       bookRepository: bookRepository,
     );
-
     final getBooksUsecase = GetBooksUsecase(bookRepository: bookRepository);
-
     final getLibraryStatsUsecase = GetLibraryStatsUsecase(
       dataAccess: dataAccess,
     );
-
     final getSortedAuthorsUsecase = GetSortedAuthorsUsecase(
       sortingService: authorSortingService,
     );
-
     final getSortedBooksUsecase = GetSortedBooksUsecase(
       sortingService: bookSortingService,
     );
-
     final getTagByNameUsecase = GetTagByNameUsecase(
       tagRepository: tagRepository,
     );
-
     final getTagsByNamesUsecase = GetTagsByNamesUsecase(
       tagRepository: tagRepository,
     );
-
     final getTagsUsecase = GetTagsUsecase(tagRepository: tagRepository);
-
     final importLibraryUsecase = ImportLibraryUsecase(
       dataAccess: dataAccess,
       isBookDuplicateUsecase: IsBookDuplicateUsecase(),
       fileLoader: libraryFileLoader,
     );
-
     final isAuthorDuplicateUsecase = IsAuthorDuplicateUsecase();
-
     final isBookDuplicateUsecase = IsBookDuplicateUsecase();
-
     final validateBookUsecase = ValidateBookUsecase(
       bookValidationService: bookValidationService,
     );
-
     final updateAuthorUsecase = UpdateAuthorUsecase(
       authorRepository: authorRepository,
     );
-
     final updateBookUsecase = UpdateBookUsecase(bookRepository: bookRepository);
-
     final updateTagUsecase = UpdateTagUsecase(tagRepository: tagRepository);
-
     final deleteAuthorUsecase = DeleteAuthorUsecase(
       authorRepository: authorRepository,
     );
-
     final deleteBookUsecase = DeleteBookUsecase(bookRepository: bookRepository);
-
     final deleteTagUsecase = DeleteTagUsecase(tagRepository: tagRepository);
 
     return LibraryDomain(
