@@ -15,6 +15,7 @@ workspace:
   - packages/core
   - packages/datastore_sembast
   - packages/datastore_hive
+  - packages/datastore_isar
   - packages/domain_entities
   - packages/domain_usecases
   - packages/domain_contracts

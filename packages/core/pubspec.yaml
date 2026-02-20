@@ -25,6 +25,7 @@ dependencies:
   domain_entities: any
   datastore_sembast: any
   datastore_hive: any
+  datastore_isar: any
   dataservice_filtering: any
   datastore_files: any
 
