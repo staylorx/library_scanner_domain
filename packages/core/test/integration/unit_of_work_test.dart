@@ -4,9 +4,12 @@ import 'package:datastore_sembast/datastore_sembast.dart';
 import 'package:datastore_sembast/src/models/tag_model.dart';
 import 'package:domain_entities/domain_entities.dart';
 import 'package:path/path.dart' as p;
+/// Convenience: extract the Sembast DatabaseClient from an active UnitOfWork.
+SembastTransactionHandle? _handle(UnitOfWork<TransactionHandle> txn) =>
+    txn.transactionHandle as SembastTransactionHandle?;
 
 void main() {
-  group('Unit of Work Integration Tests', () {
+  group('SembastUnitOfWork integration', () {
     late SembastDatabase database;
     late TagDatasource tagDatasource;
     late SembastUnitOfWork unitOfWork;
@@ -20,268 +23,157 @@ void main() {
       await database.clearAll().run();
     });
 
-    tearDownAll(() async {
-      database.close();
-    });
+    tearDownAll(() => database.close());
 
     setUp(() async {
-      // Clear database before each test
+      // Start each test with an empty database.
       await database.clearAll().run();
     });
 
-    test('Successful transaction commits database changes', () async {
-      // Verify no tags initially
-      final initialResult = await tagDatasource.getAllTags().run();
-      expect(initialResult.isRight(), true);
-      initialResult.fold(
-        (l) => fail('Expected right'),
-        (r) => expect(r.isEmpty, true),
-      );
+    // ─── Commit / success path ───────────────────────────────────────────────
 
-      // Run transaction that saves a tag
-      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          final tagModel = TagModel(
-            id: 'test-tag',
-            name: 'Test Tag',
-            slug: 'test-tag',
-            bookIds: [],
-          );
-          final saveResult = await tagDatasource
-              .saveTag(
-                tagModel,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
-          expect(saveResult.isRight(), true);
-          return 'success';
-        }, (error, stack) => ServiceFailure(error.toString()));
-      }).run();
-
-      expect(result.isRight(), true);
-      result.fold((l) => fail('Expected right'), (r) => expect(r, 'success'));
-
-      // Verify tag was committed
-      final verifyResult = await tagDatasource.getAllTags().run();
-      expect(verifyResult.isRight(), true);
-      verifyResult.fold(
-        (l) => fail('Expected right'),
-        (r) => expect(r.length, 1),
-      );
-    });
-
-    test('Failed transaction rolls back database changes', () async {
-      // Verify no tags initially
-      final initialResult = await tagDatasource.getAllTags().run();
-      expect(initialResult.isRight(), true);
-      initialResult.fold(
-        (l) => fail('Expected right'),
-        (r) => expect(r.isEmpty, true),
-      );
-
-      // Run transaction that saves tag but then fails
-      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          final tagModel = TagModel(
-            id: 'test-tag',
-            name: 'Test Tag',
-            slug: 'test-tag',
-            bookIds: [],
-          );
-          final saveResult = await tagDatasource
-              .saveTag(
-                tagModel,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
-          expect(saveResult.isRight(), true);
-
-          // Simulate failure after save
-          throw Exception('Test failure');
-        }, (error, stack) => ServiceFailure(error.toString()));
-      }).run();
-
-      expect(result.isLeft(), true);
-
-      // Verify tag was rolled back (should be empty)
-      final verifyResult = await tagDatasource.getAllTags().run();
-      expect(verifyResult.isRight(), true);
-      verifyResult.fold(
-        (l) => fail('Expected right'),
-        (r) => expect(r.isEmpty, true),
-      );
-    });
-
-    test('Multiple operations in transaction are atomic', () async {
-      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          // Save first tag
-          final tagModel1 = TagModel(
-            id: 'tag-1',
-            name: 'Tag 1',
-            slug: 'tag-1',
-            bookIds: [],
-          );
-          await tagDatasource
-              .saveTag(
-                tagModel1,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
-
-          // Save second tag
-          final tagModel2 = TagModel(
-            id: 'tag-2',
-            name: 'Tag 2',
-            slug: 'tag-2',
-            bookIds: [],
-          );
-          await tagDatasource
-              .saveTag(
-                tagModel2,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
-
-          return 'success';
-        }, (error, stack) => ServiceFailure(error.toString()));
+    test('successful transaction commits changes', () async {
+      final result = await unitOfWork.run((txn) {
+        final tag = TagModel(
+          id: 'tag-1',
+          name: 'Tag 1',
+          slug: 'tag-1',
+          bookIds: [],
+        );
+        return tagDatasource.saveTag(tag, txn: _handle(txn)?.dbClient);
       }).run();
 
       expect(result.isRight(), true);
 
-      // Verify both tags were committed
-      final verifyResult = await tagDatasource.getAllTags().run();
-      expect(verifyResult.isRight(), true);
-      verifyResult.fold(
+      final stored = await tagDatasource.getAllTags().run();
+      stored.fold(
         (l) => fail('Expected right'),
-        (r) => expect(r.length, 2),
+        (tags) => expect(tags.length, 1),
       );
     });
 
-    test('Transaction failure rolls back multiple operations', () async {
-      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          // Save first tag
-          final tagModel1 = TagModel(
-            id: 'tag-1',
-            name: 'Tag 1',
-            slug: 'tag-1',
-            bookIds: [],
-          );
-          await tagDatasource
-              .saveTag(
-                tagModel1,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
+    // ─── Rollback / failure path ─────────────────────────────────────────────
 
-          // Save second tag
-          final tagModel2 = TagModel(
-            id: 'tag-2',
-            name: 'Tag 2',
-            slug: 'tag-2',
-            bookIds: [],
-          );
-          await tagDatasource
-              .saveTag(
-                tagModel2,
-                txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-              )
-              .run();
-
-          // Fail after both saves
-          throw Exception('Transaction failure');
-        }, (error, stack) => ServiceFailure(error.toString()));
+    test('failed transaction rolls back all writes', () async {
+      final result = await unitOfWork.run((txn) {
+        final tag = TagModel(
+          id: 'tag-doomed',
+          name: 'Doomed',
+          slug: 'doomed',
+          bookIds: [],
+        );
+        return tagDatasource
+            .saveTag(tag, txn: _handle(txn)?.dbClient)
+            .flatMap((_) => TaskEither.left(const ServiceFailure('Forced failure')));
       }).run();
 
       expect(result.isLeft(), true);
 
-      // Verify all changes were rolled back
-      final verifyResult = await tagDatasource.getAllTags().run();
-      expect(verifyResult.isRight(), true);
-      verifyResult.fold(
+      // Nothing should have been persisted.
+      final stored = await tagDatasource.getAllTags().run();
+      stored.fold(
         (l) => fail('Expected right'),
-        (r) => expect(r.isEmpty, true),
+        (tags) => expect(tags, isEmpty),
       );
     });
 
-    test('Manual commit returns failure', () async {
+    // ─── Atomicity ───────────────────────────────────────────────────────────
+
+    test('multiple writes in one transaction are atomic on success', () async {
+      final result = await unitOfWork.run((txn) {
+        final t1 = TagModel(id: 'a', name: 'A', slug: 'a', bookIds: []);
+        final t2 = TagModel(id: 'b', name: 'B', slug: 'b', bookIds: []);
+        return tagDatasource
+            .saveTag(t1, txn: _handle(txn)?.dbClient)
+            .flatMap((_) => tagDatasource.saveTag(t2, txn: _handle(txn)?.dbClient))
+            .map((_) => unit);
+      }).run();
+
+      expect(result.isRight(), true);
+
+      final stored = await tagDatasource.getAllTags().run();
+      stored.fold(
+        (l) => fail('Expected right'),
+        (tags) => expect(tags.length, 2),
+      );
+    });
+
+    test('partial writes are rolled back if the transaction fails', () async {
+      final result = await unitOfWork.run((txn) {
+        final t1 = TagModel(id: 'a', name: 'A', slug: 'a', bookIds: []);
+        final t2 = TagModel(id: 'b', name: 'B', slug: 'b', bookIds: []);
+        return tagDatasource
+            .saveTag(t1, txn: _handle(txn)?.dbClient)
+            .flatMap((_) => tagDatasource.saveTag(t2, txn: _handle(txn)?.dbClient))
+            .flatMap((_) => TaskEither.left(const ServiceFailure('Boom')));
+      }).run();
+
+      expect(result.isLeft(), true);
+
+      final stored = await tagDatasource.getAllTags().run();
+      stored.fold(
+        (l) => fail('Expected right'),
+        (tags) => expect(tags, isEmpty),
+      );
+    });
+
+    // ─── Nested run ──────────────────────────────────────────────────────────
+
+    test('nested txn.run() re-uses the same transaction handle', () async {
+      SembastTransactionHandle? outer;
+      SembastTransactionHandle? inner;
+
+      await unitOfWork.run((txn) {
+        outer = txn.transactionHandle as SembastTransactionHandle?;
+        return txn.run((nestedTxn) {
+          inner = nestedTxn.transactionHandle as SembastTransactionHandle?;
+          return TaskEither.right(unit);
+        });
+      }).run();
+
+      expect(outer, isNotNull);
+      expect(inner, same(outer),
+          reason: 'Nested run must re-use the same SembastTransactionHandle');
+    });
+
+    // ─── Sequential transactions ──────────────────────────────────────────────
+
+    test('sequential transactions each see the committed state', () async {
+      // First transaction: write tag A.
+      await unitOfWork.run((txn) {
+        final t = TagModel(id: 'seq-1', name: 'Seq 1', slug: 'seq-1', bookIds: []);
+        return tagDatasource.saveTag(t, txn: _handle(txn)?.dbClient);
+      }).run();
+
+      // Second transaction: write tag B — should see tag A already committed.
+      final result = await unitOfWork.run((txn) {
+        return tagDatasource.getAllTags().flatMap((tags) {
+          // Tag A from the first transaction must be visible here.
+          expect(tags.length, 1, reason: 'First transaction must be committed');
+          final t = TagModel(id: 'seq-2', name: 'Seq 2', slug: 'seq-2', bookIds: []);
+          return tagDatasource.saveTag(t, txn: _handle(txn)?.dbClient);
+        });
+      }).run();
+
+      expect(result.isRight(), true);
+
+      final stored = await tagDatasource.getAllTags().run();
+      stored.fold(
+        (l) => fail('Expected right'),
+        (tags) => expect(tags.length, 2),
+      );
+    });
+
+    // ─── Manual commit / rollback ─────────────────────────────────────────────
+
+    test('commit() always returns Left (not supported by Sembast)', () async {
       final result = await unitOfWork.commit().run();
       expect(result.isLeft(), true);
     });
 
-    test('Manual rollback returns failure', () async {
+    test('rollback() always returns Left (not supported by Sembast)', () async {
       final result = await unitOfWork.rollback().run();
       expect(result.isLeft(), true);
-    });
-
-    test('Nested transactions reuse same transaction handle', () async {
-      final result = await unitOfWork.run((UnitOfWork<TransactionHandle> outerTxn) {
-        return TaskEither.tryCatch(() async {
-          // Capture outer handle
-          final outerHandle = outerTxn.transactionHandle;
-          expect(outerHandle, isNotNull);
-          // Start another transaction using the same unitOfWork (should reuse handle)
-          await outerTxn.run((UnitOfWork<TransactionHandle> innerTxn) {
-            return TaskEither.tryCatch(() async {
-              final innerHandle = innerTxn.transactionHandle;
-              // Both handles should be identical (same transaction)
-              expect(innerHandle, equals(outerHandle));
-              // Verify they are SembastTransactionHandle instances
-              expect(innerHandle, isA<SembastTransactionHandle>());
-              return 'success';
-            }, (error, stack) => ServiceFailure(error.toString()));
-          }).run();
-          return 'success';
-        }, (error, stack) => ServiceFailure(error.toString()));
-      }).run();
-      expect(result.isRight(), true);
-    });
-
-    test('Sequential transactions are independent', () async {
-      // First transaction inserts tag A
-      final result1 = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          final tagModel = TagModel(
-            id: 'seq-1',
-            name: 'Sequential 1',
-            slug: 'seq-1',
-            bookIds: [],
-          );
-          await tagDatasource.saveTag(
-            tagModel,
-            txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          ).run();
-          return 'success';
-        }, (error, stack) => ServiceFailure(error.toString()));
-      }).run();
-      expect(result1.isRight(), true);
-
-      // Second transaction inserts tag B
-      final result2 = await unitOfWork.run((UnitOfWork<TransactionHandle> txn) {
-        return TaskEither.tryCatch(() async {
-          final tagModel = TagModel(
-            id: 'seq-2',
-            name: 'Sequential 2',
-            slug: 'seq-2',
-            bookIds: [],
-          );
-          await tagDatasource.saveTag(
-            tagModel,
-            txn: (txn.transactionHandle as SembastTransactionHandle?)?.dbClient,
-          ).run();
-          return 'success';
-        }, (error, stack) => ServiceFailure(error.toString()));
-      }).run();
-      expect(result2.isRight(), true);
-
-      // Verify both tags exist
-      final verifyResult = await tagDatasource.getAllTags().run();
-      expect(verifyResult.isRight(), true);
-      verifyResult.fold(
-        (l) => fail('Expected right'),
-        (r) => expect(r.length, 2),
-      );
     });
   });
 }

@@ -177,12 +177,18 @@ class ImportLibraryUsecase with Loggable {
         );
       }
 
-      // Handle overwrite: clear existing data if requested
+      // Handle overwrite: clear all existing data atomically if requested.
       final clearTask = overwrite
-          ? dataAccess.tagRepository.deleteAll().map((_) {
-              logger?.info('Existing data cleared');
-              return unit;
-            })
+          ? dataAccess.unitOfWork.run(
+              (txn) => dataAccess.bookRepository
+                  .deleteAll(txn: txn)
+                  .flatMap((_) => dataAccess.tagRepository.deleteAll(txn: txn))
+                  .flatMap((_) => dataAccess.authorRepository.deleteAll(txn: txn))
+                  .map((_) {
+                    logger?.info('Existing data cleared');
+                    return unit;
+                  }),
+            )
           : TaskEither<Failure, Unit>.right(unit);
 
       return clearTask.flatMap((_) {
@@ -399,63 +405,57 @@ class ImportLibraryUsecase with Loggable {
     }
   }
 
+  /// Saves [authors], [tags] and [books] to the database inside a single
+  /// atomic transaction.
+  ///
+  /// All three entity types are enlisted in the same [UnitOfWork.run] callback
+  /// so that a failure in any step rolls back all previous writes atomically.
   TaskEither<Failure, Unit> _saveToDatabase(
     List<Author> authors,
     List<Tag> tags,
     List<Book> books,
   ) {
-    logger?.info('Starting database write operations...');
+    logger?.info('Starting database write operations…');
 
-    return dataAccess.unitOfWork.run(
-      (UnitOfWork<TransactionHandle> txn) => TaskEither.tryCatch(
-        () async {
-          // Save authors
-          for (final author in authors) {
-            logger?.info('Saving author: ${author.name}');
-            final result = await dataAccess.authorRepository
-                .create(item: author, txn: txn)
-                .run();
-            if (result.isLeft()) {
-              throw result.getLeft().getOrElse(
-                () => ServiceFailure('Unknown error'),
-              );
-            }
-          }
+    return dataAccess.unitOfWork.run((txn) {
+      // Chain all saves sequentially inside the open transaction.
+      // Each repo call receives `txn` so it joins the same Sembast transaction.
+      TaskEither<Failure, Unit> chain = TaskEither.right(unit);
 
-          // Save tags
-          for (final tag in tags) {
-            logger?.info('Saving tag: ${tag.name}');
-            final result = await dataAccess.tagRepository
-                .create(item: tag, txn: txn)
-                .run();
-            if (result.isLeft()) {
-              throw result.getLeft().getOrElse(
-                () => ServiceFailure('Unknown error'),
-              );
-            }
-          }
+      for (final author in authors) {
+        chain = chain.flatMap(
+          (_) => dataAccess.authorRepository.create(item: author, txn: txn).map((_) {
+            logger?.info('Saved author: ${author.name}');
+            return unit;
+          }),
+        );
+      }
 
-          // Save books
-          for (final book in books) {
-            logger?.info('Saving book: ${book.title}');
-            final result = await dataAccess.bookRepository
-                .create(item: book, txn: txn)
-                .run();
-            if (result.isLeft()) {
-              throw result.getLeft().getOrElse(
-                () => ServiceFailure('Unknown error'),
-              );
-            }
-          }
+      for (final tag in tags) {
+        chain = chain.flatMap(
+          (_) => dataAccess.tagRepository.create(item: tag, txn: txn).map((_) {
+            logger?.info('Saved tag: ${tag.name}');
+            return unit;
+          }),
+        );
+      }
 
-          logger?.info(
-            'Saved ${authors.length} authors, ${tags.length} tags, ${books.length} books to database',
-          );
-          return unit;
-        },
-        (error, stackTrace) =>
-            ServiceFailure('Failed to save to database: $error'),
-      ),
-    );
+      for (final book in books) {
+        chain = chain.flatMap(
+          (_) => dataAccess.bookRepository.create(item: book, txn: txn).map((_) {
+            logger?.info('Saved book: ${book.title}');
+            return unit;
+          }),
+        );
+      }
+
+      return chain.map((_) {
+        logger?.info(
+          'Saved ${authors.length} authors, ${tags.length} tags, '
+          '${books.length} books',
+        );
+        return unit;
+      });
+    });
   }
 }

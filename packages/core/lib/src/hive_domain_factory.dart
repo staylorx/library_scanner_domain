@@ -1,35 +1,61 @@
-import 'package:datastore_sembast/datastore_sembast.dart';
+import 'package:datastore_hive/datastore_hive.dart';
 import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_usecases/domain_usecase.dart';
 import 'package:dataservice_filtering/dataservice_filtering.dart';
 import 'package:datastore_files/datastore_files.dart';
 import 'package:library_scanner_core/library_scanner_domain.dart';
 
-/// Factory for creating a [LibraryDomain] instance with all Sembast dependencies
+/// Factory for creating a [LibraryDomain] instance with all Hive dependencies
 /// wired up.
 ///
-/// Callers provide a [SembastUnitOfWork] (and optionally file I/O services).
+/// Callers provide a [HiveUnitOfWork] (and optionally file I/O services).
 /// All internal datasources, repositories and usecases are created here.
-class LibraryDomainFactory {
-  /// Creates a fully wired [LibraryDomain] backed by a Sembast database.
+///
+/// ## No domain changes required
+///
+/// This factory is proof that the clean architecture is truly decoupled.
+/// The domain layer (`domain_entities`, `domain_contracts`, `domain_usecases`)
+/// is identical for both Sembast and Hive backends — only this factory and
+/// the `datastore_hive` package differ.
+class HiveDomainFactory {
+  /// Creates a fully wired [LibraryDomain] backed by a Hive database.
   ///
-  /// [unitOfWork] — the Sembast unit of work that owns the database connection.
+  /// [unitOfWork] — the Hive unit of work that owns the database connection.
   /// [fileLoader] / [fileWriter] — optional overrides for file I/O (useful in tests).
   static LibraryDomain create({
-    required SembastUnitOfWork unitOfWork,
+    required HiveUnitOfWork unitOfWork,
     LibraryFileLoader? fileLoader,
     LibraryFileWriter? fileWriter,
   }) {
-    final sembastDb = unitOfWork.sembastDb;
+    // The HiveDatabase is not directly exposed by HiveUnitOfWork, so callers
+    // must pass the HiveDatabase separately when constructing datasources.
+    // To keep the factory API simple (mirrors LibraryDomainFactory), callers
+    // can pass a HiveDatabase via a wrapper or construct the domain objects
+    // directly. Here we require the caller to supply the HiveDatabase.
+    throw UnimplementedError(
+      'Use HiveDomainFactory.createWithDatabase(...) instead.',
+    );
+  }
 
+  /// Creates a fully wired [LibraryDomain] backed by a [HiveDatabase].
+  ///
+  /// [hiveDb]     — the open (or lazy-open) Hive database instance.
+  /// [unitOfWork] — the Hive unit of work (shares the same backend as [hiveDb]).
+  /// [fileLoader] / [fileWriter] — optional overrides for file I/O.
+  static LibraryDomain createWithDatabase({
+    required HiveDatabase hiveDb,
+    required HiveUnitOfWork unitOfWork,
+    LibraryFileLoader? fileLoader,
+    LibraryFileWriter? fileWriter,
+  }) {
     // ID Registry Services
     final authorIdRegistryService = AuthorIdRegistryServiceImpl();
     final bookIdRegistryService = BookIdRegistryServiceImpl();
 
     // Datasources
-    final authorDatasource = AuthorDatasource(sembastDb: sembastDb);
-    final bookDatasource = BookDatasource(sembastDb: sembastDb);
-    final tagDatasource = TagDatasource(sembastDb: sembastDb);
+    final authorDatasource = AuthorDatasource(hiveDb: hiveDb);
+    final bookDatasource = BookDatasource(hiveDb: hiveDb);
+    final tagDatasource = TagDatasource(hiveDb: hiveDb);
 
     // Repositories
     final authorRepository = AuthorRepositoryImpl(

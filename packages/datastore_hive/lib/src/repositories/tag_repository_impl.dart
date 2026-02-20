@@ -4,12 +4,12 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
 
-import '../sembast/datasources/tag_datasource.dart';
+import '../hive/datasources/tag_datasource.dart';
 import '../models/tag_model.dart';
 import 'base_repository.dart';
 
-/// Sembast implementation of [TagRepository].
-class TagRepositoryImpl extends SembastBaseRepository
+/// Hive implementation of [TagRepository].
+class TagRepositoryImpl extends HiveBaseRepository
     with Loggable
     implements TagRepository {
   final TagDatasource _tagDatasource;
@@ -64,17 +64,16 @@ class TagRepositoryImpl extends SembastBaseRepository
     required Tag item,
     UnitOfWork<TransactionHandle>? txn,
   }) {
-    final tag = item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
+    final tag =
+        item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
     final model = TagModel.fromEntity(tag);
     return runInTransaction(
       txn: txn,
-      operation: (dbClient) =>
-          _tagDatasource.saveTag(model, txn: dbClient).map((_) => tag),
+      operation: (_) => _tagDatasource.saveTag(model).map((_) => tag),
     );
   }
 
-  /// Updates [item] in the database, preserving the existing `bookIds`
-  /// association list (which is owned by the database layer, not the entity).
+  /// Updates [item] in the database, preserving the existing `bookIds`.
   @override
   TaskEither<Failure, Tag> update({
     required Tag item,
@@ -82,17 +81,14 @@ class TagRepositoryImpl extends SembastBaseRepository
   }) {
     return runInTransaction(
       txn: txn,
-      operation: (dbClient) =>
-          // Read existing record to get the current bookIds.
+      operation: (_) =>
           _tagDatasource.getTagById(item.id).flatMap((existing) {
             final existingBookIds = existing?.bookIds ?? [];
             final model = TagModel.fromEntity(
               item,
               existingBookIds: existingBookIds,
             );
-            return _tagDatasource
-                .saveTag(model, txn: dbClient)
-                .map((_) => item);
+            return _tagDatasource.saveTag(model).map((_) => item);
           }),
     );
   }
@@ -103,16 +99,13 @@ class TagRepositoryImpl extends SembastBaseRepository
     UnitOfWork<TransactionHandle>? txn,
   }) => runInTransaction(
     txn: txn,
-    operation: (dbClient) =>
-        _tagDatasource.deleteTag(item.id, txn: dbClient).map((_) => unit),
+    operation: (_) => _tagDatasource.deleteTag(item.id).map((_) => unit),
   );
 
-  /// Deletes all tags in a single atomic operation.
   @override
   TaskEither<Failure, Unit> deleteAll({UnitOfWork<TransactionHandle>? txn}) =>
       runInTransaction(
         txn: txn,
-        operation: (dbClient) =>
-            _tagDatasource.deleteAll(txn: dbClient),
+        operation: (_) => _tagDatasource.deleteAll(),
       );
 }

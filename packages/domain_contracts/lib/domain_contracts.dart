@@ -13,4 +13,3 @@ export 'src/services/library_file_writer.dart';
 export 'src/repositories/author_repository.dart';
 export 'src/repositories/book_repository.dart';
 export 'src/repositories/tag_repository.dart';
-export 'src/repositories/unit_of_work_repository.dart';

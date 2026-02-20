@@ -4,12 +4,12 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
 
-import '../sembast/datasources/author_datasource.dart';
+import '../hive/datasources/author_datasource.dart';
 import '../models/author_model.dart';
 import 'base_repository.dart';
 
-/// Sembast implementation of [AuthorRepository].
-class AuthorRepositoryImpl extends SembastBaseRepository
+/// Hive implementation of [AuthorRepository].
+class AuthorRepositoryImpl extends HiveBaseRepository
     with Loggable
     implements AuthorRepository {
   final AuthorDatasource _authorDatasource;
@@ -71,32 +71,25 @@ class AuthorRepositoryImpl extends SembastBaseRepository
 
   // ─── Write operations ─────────────────────────────────────────────────────
 
-  /// Creates [item] in the database within a single atomic transaction.
-  ///
-  /// ID registration and the database write both happen inside [runInTransaction]
-  /// so that a failed write prevents the registry from being updated.
   @override
   TaskEither<Failure, Author> create({
     required Author item,
     UnitOfWork<TransactionHandle>? txn,
   }) {
-    final author = item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
+    final author =
+        item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
     final model = AuthorModel.fromEntity(author);
     final idPairs = AuthorIdPairs(pairs: author.businessIds);
 
     return runInTransaction(
       txn: txn,
-      operation: (dbClient) =>
+      operation: (_) =>
           _idRegistryService.registerAuthorIdPairs(idPairs).flatMap(
-            (_) => _authorDatasource.saveAuthor(model, txn: dbClient),
+            (_) => _authorDatasource.saveAuthor(model),
           ).map((_) => author),
     );
   }
 
-  /// Updates [item] in the database.
-  ///
-  /// Re-registration of business IDs and the database write happen together
-  /// so that a failed write prevents the registry from diverging.
   @override
   TaskEither<Failure, Author> update({
     required Author item,
@@ -108,12 +101,12 @@ class AuthorRepositoryImpl extends SembastBaseRepository
       final newIdPairs = AuthorIdPairs(pairs: item.businessIds);
       return runInTransaction(
         txn: txn,
-        operation: (dbClient) =>
+        operation: (_) =>
             _idRegistryService.unregisterAuthorIdPairs(oldIdPairs).flatMap(
               (_) => _idRegistryService.registerAuthorIdPairs(newIdPairs),
-            ).flatMap(
-              (_) => _authorDatasource.saveAuthor(model, txn: dbClient),
-            ).map((_) => item),
+            ).flatMap((_) => _authorDatasource.saveAuthor(model)).map(
+              (_) => item,
+            ),
       );
     });
   }
@@ -127,23 +120,18 @@ class AuthorRepositoryImpl extends SembastBaseRepository
       final idPairs = AuthorIdPairs(pairs: author.businessIds);
       return runInTransaction(
         txn: txn,
-        operation: (dbClient) =>
+        operation: (_) =>
             _idRegistryService.unregisterAuthorIdPairs(idPairs).flatMap(
-              (_) => _authorDatasource.deleteAuthorWithCascade(
-                author.id,
-                txn: dbClient,
-              ),
+              (_) => _authorDatasource.deleteAuthorWithCascade(author.id),
             ).map((_) => unit),
       );
     });
   }
 
-  /// Deletes all authors in a single atomic operation.
   @override
   TaskEither<Failure, Unit> deleteAll({UnitOfWork<TransactionHandle>? txn}) =>
       runInTransaction(
         txn: txn,
-        operation: (dbClient) =>
-            _authorDatasource.deleteAll(txn: dbClient),
+        operation: (_) => _authorDatasource.deleteAll(),
       );
 }

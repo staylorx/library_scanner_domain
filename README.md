@@ -27,7 +27,7 @@ dependencies:
 Then run:
 
 ```bash
-flutter pub get
+dart pub get
 ```
 
 ## Usage
@@ -225,8 +225,6 @@ final factory = LibraryFactory(
 ## Factory Setup and Dependency Injection
 
 The library provides a factory pattern for dependency injection. Use `LibraryDomainFactory` to create a fully wired domain instance.
-
-
 
 ### Factory Examples
 

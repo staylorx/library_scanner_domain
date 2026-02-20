@@ -4,14 +4,14 @@ import 'package:fpdart/fpdart.dart';
 import 'package:id_logging/id_logging.dart';
 import 'package:uuid/uuid.dart';
 
-import '../sembast/datasources/book_datasource.dart';
-import '../sembast/datasources/author_datasource.dart';
-import '../sembast/datasources/tag_datasource.dart';
+import '../hive/datasources/book_datasource.dart';
+import '../hive/datasources/author_datasource.dart';
+import '../hive/datasources/tag_datasource.dart';
 import '../models/book_model.dart';
 import 'base_repository.dart';
 
-/// Sembast implementation of [BookRepository].
-class BookRepositoryImpl extends SembastBaseRepository
+/// Hive implementation of [BookRepository].
+class BookRepositoryImpl extends HiveBaseRepository
     with Loggable
     implements BookRepository {
   final BookDatasource _bookDatasource;
@@ -41,11 +41,9 @@ class BookRepositoryImpl extends SembastBaseRepository
 
   @override
   TaskEither<Failure, List<Book>> getBooks({int? limit, int? offset}) =>
-      _bookDatasource
-          .getAllBooks()
-          .flatMap(
-            (models) => TaskEither.traverseList(models, _loadBookWithRelations),
-          );
+      _bookDatasource.getAllBooks().flatMap(
+        (models) => TaskEither.traverseList(models, _loadBookWithRelations),
+      );
 
   @override
   TaskEither<Failure, List<Book>> listSection({int? limit, int? offset}) =>
@@ -78,11 +76,9 @@ class BookRepositoryImpl extends SembastBaseRepository
 
   @override
   TaskEither<Failure, List<Book>> getBooksByAuthor({required Author author}) =>
-      _bookDatasource
-          .getBooksByAuthorId(author.id)
-          .flatMap(
-            (models) => TaskEither.traverseList(models, _loadBookWithRelations),
-          );
+      _bookDatasource.getBooksByAuthorId(author.id).flatMap(
+        (models) => TaskEither.traverseList(models, _loadBookWithRelations),
+      );
 
   @override
   TaskEither<Failure, List<Book>> getBooksByTag({required Tag tag}) =>
@@ -102,20 +98,20 @@ class BookRepositoryImpl extends SembastBaseRepository
     required Book item,
     UnitOfWork<TransactionHandle>? txn,
   }) {
-    final book = item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
+    final book =
+        item.id.isNotEmpty ? item : item.copyWith(id: const Uuid().v4());
     final model = BookModel.fromEntity(book);
 
     return runInTransaction(
       txn: txn,
-      operation: (dbClient) =>
+      operation: (_) =>
           _idRegistryService
               .registerBookIdPairs(BookIdPairs(pairs: book.businessIds))
-              .flatMap((_) => _bookDatasource.saveBook(model, txn: dbClient))
+              .flatMap((_) => _bookDatasource.saveBook(model))
               .flatMap(
                 (_) => _tagDatasource.addBookToTags(
                   book.id,
                   book.tags.map((t) => t.name).toList(),
-                  txn: dbClient,
                 ),
               )
               .map((_) => book),
@@ -130,8 +126,8 @@ class BookRepositoryImpl extends SembastBaseRepository
     final model = BookModel.fromEntity(item);
     return runInTransaction(
       txn: txn,
-      operation: (dbClient) =>
-          _bookDatasource.saveBook(model, txn: dbClient).map((_) => item),
+      operation: (_) =>
+          _bookDatasource.saveBook(model).map((_) => item),
     );
   }
 
@@ -141,29 +137,24 @@ class BookRepositoryImpl extends SembastBaseRepository
     UnitOfWork<TransactionHandle>? txn,
   }) => runInTransaction(
     txn: txn,
-    operation: (dbClient) =>
+    operation: (_) =>
         _idRegistryService
             .unregisterBookIdPairs(BookIdPairs(pairs: item.businessIds))
-            .flatMap(
-              (_) => _bookDatasource.deleteBook(item.id, txn: dbClient),
-            )
+            .flatMap((_) => _bookDatasource.deleteBook(item.id))
             .flatMap(
               (_) => _tagDatasource.removeBookFromTags(
                 item.id,
                 item.tags.map((t) => t.name).toList(),
-                txn: dbClient,
               ),
             )
             .map((_) => unit),
   );
 
-  /// Deletes all books in a single atomic operation.
   @override
   TaskEither<Failure, Unit> deleteAll({UnitOfWork<TransactionHandle>? txn}) =>
       runInTransaction(
         txn: txn,
-        operation: (dbClient) =>
-            _bookDatasource.deleteAll(txn: dbClient),
+        operation: (_) => _bookDatasource.deleteAll(),
       );
 
   // ─── Private helpers ──────────────────────────────────────────────────────
@@ -171,9 +162,7 @@ class BookRepositoryImpl extends SembastBaseRepository
   TaskEither<Failure, Book> _loadBookWithRelations(BookModel model) {
     final loadAuthors = TaskEither.traverseList(
       model.authorIds,
-      (id) => _authorDatasource
-          .getAuthorById(id)
-          .map((m) => m?.toEntity()),
+      (id) => _authorDatasource.getAuthorById(id).map((m) => m?.toEntity()),
     ).map((authors) => authors.whereType<Author>().toList());
 
     final loadTags = TaskEither.traverseList(

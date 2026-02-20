@@ -64,7 +64,10 @@ class TagModel {
   /// [existingBookIds] should be read from the database before calling this
   /// (e.g. during an update), so that the persisted book associations are not
   /// silently wiped. Defaults to an empty list for new records.
-  factory TagModel.fromEntity(Tag tag, {List<String> existingBookIds = const []}) {
+  factory TagModel.fromEntity(
+    Tag tag, {
+    List<String> existingBookIds = const [],
+  }) {
     return TagModel(
       id: tag.id,
       name: tag.name,

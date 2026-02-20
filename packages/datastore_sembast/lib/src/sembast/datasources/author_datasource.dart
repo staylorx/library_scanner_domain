@@ -6,135 +6,159 @@ import 'package:sembast/sembast.dart' as sembast;
 
 import 'sembast_database.dart';
 
-
 class AuthorDatasource {
   final SembastDatabase _sembastDb;
 
-  /// Creates an AuthorDatasource with required SembastDatabase.
-  AuthorDatasource({required SembastDatabase sembastDb}) : _sembastDb = sembastDb;
+  AuthorDatasource({required SembastDatabase sembastDb})
+      : _sembastDb = sembastDb;
 
-  /// Retrieves all authors from the store.
-  TaskEither<Failure, List<AuthorModel>> getAllAuthors() {
-    return TaskEither.tryCatch(() async {
-      final db = await _sembastDb.database;
-      final records = await _sembastDb.authorsStore.find(db);
-      return records.map((r) => AuthorModel.fromMap(map: r.value)).toList();
-    }, (error, stackTrace) => DatabaseFailure('Failed to get all authors: $error'));
-  }
+  // ─── Read operations ──────────────────────────────────────────────────────
 
-  /// Retrieves an author by name.
-  TaskEither<Failure, AuthorModel?> getAuthorByName(String name) {
-    return TaskEither.tryCatch(() async {
-      final db = await _sembastDb.database;
-      final finder = sembast.Finder(filter: sembast.Filter.equals('name', name));
-      final records = await _sembastDb.authorsStore.find(db, finder: finder);
-      if (records.isEmpty) return null;
-      return AuthorModel.fromMap(map: records.first.value);
-    }, (error, stackTrace) => DatabaseFailure('Failed to get author by name: $error'));
-  }
+  /// Returns all authors from the store.
+  TaskEither<Failure, List<AuthorModel>> getAllAuthors() =>
+      TaskEither.tryCatch(
+        () async {
+          final db = await _sembastDb.database;
+          final records = await _sembastDb.authorsStore.find(db);
+          return records
+              .map((r) => AuthorModel.fromMap(map: r.value))
+              .toList();
+        },
+        (error, _) => DatabaseFailure('Failed to get all authors: $error'),
+      );
 
-  /// Retrieves authors by a list of names.
-  TaskEither<Failure, List<AuthorModel>> getAuthorsByNames(List<String> names) {
-    return TaskEither.tryCatch(() async {
+  /// Returns an author matching [name], or `null` if not found.
+  TaskEither<Failure, AuthorModel?> getAuthorByName(String name) =>
+      TaskEither.tryCatch(
+        () async {
+          final db = await _sembastDb.database;
+          final finder = sembast.Finder(
+            filter: sembast.Filter.equals('name', name),
+          );
+          final records =
+              await _sembastDb.authorsStore.find(db, finder: finder);
+          return records.isEmpty
+              ? null
+              : AuthorModel.fromMap(map: records.first.value);
+        },
+        (error, _) => DatabaseFailure('Failed to get author by name: $error'),
+      );
+
+  /// Returns authors whose names are in [names].
+  TaskEither<Failure, List<AuthorModel>> getAuthorsByNames(
+    List<String> names,
+  ) => TaskEither.tryCatch(
+    () async {
       final db = await _sembastDb.database;
-      final namesList = names.toList();
       final finder = sembast.Finder(
-        filter: sembast.Filter.inList('name', namesList),
+        filter: sembast.Filter.inList('name', names),
       );
       final records = await _sembastDb.authorsStore.find(db, finder: finder);
       return records.map((r) => AuthorModel.fromMap(map: r.value)).toList();
-    }, (error, stackTrace) => DatabaseFailure('Failed to get authors by names: $error'));
-  }
+    },
+    (error, _) => DatabaseFailure('Failed to get authors by names: $error'),
+  );
 
-  /// Retrieves an author by ID.
-  TaskEither<Failure, AuthorModel?> getAuthorById(String id) {
-    return TaskEither.tryCatch(() async {
-      final db = await _sembastDb.database;
-      final record = await _sembastDb.authorsStore.record(id).get(db);
-      return record != null ? AuthorModel.fromMap(map: record) : null;
-    }, (error, stackTrace) => DatabaseFailure('Failed to get author by id: $error'));
-  }
+  /// Returns an author by [id], or `null` if not found.
+  TaskEither<Failure, AuthorModel?> getAuthorById(String id) =>
+      TaskEither.tryCatch(
+        () async {
+          final db = await _sembastDb.database;
+          final record = await _sembastDb.authorsStore.record(id).get(db);
+          return record != null ? AuthorModel.fromMap(map: record) : null;
+        },
+        (error, _) => DatabaseFailure('Failed to get author by id: $error'),
+      );
 
-  /// Retrieves authors by business ID pair.
+  /// Returns authors that match the given business ID [pair].
   TaskEither<Failure, List<AuthorModel>> getAuthorsByBusinessIdPair(
     AuthorIdPair pair,
-  ) {
-    return TaskEither.tryCatch(() async {
+  ) => TaskEither.tryCatch(
+    () async {
       final db = await _sembastDb.database;
       final finder = sembast.Finder(
         filter: sembast.Filter.custom((record) {
-          final businessIdsRaw = record['businessIds'] as List<dynamic>? ?? [];
-          final businessIds = businessIdsRaw.map((e) {
-            final idTypeString = e['idType'] as String;
-            final idType = AuthorIdType.values.byName(idTypeString);
-            return AuthorIdPair(
-              idType: idType,
-              idCode: e['idCode'] as String,
-            );
-          }).toList();
-          return businessIds.any((p) => p == pair);
+          final raw = record['businessIds'] as List<dynamic>? ?? [];
+          return raw.any((e) {
+            final idType = AuthorIdType.values.byName(e['idType'] as String);
+            return AuthorIdPair(idType: idType, idCode: e['idCode'] as String) ==
+                pair;
+          });
         }),
       );
       final records = await _sembastDb.authorsStore.find(db, finder: finder);
       return records.map((r) => AuthorModel.fromMap(map: r.value)).toList();
-    }, (error, stackTrace) => DatabaseFailure('Failed to get authors by business id pair: $error'));
-  }
+    },
+    (error, _) =>
+        DatabaseFailure('Failed to get authors by business id pair: $error'),
+  );
 
-  /// Saves an author to the store.
-  TaskEither<Failure, Unit> saveAuthor(AuthorModel author, {sembast.DatabaseClient? txn}) {
-    return TaskEither.tryCatch(() async {
-      final data = author.toMap();
+  // ─── Write operations ─────────────────────────────────────────────────────
+
+  /// Inserts or replaces [author] in the store.
+  TaskEither<Failure, Unit> saveAuthor(
+    AuthorModel author, {
+    sembast.DatabaseClient? txn,
+  }) => TaskEither.tryCatch(
+    () async {
       final db = txn ?? await _sembastDb.database;
-      await _sembastDb.authorsStore.record(author.id).put(db, data);
+      await _sembastDb.authorsStore.record(author.id).put(db, author.toMap());
       return unit;
-    }, (error, stackTrace) => DatabaseFailure('Failed to save author: $error'));
-  }
+    },
+    (error, _) => DatabaseFailure('Failed to save author: $error'),
+  );
 
-  /// Deletes an author by ID.
-  TaskEither<Failure, Unit> deleteAuthor(String id, {sembast.DatabaseClient? txn}) {
-    return TaskEither.tryCatch(() async {
+  /// Deletes the author with [id] from the store.
+  TaskEither<Failure, Unit> deleteAuthor(
+    String id, {
+    sembast.DatabaseClient? txn,
+  }) => TaskEither.tryCatch(
+    () async {
       final db = txn ?? await _sembastDb.database;
       await _sembastDb.authorsStore.record(id).delete(db);
       return unit;
-    }, (error, stackTrace) => DatabaseFailure('Failed to delete author: $error'));
-  }
+    },
+    (error, _) => DatabaseFailure('Failed to delete author: $error'),
+  );
 
-  /// Deletes an author with cascade deletion of associated books.
+  /// Deletes all authors from the store.
+  TaskEither<Failure, Unit> deleteAll({sembast.DatabaseClient? txn}) =>
+      TaskEither.tryCatch(
+        () async {
+          final db = txn ?? await _sembastDb.database;
+          await _sembastDb.authorsStore.delete(db);
+          return unit;
+        },
+        (error, _) => DatabaseFailure('Failed to delete all authors: $error'),
+      );
+
+  /// Deletes [authorId] and all books that reference it.
+  ///
+  /// This cascade delete is performed within [txn] (or a fresh database
+  /// connection if [txn] is `null`).
   TaskEither<Failure, Unit> deleteAuthorWithCascade(
     String authorId, {
     sembast.DatabaseClient? txn,
-  }) {
-    return TaskEither.tryCatch(() async {
+  }) => TaskEither.tryCatch(
+    () async {
       final db = txn ?? await _sembastDb.database;
-      final authorRecord = await _sembastDb.authorsStore.record(authorId).get(db);
-      if (authorRecord == null) {
-        throw ServiceFailure('Author not found');
-      }
-      final author = AuthorModel.fromMap(map: authorRecord);
-      final id = author.id;
-      // Find and delete books with this author
+      final rawAuthor =
+          await _sembastDb.authorsStore.record(authorId).get(db);
+      if (rawAuthor == null) throw const ServiceFailure('Author not found');
+      final author = AuthorModel.fromMap(map: rawAuthor);
+      // Delete books that list this author.
       final bookRecords = await _sembastDb.booksStore.find(db);
       for (final bookRecord in bookRecords) {
         final book = BookModel.fromMap(map: bookRecord.value);
-        if (book.authorIds.contains(id)) {
+        if (book.authorIds.contains(author.id)) {
           await _sembastDb.booksStore.record(book.id).delete(db);
         }
       }
-      await _sembastDb.authorsStore.record(id).delete(db);
+      await _sembastDb.authorsStore.record(author.id).delete(db);
       return unit;
-    }, (error, stackTrace) => error is Failure ? error : DatabaseFailure('Failed to delete author with cascade: $error'));
-  }
-
-  /// Executes a transaction with the given operation.
-  TaskEither<Failure, Unit> transaction(
-    Future<Unit> Function(sembast.DatabaseClient txn) operation,
-  ) {
-    return TaskEither.tryCatch(() async {
-      final db = await _sembastDb.database;
-      await db.transaction((txn) async {
-        await operation(txn);
-      });
-      return unit;
-    }, (error, stackTrace) => DatabaseFailure('Transaction failed: $error'));
-  }
+    },
+    (error, _) => error is Failure
+        ? error
+        : DatabaseFailure('Failed to delete author with cascade: $error'),
+  );
 }

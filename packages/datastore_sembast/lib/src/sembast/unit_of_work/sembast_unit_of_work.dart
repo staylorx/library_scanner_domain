@@ -3,46 +3,69 @@ import 'package:domain_entities/domain_entities.dart';
 import '../datasources/sembast_database.dart';
 import 'sembast_transaction_handle.dart';
 
-/// UnitOfWork that wraps a Sembast transaction handle.
-/// Used to pass transaction context to repository operations.
+/// A [UnitOfWork] that is already *inside* an open Sembast transaction.
+///
+/// Created by [SembastUnitOfWork.run] for the duration of a `db.transaction`
+/// callback. Its [transactionHandle] exposes the live [SembastTransactionHandle]
+/// so repositories can pass it down to datasource calls.
+///
+/// Calling [run] on this class does NOT open a nested Sembast transaction — it
+/// simply re-uses the already-open one by invoking the operation with `this`.
+/// This is the correct Sembast behaviour: nested transactions are not supported,
+/// and re-using the same transaction client is safe.
 class SembastTransactionUnitOfWork
     implements UnitOfWork<SembastTransactionHandle> {
-  final SembastTransactionHandle _transactionHandle;
-
-  SembastTransactionUnitOfWork(this._transactionHandle);
-
   @override
-  SembastTransactionHandle get transactionHandle => _transactionHandle;
+  final SembastTransactionHandle transactionHandle;
 
+  SembastTransactionUnitOfWork(this.transactionHandle);
+
+  /// Runs [operation] within the already-open transaction.
+  ///
+  /// The same [SembastTransactionUnitOfWork] (`this`) is passed back so that
+  /// nested calls can propagate the transaction handle without opening a new
+  /// transaction.
   @override
   TaskEither<Failure, R> run<R>(
     TaskEither<Failure, R> Function(UnitOfWork<SembastTransactionHandle> txn)
     operation,
-  ) {
-    // Already inside a transaction, just execute operation with this context
-    return operation(this);
-  }
-
-  @override
-  R? maybeHandle<R extends TransactionHandle>() {
-    final handle = transactionHandle;
-    return handle is R ? handle as R : null;
-  }
-
-  @override
-  bool hasHandle<R extends TransactionHandle>() => transactionHandle is R;
+  ) =>
+      operation(this);
 }
 
-/// Sembast implementation of UnitOfWork.
+/// The top-level Sembast [UnitOfWork].
+///
+/// This is the "outer" unit of work — it has no open transaction yet.
+/// Calling [run] opens a Sembast database transaction, wraps the Sembast
+/// transaction client in a [SembastTransactionHandle], and invokes the
+/// operation inside that transaction.
+///
+/// ## Auto-commit / auto-rollback
+///
+/// Sembast transactions are **auto-committed** when the `db.transaction`
+/// callback completes normally and **auto-rolled-back** when it throws.
+/// This class exploits that: if the [operation] returns a `Left` (failure),
+/// it re-throws the [Failure] so Sembast rolls back, then catches it and
+/// re-wraps it as a `Left` for the caller.
+///
+/// Manual [commit] and [rollback] are not supported by Sembast — calls to
+/// those methods always return a `Left(ServiceFailure)`.
 class SembastUnitOfWork implements UnitOfWork<TransactionHandle> {
   final SembastDatabase sembastDb;
 
-  /// Creates a SembastUnitOfWork with the required SembastDatabase.
   SembastUnitOfWork({required this.sembastDb});
 
+  /// Always `null` — no transaction is open until [run] is called.
   @override
-  TransactionHandle? get transactionHandle => null; // Sembast doesn't use a persistent handle
+  TransactionHandle? get transactionHandle => null;
 
+  /// Opens a Sembast database transaction and runs [operation] inside it.
+  ///
+  /// The [operation] receives a [SembastTransactionUnitOfWork] whose
+  /// [transactionHandle] wraps the live Sembast `DatabaseClient`. Pass this
+  /// `txn` to repository methods so they enlist in the same transaction.
+  ///
+  /// The transaction is committed on success and rolled back on any failure.
   @override
   TaskEither<Failure, T> run<T>(
     TaskEither<Failure, T> Function(UnitOfWork<TransactionHandle> txn)
@@ -52,37 +75,39 @@ class SembastUnitOfWork implements UnitOfWork<TransactionHandle> {
       () async {
         T? result;
         final db = await sembastDb.database;
-        await db.transaction((txn) async {
-          final transactionUnitOfWork = SembastTransactionUnitOfWork(
-            SembastTransactionHandle(txn),
+        await db.transaction((rawTxn) async {
+          final txn = SembastTransactionUnitOfWork(
+            SembastTransactionHandle(rawTxn),
           );
-          final opResult = await operation(transactionUnitOfWork).run();
-          result = opResult.fold((l) => throw l, (r) => r);
+          final opResult = await operation(txn).run();
+          // Re-throw on failure so Sembast rolls back the transaction.
+          result = opResult.fold((failure) => throw failure, (value) => value);
         });
         return result as T;
       },
       (error, stackTrace) =>
+          // Preserve domain Failure types; wrap anything else as ServiceFailure.
           error is Failure ? error : ServiceFailure(error.toString()),
     );
   }
 
-  @override
-  R? maybeHandle<R extends TransactionHandle>() => null;
+  /// Not supported — Sembast transactions commit automatically on success.
+  ///
+  /// Returns `Left(ServiceFailure)` always. Prefer letting [run] handle
+  /// commit via normal completion.
+  TaskEither<Failure, Unit> commit() => TaskEither.left(
+    const ServiceFailure(
+      'Manual commit is not supported — Sembast commits automatically.',
+    ),
+  );
 
-  @override
-  bool hasHandle<R extends TransactionHandle>() => false;
-
-  TaskEither<Failure, Unit> commit() {
-    // Sembast transactions are auto-committed; manual commit not supported
-    return TaskEither.left(
-      ServiceFailure('Manual commit not supported in SembastUnitOfWork'),
-    );
-  }
-
-  TaskEither<Failure, Unit> rollback() {
-    // Sembast transactions are auto-rolled back on failure; manual rollback not supported
-    return TaskEither.left(
-      ServiceFailure('Manual rollback not supported in SembastUnitOfWork'),
-    );
-  }
+  /// Not supported — Sembast transactions roll back automatically on failure.
+  ///
+  /// Returns `Left(ServiceFailure)` always. Prefer letting [run] propagate
+  /// failures which trigger automatic rollback.
+  TaskEither<Failure, Unit> rollback() => TaskEither.left(
+    const ServiceFailure(
+      'Manual rollback is not supported — Sembast rolls back on failure.',
+    ),
+  );
 }
