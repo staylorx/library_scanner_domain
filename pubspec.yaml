@@ -1,4 +1,4 @@
-name: llibrary_scanner_domain
+name: library_scanner_domain_workspace
 description: The domain layer for the library scanner app.
 version: 2.1.2
 repository: https://github.com/staylorx/library_scanner_domain
@@ -24,7 +24,7 @@ workspace:
 
 # Thanks to flutterfire for the start.
 melos:
-  name: electrical_junctions_domain
+  name: library_scanner_domain
   repository: https://github.com/staylorx/electrical_junctions_domain
 
   packages:
