@@ -1,4 +1,4 @@
-name: library_scanner_core
+name: electrical_junctions_domain
 description: The core layer for the library scanner app.
 version: 2.1.2
 # repository: https://github.com/my_org/my_repo
