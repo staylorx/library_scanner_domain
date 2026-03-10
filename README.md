@@ -8,7 +8,7 @@ The domain layer for the library scanner app — a clean-architecture Melos mono
 
 | Package | Role |
 |---|---|
-| `library_scanner_core` | Domain facade (`LibraryDomain`) — the only package most consumers import |
+| `library_scanner_domain` | Domain facade (`LibraryDomain`) — the only package most consumers import |
 | `datastore_sembast` | Sembast backend + `SembastDomainFactory` |
 | `datastore_hive` | Hive backend + `HiveDomainFactory` |
 | `datastore_isar` | Isar backend + `IsarDomainFactory` (full ACID transactions) |
@@ -20,13 +20,13 @@ The domain layer for the library scanner app — a clean-architecture Melos mono
 
 ## Installation
 
-A consumer depends on **`library_scanner_core`** plus **exactly one** backend package.
+A consumer depends on **`library_scanner_domain`** plus **exactly one** backend package.
 No other datastore packages are pulled in.
 
 ```yaml
 # pubspec.yaml (Flutter / Dart consumer)
 dependencies:
-  library_scanner_core: any
+  library_scanner_domain: any
 
   # Pick ONE backend:
   datastore_sembast: any       # lightweight, pure-Dart — good default
@@ -42,7 +42,7 @@ See [`packages/example/pubspec.yaml`](packages/example/pubspec.yaml) for an anno
 
 ```dart
 import 'package:datastore_sembast/datastore_sembast.dart';
-import 'package:library_scanner_core/library_scanner_domain.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 final unitOfWork = SembastUnitOfWork(
   sembastDb: SembastDatabase(testDbPath: 'path/to/library.db'),
@@ -57,7 +57,7 @@ final LibraryDomain domain = SembastDomainFactory.create(
 
 ```dart
 import 'package:datastore_hive/datastore_hive.dart';
-import 'package:library_scanner_core/library_scanner_domain.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 final hiveDb = HiveDatabase();
 final unitOfWork = HiveUnitOfWork();
@@ -72,7 +72,7 @@ final LibraryDomain domain = HiveDomainFactory.createWithDatabase(
 
 ```dart
 import 'package:datastore_isar/datastore_isar.dart';
-import 'package:library_scanner_core/library_scanner_domain.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 final isarDb = IsarDatabase();
 final unitOfWork = IsarUnitOfWork(isarDb: isarDb);
@@ -115,7 +115,7 @@ The dependency graph flows strictly inward — `core` never imports any datastor
 
 ```
 datastore_sembast ──┐
-datastore_hive    ──┼──► library_scanner_core ──► domain_usecases
+datastore_hive    ──┼──► library_scanner_domain ──► domain_usecases
 datastore_isar    ──┘                          ──► domain_contracts
                                                ──► domain_entities
 ```
@@ -135,7 +135,7 @@ Each `*DomainFactory` lives in its own backend package and wires together:
 2. Implement datasources, unit of work, and repositories against `domain_contracts`
 3. Add a `MyDbDomainFactory` that wires everything and returns `LibraryDomain`
 4. Export the factory from `lib/datastore_mydb.dart`
-5. No changes to `library_scanner_core` or any other package
+5. No changes to `library_scanner_domain` or any other package
 
 ## Running tests
 

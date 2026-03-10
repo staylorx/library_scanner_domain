@@ -2,7 +2,7 @@ import 'package:domain_contracts/domain_contracts.dart';
 import 'package:domain_usecases/domain_usecase.dart';
 import 'package:dataservice_filtering/dataservice_filtering.dart';
 import 'package:datastore_files/datastore_files.dart';
-import 'package:library_scanner_core/library_scanner_domain.dart';
+import 'package:library_scanner_domain/library_scanner_domain.dart';
 
 import 'hive/database/hive_database.dart';
 import 'hive/datasources/author_datasource.dart';
@@ -18,7 +18,7 @@ import 'repositories/tag_repository_impl.dart';
 /// Factory for creating a [LibraryDomain] instance backed by Hive.
 ///
 /// Add `datastore_hive` to your `pubspec.yaml` dependencies alongside
-/// `library_scanner_core`. No other datastore package is required.
+/// `library_scanner_domain`. No other datastore package is required.
 ///
 /// ```dart
 /// final domain = HiveDomainFactory.createWithDatabase(

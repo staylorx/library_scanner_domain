@@ -1,7 +1,7 @@
 # Example: what a Flutter consumer's pubspec.yaml looks like.
 #
 # A downstream app picks ONE backend package and pairs it with
-# library_scanner_core.  No other datastore packages are pulled in.
+# library_scanner_domain.  No other datastore packages are pulled in.
 #
 # Swap the commented lines to switch backends — domain code is unchanged.
 
@@ -19,7 +19,7 @@ dependencies:
     sdk: flutter
 
   # --- Domain core (always required) ---
-  library_scanner_core: any          # exposes LibraryDomain + LibraryDomain factory interface
+  library_scanner_domain: any          # exposes LibraryDomain + LibraryDomain factory interface
 
   # --- Pick exactly ONE backend ---
   datastore_sembast: any             # lightweight, pure-Dart, good for mobile/desktop
